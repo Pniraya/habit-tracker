@@ -31,6 +31,10 @@
 格式，确保日期文本可按字典序排序。时间戳统一 epoch
 milliseconds，不得在不同表中混用秒与毫秒。
 
+本地日期（`created_on`、`archived_on`）在写入时按**当时的设备
+ZoneId** 冻结；读取与统计只使用这些列，不得由 `Instant` 现算本地日期
+（ADR-005）。
+
 ## 3. 表关系
 
 ``` text
@@ -63,6 +67,8 @@ CREATE TABLE habits (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   archived_at INTEGER,
+  created_on TEXT NOT NULL,
+  archived_on TEXT,
   CHECK (length(trim(name)) > 0),
   CHECK (target_value > 0)
 );
@@ -79,9 +85,11 @@ CREATE TABLE habits (
   `tracking_type`   `BOOLEAN` / `NUMERIC`
   `target_value`    数值型目标；布尔型固定为 1
   `unit`            数值型单位，如 ml、页、分钟；布尔型为 NULL
-  `created_at`      创建时间
+  `created_at`      创建时间（审计用，不参与业务判定）
   `updated_at`      最近修改时间
-  `archived_at`     归档时间；NULL 表示未归档
+  `archived_at`     归档时间戳（审计用）；与 `archived_on` 同时写入
+  `created_on`      创建时的本地日期 `yyyy-MM-dd`；连续天数的起点
+  `archived_on`     归档时的本地日期；NULL 表示未归档；统计区间上界的唯一依据
 
 约束： - `BOOLEAN`：`target_value=1`、`unit IS NULL`；日志实际值规范为 0
 或 1。 - `NUMERIC`：`target_value>0`；`unit`
@@ -107,7 +115,12 @@ CREATE TABLE habit_schedules (
   created_at INTEGER NOT NULL,
   FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE,
   CHECK (effective_until IS NULL OR effective_until >= effective_from),
-  CHECK (weekday_mask BETWEEN 0 AND 127)
+  CHECK (weekday_mask BETWEEN 1 AND 127),
+  CHECK (
+    (frequency_type = 'DAILY' AND weekday_mask = 127)
+    OR (frequency_type = 'WEEKDAYS' AND weekday_mask = 31)
+    OR (frequency_type = 'CUSTOM')
+  )
 );
 
 CREATE INDEX index_habit_schedules_habit_id
@@ -139,6 +152,12 @@ SQLite CHECK 无法简单表达同一习惯的跨行区间不重叠；必须由
 Repository/UseCase 在 transaction
 中校验。并发更新也必须在同一事务中完成。
 
+具体位置：由 Repository 的 `HabitScheduleWriter` 在**同一事务内**完成
+“查全部版本 → 计算新区间 → 校验 → 关闭旧版本 → 插入新版本”；DAO 不直接
+插入计划版本。`frequency_type` 与 `weekday_mask` 的一致性由上面的
+CHECK 兜底（ADR-007）。读取时若同一天出现多个有效版本，视为数据完整性
+错误并抛出，不得静默挑一条。
+
 ### 4.3 habit_logs
 
 一条记录表示某习惯在一个自然日内的汇总进度。
@@ -160,7 +179,9 @@ CREATE TABLE habit_logs (
   UNIQUE (habit_id, log_date),
   CHECK (actual_value >= 0),
   CHECK (target_snapshot > 0),
-  CHECK (duration_seconds IS NULL OR duration_seconds >= 0)
+  CHECK (duration_seconds IS NULL OR duration_seconds >= 0),
+  CHECK ((status = 'COMPLETED') = (actual_value >= target_snapshot)),
+  CHECK ((status = 'COMPLETED') = (completed_at IS NOT NULL))
 );
 
 CREATE INDEX index_habit_logs_habit_date
@@ -177,7 +198,8 @@ CREATE INDEX index_habit_logs_log_date
 `IN_PROGRESS`、`COMPLETED`。未记录不是一条日志，而是没有对应行。 -
 `completed_at`：首次达到目标的实际时间；撤销达标后置
 NULL，再次达标时更新为新的达标时刻。 -
-`duration_seconds`：可选的当日耗时，不作为完成判断依据。 - `created_at`
+`duration_seconds`：可选的当日耗时，不作为完成判断依据。**V1 未启用**：
+不写入、不读取、不展示（ADR-010）。 - `created_at`
 / `updated_at`：记录创建与最后修改时间。
 
 完成状态规则： - BOOLEAN：`actual_value=0` 为未完成；`actual_value=1`
@@ -187,6 +209,10 @@ NULL，再次达标时更新为新的达标时刻。 -
 数值型允许超额完成；统计只判定是否达到目标。 - BOOLEAN 的输入只允许 0 或
 1。 - `status` 和 `completed_at` 必须由同一个 Domain 规则计算，不允许 UI
 独立写入互相矛盾的值。
+- 唯一写入口：Domain 纯函数计算状态，Repository 只提供
+  `upsertDailyLog(habitId, date, value, targetSnapshot)`；DAO 不得暴露
+  `setStatus` / `setCompletedAt`。上面两条 CHECK 是该不变量的数据库兜底
+  （ADR-006）。
 
 无记录与 0 值： - 无日志行：当天尚未产生记录。 - 有日志且
 `actual_value=0`：用户显式记录了
@@ -257,7 +283,7 @@ enum 的 ordinal，因为调整枚举顺序会破坏已有数据。
 
 ### 7.1 输入集合
 
-对一个习惯，生成从创建日期至今天的计划执行日期序列。每个日期使用当日生效的计划版本判断。
+对一个习惯，生成从 `created_on` 至今天的计划执行日期序列。每个日期使用当日生效的计划版本判断。
 
 ### 7.2 单日判定
 
@@ -286,7 +312,7 @@ enum 的 ordinal，因为调整枚举顺序会破坏已有数据。
 -   补录历史日志后重新计算整个相关区间。
 -   计划修改不改写过去计划版本。
 -   计划变更前后相邻的成功计划日可以属于同一连续段，只要两日之间没有失败的计划执行日。
--   归档后保留历史最长连续；当前连续按归档日之前最后一个到期计划日计算，归档后的日期不再产生应执行次数。
+-   归档后保留历史最长连续；当前连续按 `archived_on` 之前最后一个到期计划日计算，归档后的日期不再产生应执行次数。
 
 ## 8. 统计口径
 
@@ -306,15 +332,18 @@ enum 的 ordinal，因为调整枚举顺序会破坏已有数据。
 
 ### 8.3 归档
 
-归档习惯仍可查看历史统计；统计日期不得晚于归档日期。归档日是否计入取决于当日是否为计划日，且归档操作发生前用户是否完成：已有日志保留；没有完成日志的归档当日不应在未来被继续提醒。产品统计实现应将归档日期作为该习惯有效期的最后日期，并在归档时冻结当天状态。
+归档习惯仍可查看历史统计。统计区间上界为 `min(今天, habits.archived_on)`；`archived_on` 在归档时按当时的设备 ZoneId 写入，之后不再随设备时区变化（ADR-005）。
+
+归档当日：若为计划日，则按归档操作**之前**是否已有完成日志判定；归档不新建、不修改当日日志，也不补建。归档之后不再产生新的应执行次数。
 
 ## 9. 删除、归档与恢复
 
--   归档：设置
-    `archived_at`，保留所有计划、日志和提醒；禁用提醒并取消所有
-    PendingIntent。
--   恢复：清空 `archived_at`；提醒是否重新启用应沿用各条 reminder 的
-    enabled 字段，并重新调度未来触发。
+-   归档：写入 `archived_on` 与 `archived_at`，保留所有计划、日志和
+    提醒；**不改写** `habit_reminders.enabled`，只取消该习惯的全部
+    PendingIntent。“有效提醒集合”统一定义为 `enabled = 1` 且
+    `habits.archived_on IS NULL`（ADR-008）。
+-   恢复：清空 `archived_on` 与 `archived_at`；按 `enabled = 1` 的记录
+    重排未来触发，用户原先关闭的提醒保持关闭。
 -   永久删除：显式确认后在单一 transaction 内删除子表与主表记录。
 -   V1 不做软删除字段以外的回收站机制。
 
@@ -333,7 +362,7 @@ enum 的 ordinal，因为调整枚举顺序会破坏已有数据。
 {
   "format": "habit-tracker-backup",
   "schemaVersion": 1,
-  "exportedAt": "2026-11-04T12:00:00Z",
+  "exportedAt": 1793750400000,
   "habits": [],
   "schedules": [],
   "logs": [],
@@ -342,10 +371,10 @@ enum 的 ordinal，因为调整枚举顺序会破坏已有数据。
 ```
 
 导出： - 包含归档习惯及其历史计划、日志、提醒配置。 - 不包含 Android
-系统权限、PendingIntent 或设备闹钟状态。 - 数值使用 JSON
-number；日期与时间使用上述 ISO 格式；时间戳使用 ISO-8601 UTC
-字符串或统一 epoch milliseconds，整个格式版本内必须固定。本 V1
-推荐时间戳统一 epoch milliseconds number。
+系统权限、PendingIntent 或设备闹钟状态。 - 数值使用 JSON number；日期使用
+ISO `yyyy-MM-dd`，本地时间使用 ISO `HH:mm:ss`；**时间戳（含
+`exportedAt`）统一为 epoch milliseconds 的 JSON number**，格式版本内
+固定不变（ADR-009）。
 
 导入： 1. 读取文件并限制合理文件大小。 2. 校验
 `format`、`schemaVersion`、必填字段、枚举、日期格式、引用完整性和数值范围。
@@ -368,6 +397,10 @@ number；日期与时间使用上述 ISO 格式；时间戳使用 ISO-8601 UTC
 -   BOOLEAN 只接受 0/1。
 -   NUMERIC 的部分完成与超额完成判定正确。
 -   修改目标后旧日志仍使用 target_snapshot。
--   归档保留历史数据并禁用提醒。
+-   归档保留历史数据，且**不改写** `habit_reminders.enabled`；归档后提醒由
+    `archived_on` 抑制触发，恢复后按 `enabled = 1` 重排（ADR-008）。
 -   永久删除时关联数据按预期删除。
 -   JSON 导入校验失败不产生部分写入。
+-   违反 `status` 不变量的直接 UPDATE 被 CHECK 拒绝（ADR-006）。
+-   `DAILY` 配非 127 掩码、`WEEKDAYS` 配非 31 掩码被 CHECK 拒绝（ADR-007）。
+-   `created_on` / `archived_on` 在设备时区变化后保持不变（ADR-005）。

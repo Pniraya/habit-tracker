@@ -174,7 +174,9 @@ Gradle module。
 2.  ViewModel 调用 `RecordHabitProgressUseCase`。
 3.  UseCase 校验习惯是否有效、当天是否为计划日、输入是否符合追踪类型。
 4.  Repository 在 Room transaction 中插入或更新当天唯一日志。
-5.  更新完成状态后，提醒调度器取消该习惯当天剩余提醒。
+5.  UseCase 返回后，由 Presentation 调用 `ReminderScheduler` 取消该习惯
+    当天剩余提醒。Domain 只判定“是否应提醒”，不得依赖 Android API
+    （ADR-008）。
 6.  Room Flow 发出变化，页面自动刷新。
 
 同一习惯同一日期最多一条
@@ -196,6 +198,9 @@ Gradle module。
 `TEXT`，格式 `HH:mm:ss`。 - 实际时间戳：`Instant`，数据库保存 epoch
 milliseconds `INTEGER`。 - 时区：运行时使用设备当前 `ZoneId`；不把固定
 UTC 偏移量当作时区。
+
+本地日期在写入时冻结：创建与归档分别写入 `created_on`、
+`archived_on`，读取与统计不得由 `Instant` 现算本地日期（ADR-005）。
 
 计划版本以 `effectiveFrom`（含）和
 `effectiveUntil`（含，可空）定义有效区间。更新计划必须结束旧版本并插入新版本，不得改写已经生效的历史计划。详细字段与约束见
@@ -274,7 +279,7 @@ V1 提供本地 JSON 导出/导入，不依赖服务器。
 {
   "format": "habit-tracker-backup",
   "schemaVersion": 1,
-  "exportedAt": "2026-11-04T12:00:00Z",
+  "exportedAt": 1793750400000,
   "habits": [],
   "schedules": [],
   "logs": [],
@@ -282,8 +287,9 @@ V1 提供本地 JSON 导出/导入，不依赖服务器。
 }
 ```
 
-要求： - `schemaVersion` 用于备份格式演进，与 Room
-数据库版本分开管理。 -
+要求： - 所有时间戳（含 `exportedAt`）为 epoch milliseconds 的 JSON
+number；日期为 ISO `yyyy-MM-dd`，本地时间为 `HH:mm:ss`（ADR-009）。 -
+`schemaVersion` 用于备份格式演进，与 Room 数据库版本分开管理。 -
 导入前完整解析并校验；校验失败不得写入部分数据。 - 导入写入必须放在 Room
 transaction 中。 - V1 默认采用"恢复前预览 +
 明确确认"；导入策略选择合并时，以稳定 ID 去重，遇到同 ID

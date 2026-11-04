@@ -1,8 +1,8 @@
 # ADR-009: 备份 JSON 的时间戳统一为 epoch milliseconds
 
-- 状态：`PROPOSED`（等待批准；批准后改 `ACCEPTED`）
+- 状态：`ACCEPTED`（2026-11-05 用户批准）
 - 日期：`2026-11-05`
-- 决策人：用户（待批准）
+- 决策人：用户（2026-11-05 明确批准 ADR-005~010 全部内容）
 - 相关任务：`TASK-001`
 - 关闭问题：`BASELINE_REVIEW` B4 的直接冲突
 

@@ -28,7 +28,7 @@
 | F-013 | 重启/时区后提醒恢复 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
 | F-014 | JSON 备份/恢复 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
 | F-015 | 离线核心功能 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
-| F-016 | 平均用时 | 需求待澄清 | BLOCKED | NOT_STARTED | NOT_STARTED |
+| F-016 | 平均用时 | V1 不做（ADR-010） | OUT_OF_SCOPE | — | — |
 | F-017 | 桌面小组件 | V1 不做 | OUT_OF_SCOPE | — | — |
 | F-018 | 深色模式 | V1 不做 | OUT_OF_SCOPE | — | — |
 | F-019 | 账号/云同步/服务端 | V1 不做 | OUT_OF_SCOPE | — | — |

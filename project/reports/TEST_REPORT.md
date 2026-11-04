@@ -23,6 +23,9 @@
 | 2026-11-05 | `check-governance.ps1`（13 项，新增「改基线须带 ADR」） | exit 0 | 13 PASS / 0 WARN / 0 FAIL；首轮曾抓出 `235941f` 仅改 AGENTS.md 尾空行，已用「忽略空白后比对 blob」精确豁免 | TASK-001 |
 | 2026-11-05 | 临时克隆注入：改 `DATABASE.md` 且无 ADR | FAIL | `[FAIL] baseline changes carry an ADR  77d9246: DATABASE.md`，exit 1 | TASK-001 |
 | 2026-11-05 | 临时克隆注入：同样改动 + 同 commit 新增 ADR | PASS | `[PASS] baseline changes carry an ADR`，RESULT OK，exit 0 | TASK-001 |
+| 2026-11-05 | 按 ADR-005~010 修订 `DATABASE.md`/`ARCHITECTURE.md`/`REQUIREMENTS.md` 后运行检查器 | exit 0 | 13 项全 PASS | TASK-001 |
+| 2026-11-05 | `Select-String` 一致性复核（`禁用提醒`、`weekday_mask BETWEEN`、`exportedAt`、`平均用时`） | 均符合预期 | 归档不再改 `enabled`；掩码下界 1；时间戳为数字；平均用时仅剩“V1 不提供” | TASK-001 |
+| 2026-11-05 | `gradlew assembleDebug` / `test` | NOT_RUN | 仍无工程与 SDK | TASK-001 |
 
 ## Known Test Gaps
 - Android 工程创建前无法运行 Gradle 构建；本机连 Android SDK 与 Gradle Wrapper 都不存在。

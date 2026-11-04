@@ -1,12 +1,12 @@
 # TASK-001: 关闭 Gate 0 —— 固化基线决策并做最小修订
 
-- 状态：`NOT_STARTED`
+- 状态：`DONE`
 - 阶段：`Gate 0`
 - 优先级：`P0`
 - 依赖：`TASK-000`（已完成）
-- 阻塞：等待用户批准 §5 的 8 项决策（草案已写入 `ADR-005~010`，状态 `PROPOSED`）
 - 创建日期：`2026-11-04`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
+- 批准：用户于 `2026-11-05` 明确批准 `ADR-005~010` 全部内容
 
 ## 1. Objective
 把 `project/reports/BASELINE_REVIEW.md` 的 A 类问题与本次审查新增的冲突，用 ADR + 文档最小修订一次关闭，使数据库 schema 与统计口径在进入 Gate 2 之前无未决语义。
@@ -38,11 +38,11 @@
 | 8 | 时区变更后的历史日志 | 保留 `log_date` 文本，不按新时区重算 | DATABASE §2 注 |
 
 ## 6. Acceptance Criteria
-- [ ] 8 项决策各在文档中有可执行、无歧义的一句话规则
-- [ ] 每条被修订的受保护文件改动都能指向对应 ADR 编号
-- [ ] 修订后不存在新的自相矛盾（同一规则只出现一种口径）
-- [ ] `git diff` 仅包含预期文件，无无关改动
-- [ ] F-016 状态与产品范围一致，且不出现无证据的 `VERIFIED`
+- [x] 8 项决策各在文档中有可执行、无歧义的一句话规则
+- [x] 每条被修订的受保护文件改动都能指向对应 ADR 编号（ADR-005~010）
+- [x] 修订后不存在新的自相矛盾（同一规则只出现一种口径）
+- [x] `git diff` 仅包含预期文件，无无关改动
+- [x] F-016 状态与产品范围一致（`OUT_OF_SCOPE`），且未出现无证据的 `VERIFIED`
 
 ## 7. Tests
 - 文档类任务：`git diff --check`；对修订后的关键词（`archived_at`、`archived_on`、`status`、`epoch`、`平均用时`）逐条 grep 复核一致性。
@@ -55,19 +55,26 @@
 
 ## 9. Implementation Log
 - 2026-11-05：把 §5 的 8 项决策写成 `ADR-005~010`（状态 `PROPOSED`），每份含决策、替代方案、影响文件、必需测试与批准后要执行的具体改动。基线文档本次未修改，等批准后再动。
+- 2026-11-05：用户批准全部 6 份 ADR，状态改为 `ACCEPTED`；按各 ADR 的 Implementation 段完成 `DATABASE.md`、`ARCHITECTURE.md`、`REQUIREMENTS.md` 的修订，并把 `FEATURE_MATRIX` F-016 改为 `OUT_OF_SCOPE`。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| TBD | NOT_RUN | 尚未执行 |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | exit 0 | 13 项全 PASS，含“改基线须带 ADR”（本次改动与 ADR 同 commit） |
+| `Select-String DATABASE.md -Pattern 'exportedAt'` | 1793750400000 | 备份示例已改为 epoch milliseconds（ADR-009） |
+| `Select-String DATABASE.md -Pattern '禁用提醒'` | 0 命中 | 归档不再改写 `enabled`（ADR-008） |
+| `Select-String DATABASE.md -Pattern 'weekday_mask BETWEEN'` | `BETWEEN 1 AND 127` | 掩码下界修正，配合 frequency CHECK（ADR-007） |
+| `Select-String REQUIREMENTS.md -Pattern '平均用时'` | 仅剩“V1 不提供”说明 | 平均用时已从范围移除（ADR-010） |
+| `git diff --check` / `git status --short` | exit 0 / 空 | 无空白错误，无遗留改动 |
+| 构建/单元测试 | NOT_RUN | 仍无 Android 工程与 SDK，不产生构建结论 |
 
 ## 11. Completion Review
-- [ ] 验收标准全部满足
-- [ ] `git diff --check` 通过
-- [ ] 文档/状态已更新
-- [ ] 未完成项已记录
+- [x] 验收标准全部满足
+- [x] `git diff --check` 通过
+- [x] 文档/状态已更新
+- [x] 未完成项已记录（构建与单元测试未执行）
 
 ## 12. Handoff
-- 当前剩余工作：等待 8 项决策答复
-- 下一条安全操作：用户确认后写 ADR-005~010，再改文档
-- Git 分支/提交：`main`
+- 当前剩余工作：无（Gate 0 关闭）；下一步是 `TASK-002` 环境准备
+- 下一条安全操作：安装 Android SDK 并把 `JAVA_HOME` 指向 `D:\javajdk17`，然后进 `TASK-003`
+- Git 分支/提交：`main`，本次改动随批准提交入库
