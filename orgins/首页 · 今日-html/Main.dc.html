@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>首页 · 今日</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAF7F2}
+.chk{-webkit-tap-highlight-color:transparent}
+.chk .dot{transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .2s ease}
+.chk:active .dot{transform:scale(.88)}
+@keyframes leaffall{0%{transform:translateY(-40px) rotate(0deg);opacity:0}12%{opacity:.95}100%{transform:translateY(780px) rotate(240deg);opacity:0}}
+.leaf{position:absolute;top:0;pointer-events:none;animation:leaffall 6s ease-in infinite}
+@media (prefers-reduced-motion: reduce){.leaf{animation:none;opacity:0}.chk .dot{transition:none}}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#FAF7F2;font-family:'Noto Sans SC','HarmonyOS Sans SC','PingFang SC',system-ui,sans-serif;color:#2B2A27;padding:56px 20px 0;display:flex;flex-direction:column">
+
+<div style="display:flex;flex-direction:column;gap:2px;height:56px">
+<span style="font-size:14px;color:#6F6A61;font-weight:500">10月11日 · 周日</span>
+<h1 style="margin:0;font-size:32px;line-height:38px;font-weight:700">今天</h1>
+</div>
+
+<div style="margin-top:16px;height:132px;box-sizing:border-box;padding:18px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06);display:flex;align-items:center;gap:18px">
+<div style="position:relative;width:96px;height:96px;flex:none">
+<svg width="96" height="96" viewBox="0 0 120 120" role="img" aria-label="{{ ringLabel }}" style="{{ ringGlow }}">
+<circle cx="60" cy="60" r="50" fill="none" stroke="#EEE9DF" stroke-width="12"></circle>
+<circle cx="60" cy="60" r="50" fill="none" stroke="#5B8C6A" stroke-width="12" stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="{{ ringOffset }}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .5s ease"></circle>
+</svg>
+<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:baseline;justify-content:center;padding-top:30px;box-sizing:border-box;font-family:'Nunito','Noto Sans SC',sans-serif">
+<span style="font-size:30px;line-height:36px;font-weight:800">{{ doneCount }}</span>
+<span style="font-size:16px;font-weight:600;color:#6F6A61">{{ totalLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<span style="font-size:13px;color:#6F6A61;font-weight:500">今日完成</span>
+<span style="font-size:17px;font-weight:700;line-height:24px">{{ message }}</span>
+<span style="align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border-radius:999px;background:#FCEBD5;color:#8A4B0C;font-size:13px;font-weight:700">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C97A1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"></path><path d="M5 19l8-8"></path></svg>
+{{ streakLabel }}
+</span>
+</div>
+</div>
+
+<div style="margin-top:20px;height:24px;font-size:15px;font-weight:700;color:#6F6A61">我的习惯</div>
+
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ habits }}" as="item" hint-placeholder-count="5">
+<div style="height:66px;box-sizing:border-box;padding:0 14px 0 12px;background:#FFFFFF;border-radius:20px;box-shadow:0 6px 18px rgba(60,50,30,0.05);display:flex;align-items:center;gap:12px">
+<button class="chk" onClick="{{ item.toggle }}" aria-label="{{ item.label }}" aria-pressed="{{ item.done }}" style="flex:none;width:44px;height:44px;padding:0;border:0;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
+<sc-if value="{{ item.done }}" hint-placeholder-val="{{ true }}">
+<span class="dot" style="width:40px;height:40px;border-radius:50%;background:#5B8C6A;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(91,140,106,0.32)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</span>
+</sc-if>
+<sc-if value="{{ item.notDone }}" hint-placeholder-val="{{ false }}">
+<span class="dot" style="width:40px;height:40px;box-sizing:border-box;border-radius:50%;border:2px solid #A39C8D"></span>
+</sc-if>
+</button>
+<a href="{{ item.href }}" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;color:inherit;text-decoration:none">
+<span style="font-size:16px;font-weight:700;line-height:22px">{{ item.title }}</span>
+<span style="font-size:13px;color:#6F6A61;line-height:18px">{{ item.sub }}</span>
+</a>
+<div style="flex:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#F3EFE7">
+<sc-if value="{{ item.iWater }}" hint-placeholder-val="{{ true }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F7A94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5s6 6.3 6 10.5a6 6 0 0 1-12 0c0-4.2 6-10.5 6-10.5z"></path></svg>
+</sc-if>
+<sc-if value="{{ item.iStretch }}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A7A59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20v-8"></path><path d="M12 12c0-3.5 2.5-5.5 6-5.5 0 3.5-2.5 5.5-6 5.5z"></path><path d="M12 15c0-3-2-4.5-5-4.5 0 3 2 4.5 5 4.5z"></path></svg>
+</sc-if>
+<sc-if value="{{ item.iRead }}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A35A10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10.5 5 8 4.5 4 4.5v14c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-14c-4 0-6.5.5-8 2z"></path><path d="M12 6.5v14"></path></svg>
+</sc-if>
+<sc-if value="{{ item.iMeditate }}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F7A94" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+</sc-if>
+<sc-if value="{{ item.iSleep }}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A35A10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+
+<a href="New.dc.html" aria-label="新建习惯" style="position:absolute;right:20px;bottom:98px;width:56px;height:56px;border-radius:50%;background:#5B8C6A;box-shadow:0 10px 24px rgba(91,140,106,0.4);display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:6">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+</a>
+
+<div style="position:absolute;left:0;right:0;bottom:0;height:84px;box-sizing:border-box;padding:10px 24px 22px;background:#FFFFFF;border-radius:28px 28px 0 0;box-shadow:0 -6px 24px rgba(60,50,30,0.06);display:flex;justify-content:space-between;z-index:7">
+<div style="width:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:16px;background:#E4EDE6;color:#3F6B4D">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l3 3 5-6"></path></svg>
+<span style="font-size:12px;font-weight:700">今日</span>
+</div>
+<a href="Stats.dc.html" style="width:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:16px;color:#6F6A61;text-decoration:none">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20v-9"></path><path d="M12 20V5"></path><path d="M18 20v-6"></path></svg>
+<span style="font-size:12px;font-weight:500">统计</span>
+</a>
+<div style="width:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:16px;color:#6F6A61">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"></path></svg>
+<span style="font-size:12px;font-weight:500">我的</span>
+</div>
+</div>
+
+<sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;overflow:hidden;z-index:5" aria-hidden="true">
+<svg class="leaf" style="left:36px;animation-delay:0s" width="22" height="22" viewBox="0 0 24 24" fill="#5B8C6A"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"></path></svg>
+<svg class="leaf" style="left:112px;animation-delay:1.2s" width="18" height="18" viewBox="0 0 24 24" fill="#F2A65A"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"></path></svg>
+<svg class="leaf" style="left:188px;animation-delay:2.4s" width="24" height="24" viewBox="0 0 24 24" fill="#8FAFC4"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"></path></svg>
+<svg class="leaf" style="left:250px;animation-delay:0.6s" width="20" height="20" viewBox="0 0 24 24" fill="#5B8C6A"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"></path></svg>
+<svg class="leaf" style="left:322px;animation-delay:3.1s" width="22" height="22" viewBox="0 0 24 24" fill="#F2A65A"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"></path></svg>
+<svg class="leaf" style="left:72px;animation-delay:4s" width="16" height="16" viewBox="0 0 24 24" fill="#8FAFC4"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"></path></svg>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startDone":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  isDone(id, all) {
+    const t = (this.state && this.state.t) || {};
+    if (t[id] !== undefined) return t[id];
+    return all || id === 'water' || id === 'stretch' || id === 'read';
+  }
+  renderVals() {
+    const all = !!this.props.startDone;
+    const defs = [
+      { id: 'water', title: '喝水', sub: '8 杯 · 连续 12 天' },
+      { id: 'stretch', title: '晨间拉伸', sub: '10 分钟 · 连续 6 天' },
+      { id: 'read', title: '阅读', sub: '20 分钟 · 连续 12 天' },
+      { id: 'meditate', title: '冥想', sub: '10 分钟 · 连续 3 天' },
+      { id: 'sleep', title: '早睡', sub: '23:00 前 · 连续 5 天' }
+    ];
+    const habits = defs.map((h) => {
+      const done = this.isDone(h.id, all);
+      return {
+        id: h.id,
+        title: h.title,
+        sub: h.sub,
+        done: done,
+        notDone: !done,
+        label: (done ? '取消完成：' : '完成：') + h.title,
+        toggle: () => {
+          const t = (this.state && this.state.t) || {};
+          this.setState({ t: Object.assign({}, t, { [h.id]: !this.isDone(h.id, all) }) });
+        },
+        iWater: h.id === 'water',
+        iStretch: h.id === 'stretch',
+        iRead: h.id === 'read',
+        iMeditate: h.id === 'meditate',
+        iSleep: h.id === 'sleep',
+        href: h.id === 'read' ? 'Detail.dc.html' : '#'
+      };
+    });
+    const total = habits.length;
+    const doneCount = habits.filter((h) => h.done).length;
+    const allDone = doneCount === total;
+    const remain = total - doneCount;
+    return {
+      habits: habits,
+      doneCount: doneCount,
+      totalLabel: '/' + total,
+      allDone: allDone,
+      message: allDone ? '今天也做到了' : '再完成 ' + remain + ' 个，今天就圆满了',
+      ringOffset: (314.16 * (1 - doneCount / total)).toFixed(2),
+      ringGlow: allDone ? 'filter: drop-shadow(0 0 10px rgba(91,140,106,0.55))' : '',
+      ringLabel: '今日完成 ' + doneCount + ' / ' + total,
+      streakLabel: '连续 ' + (allDone ? 13 : 12) + ' 天'
+    };
+  }
+}
+</script>
+</body>
+</html>

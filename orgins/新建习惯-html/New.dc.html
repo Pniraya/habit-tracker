@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>新建习惯</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAF7F2}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#FAF7F2;font-family:'Noto Sans SC','HarmonyOS Sans SC','PingFang SC',system-ui,sans-serif;color:#2B2A27;padding:56px 20px 0">
+
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between">
+<a href="Main.dc.html" aria-label="关闭" style="width:44px;height:44px;border-radius:50%;background:#FFFFFF;box-shadow:0 4px 14px rgba(60,50,30,0.08);display:flex;align-items:center;justify-content:center;color:#2B2A27;text-decoration:none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg>
+</a>
+<h1 style="margin:0;font-size:20px;line-height:28px;font-weight:700">新建习惯</h1>
+<span style="width:44px;height:44px"></span>
+</div>
+
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:14px">
+
+<div style="padding:16px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06);display:flex;flex-direction:column;gap:10px">
+<label for="habit-name" style="font-size:13px;line-height:18px;font-weight:700;color:#6F6A61">习惯名称</label>
+<input id="habit-name" type="text" value="晨跑" style="height:48px;box-sizing:border-box;padding:0 14px;border:0;border-radius:14px;background:#F3EFE7;font-family:inherit;font-size:17px;font-weight:500;color:#2B2A27">
+</div>
+
+<div style="padding:16px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06);display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;line-height:18px;font-weight:700;color:#6F6A61">图标</span>
+<div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:8px">
+<sc-for list="{{ icons }}" as="it" hint-placeholder-count="6">
+<button aria-label="{{ it.label }}" aria-pressed="{{ it.on }}" onClick="{{ it.pick }}" style="{{ it.style }}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ it.stroke }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ it.d }}"></path></svg>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="padding:16px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06);display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;line-height:18px;font-weight:700;color:#6F6A61">颜色</span>
+<div style="display:flex;gap:16px;padding-left:4px">
+<sc-for list="{{ colors }}" as="c" hint-placeholder-count="3">
+<button aria-label="{{ c.label }}" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}" style="{{ c.style }}"></button>
+</sc-for>
+</div>
+</div>
+
+<div style="padding:16px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06);display:flex;flex-direction:column;gap:10px">
+<span style="font-size:13px;line-height:18px;font-weight:700;color:#6F6A61">频率</span>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ freqs }}" as="f" hint-placeholder-count="3">
+<button aria-pressed="{{ f.on }}" onClick="{{ f.pick }}" style="{{ f.style }}">{{ f.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="height:64px;box-sizing:border-box;padding:0 16px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06);display:flex;align-items:center;gap:12px">
+<div style="flex:none;width:36px;height:36px;border-radius:50%;background:#F3EFE7;display:flex;align-items:center;justify-content:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6F6A61" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20.5a2 2 0 0 0 4 0"></path></svg>
+</div>
+<div style="flex:1;display:flex;flex-direction:column">
+<span style="font-size:16px;line-height:22px;font-weight:700">每日提醒</span>
+<span style="font-size:13px;line-height:18px;color:#6F6A61">{{ remindText }}</span>
+</div>
+<button role="switch" aria-checked="{{ remind }}" aria-label="每日提醒" onClick="{{ toggleRemind }}" style="width:56px;height:44px;border:0;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer">
+<span style="{{ trackStyle }}"><span style="{{ knobStyle }}"></span></span>
+</button>
+</div>
+
+</div>
+
+<a href="Main.dc.html" style="position:absolute;left:20px;right:20px;bottom:28px;height:56px;border-radius:999px;background:#4A7A59;color:#FFFFFF;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 10px 24px rgba(74,122,89,0.32)">开始养成</a>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const iconKey = s.icon || 'drop';
+    const colorKey = s.color || 'moss';
+    const freqKey = s.freq || 'daily';
+    const remind = s.remind === undefined ? true : s.remind;
+    const palette = {
+      moss: { fill: '#5B8C6A', tint: '#E4EDE6', dark: '#3F6B4D', name: '苔绿' },
+      apricot: { fill: '#F2A65A', tint: '#FCEBD5', dark: '#A35A10', name: '杏橙' },
+      blue: { fill: '#8FAFC4', tint: '#E3EDF3', dark: '#4F7A94', name: '雾蓝' }
+    };
+    const cur = palette[colorKey];
+    const iconDefs = [
+      { key: 'drop', label: '水滴', d: 'M12 3.5s6 6.3 6 10.5a6 6 0 0 1-12 0c0-4.2 6-10.5 6-10.5z' },
+      { key: 'sprout', label: '嫩芽', d: 'M12 20v-8 M12 12c0-3.5 2.5-5.5 6-5.5 0 3.5-2.5 5.5-6 5.5z M12 15c0-3-2-4.5-5-4.5 0 3 2 4.5 5 4.5z' },
+      { key: 'book', label: '书本', d: 'M12 6.5C10.5 5 8 4.5 4 4.5v14c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-14c-4 0-6.5.5-8 2z M12 6.5v14' },
+      { key: 'rings', label: '呼吸', d: 'M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z' },
+      { key: 'moon', label: '月亮', d: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' },
+      { key: 'heart', label: '爱心', d: 'M12 20s-7-4.4-7-10a4.2 4.2 0 0 1 7-3 4.2 4.2 0 0 1 7 3c0 5.6-7 10-7 10z' }
+    ];
+    const icons = iconDefs.map((it) => {
+      const on = it.key === iconKey;
+      return {
+        label: it.label,
+        d: it.d,
+        on: on,
+        stroke: on ? cur.dark : '#6F6A61',
+        style: 'width:100%;height:46px;padding:0;border:0;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:' + (on ? cur.tint : '#F3EFE7') + ';' + (on ? 'outline:2px solid ' + cur.fill + ';outline-offset:-2px;' : ''),
+        pick: () => this.setState({ icon: it.key })
+      };
+    });
+    const colors = Object.keys(palette).map((k) => {
+      const p = palette[k];
+      const on = k === colorKey;
+      return {
+        label: p.name,
+        on: on,
+        style: 'width:44px;height:44px;padding:0;border:0;border-radius:50%;cursor:pointer;background:' + p.fill + ';' + (on ? 'box-shadow:0 0 0 3px #FFFFFF,0 0 0 5px ' + p.fill + ';' : ''),
+        pick: () => this.setState({ color: k })
+      };
+    });
+    const freqDefs = [
+      { key: 'daily', label: '每天' },
+      { key: 'weekday', label: '工作日' },
+      { key: 'custom', label: '自定义' }
+    ];
+    const freqs = freqDefs.map((f) => {
+      const on = f.key === freqKey;
+      return {
+        label: f.label,
+        on: on,
+        style: 'height:44px;padding:0 20px;border:0;border-radius:999px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;background:' + (on ? '#4A7A59' : '#F3EFE7') + ';color:' + (on ? '#FFFFFF' : '#2B2A27') + ';',
+        pick: () => this.setState({ freq: f.key })
+      };
+    });
+    return {
+      icons: icons,
+      colors: colors,
+      freqs: freqs,
+      remind: remind,
+      remindText: remind ? '21:30' : '已关闭',
+      toggleRemind: () => this.setState({ remind: !remind }),
+      trackStyle: 'position:relative;display:block;width:52px;height:32px;border-radius:999px;transition:background .2s ease;background:' + (remind ? '#5B8C6A' : '#D9D3C6') + ';',
+      knobStyle: 'position:absolute;top:3px;left:' + (remind ? 23 : 3) + 'px;width:26px;height:26px;border-radius:50%;background:#FFFFFF;box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:left .2s cubic-bezier(.34,1.56,.64,1);'
+    };
+  }
+}
+</script>
+</body>
+</html>

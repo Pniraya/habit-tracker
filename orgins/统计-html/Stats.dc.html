@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>统计</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAF7F2}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#FAF7F2;font-family:'Noto Sans SC','HarmonyOS Sans SC','PingFang SC',system-ui,sans-serif;color:#2B2A27;padding:56px 20px 0;display:flex;flex-direction:column">
+
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between">
+<h1 style="margin:0;font-size:32px;line-height:38px;font-weight:700">统计</h1>
+<div style="display:flex;gap:2px;padding:4px;border-radius:999px;background:#EFEAE0">
+<button style="height:32px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:#6F6A61;font-family:inherit;font-size:13px;font-weight:500" aria-pressed="false">周</button>
+<button style="height:32px;padding:0 14px;border:0;border-radius:999px;background:#FFFFFF;box-shadow:0 2px 8px rgba(60,50,30,0.1);color:#2B2A27;font-family:inherit;font-size:13px;font-weight:700" aria-pressed="true">月</button>
+<button style="height:32px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:#6F6A61;font-family:inherit;font-size:13px;font-weight:500" aria-pressed="false">年</button>
+</div>
+</div>
+
+<div style="margin-top:14px;display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px">
+<div style="height:76px;box-sizing:border-box;padding:10px 16px;border-radius:20px;background:#E4EDE6;display:flex;flex-direction:column;justify-content:center">
+<span style="font-size:13px;color:#55514A;font-weight:500">本月完成率</span>
+<span style="font-family:'Nunito','Noto Sans SC',sans-serif;font-size:28px;line-height:36px;font-weight:800;color:#3F6B4D">86%</span>
+</div>
+<div style="height:76px;box-sizing:border-box;padding:10px 16px;border-radius:20px;background:#FCEBD5;display:flex;flex-direction:column;justify-content:center">
+<span style="font-size:13px;color:#55514A;font-weight:500">最长连续</span>
+<span style="font-family:'Nunito','Noto Sans SC',sans-serif;font-size:28px;line-height:36px;font-weight:800;color:#8A4B0C">21 <span style="font-size:15px;font-weight:700">天</span></span>
+</div>
+</div>
+
+<div style="margin-top:12px;box-sizing:border-box;padding:16px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06)">
+<div style="height:22px;display:flex;align-items:center;justify-content:space-between">
+<span style="font-size:16px;font-weight:700">10 月</span>
+<span style="display:flex;align-items:center;gap:3px;font-size:12px;color:#6F6A61">
+少
+<span style="width:10px;height:10px;border-radius:3px;background:#E9E3D6"></span>
+<span style="width:10px;height:10px;border-radius:3px;background:#CFE0D3"></span>
+<span style="width:10px;height:10px;border-radius:3px;background:#A8C8B1"></span>
+<span style="width:10px;height:10px;border-radius:3px;background:#7FA98C"></span>
+<span style="width:10px;height:10px;border-radius:3px;background:#5B8C6A"></span>
+多
+</span>
+</div>
+<div style="margin-top:10px;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));column-gap:6px;height:16px;font-size:12px;line-height:16px;color:#6F6A61;text-align:center">
+<span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+</div>
+<div role="img" aria-label="十月每日完成情况热力日历，颜色越深完成越多" style="margin-top:6px;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));gap:6px">
+<sc-for list="{{ cells }}" as="c" hint-placeholder-count="35">
+<div style="{{ c.style }}"></div>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top:12px;box-sizing:border-box;padding:16px;background:#FFFFFF;border-radius:24px;box-shadow:0 8px 24px rgba(60,50,30,0.06)">
+<div style="height:22px;display:flex;align-items:center;font-size:16px;font-weight:700">本周趋势</div>
+<div role="img" aria-label="本周每日完成数量柱状图" style="margin-top:10px;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));column-gap:10px;align-items:end;height:72px">
+<sc-for list="{{ bars }}" as="b" hint-placeholder-count="7">
+<div style="{{ b.style }}"></div>
+</sc-for>
+</div>
+<div style="margin-top:6px;display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));column-gap:10px;height:16px;font-size:12px;line-height:16px;color:#6F6A61;text-align:center">
+<span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span style="color:#3F6B4D;font-weight:700">今</span>
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;height:84px;box-sizing:border-box;padding:10px 24px 22px;background:#FFFFFF;border-radius:28px 28px 0 0;box-shadow:0 -6px 24px rgba(60,50,30,0.06);display:flex;justify-content:space-between">
+<a href="Main.dc.html" style="width:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:16px;color:#6F6A61;text-decoration:none">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l3 3 5-6"></path></svg>
+<span style="font-size:12px;font-weight:500">今日</span>
+</a>
+<div style="width:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:16px;background:#E4EDE6;color:#3F6B4D">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20v-9"></path><path d="M12 20V5"></path><path d="M18 20v-6"></path></svg>
+<span style="font-size:12px;font-weight:700">统计</span>
+</div>
+<div style="width:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:16px;color:#6F6A61">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"></path></svg>
+<span style="font-size:12px;font-weight:500">我的</span>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const colors = ['#E9E3D6', '#CFE0D3', '#A8C8B1', '#7FA98C', '#5B8C6A'];
+    const levels = [3, 4, 2, 4, 3, 4, 4, 0, 1, 4, 3];
+    const cells = [];
+    for (let i = 0; i < 35; i++) {
+      const day = i - 3 + 1;
+      let bg = 'transparent';
+      let extra = '';
+      if (day >= 1 && day <= 31) {
+        if (day <= 11) {
+          bg = colors[levels[day - 1]];
+        } else {
+          bg = '#F4F0E8';
+        }
+        if (day === 11) extra = 'outline:2px solid #F2A65A;outline-offset:2px;';
+      }
+      cells.push({ style: 'height:38px;border-radius:12px;background:' + bg + ';' + extra });
+    }
+    const heights = [54, 72, 72, 6, 18, 72, 54];
+    const bars = heights.map((h, i) => ({
+      style: 'height:' + h + 'px;border-radius:10px 10px 6px 6px;background:' + (i === 6 ? '#5B8C6A' : '#8FAFC4') + ';'
+    }));
+    return { cells: cells, bars: bars };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+# Gradle / Android build output
+.gradle/
+build/
+/local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Gradle wrapper jar is version-controlled on purpose
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.hprof
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# Kotlin/Java artifacts
+out/
+*.class
+*.log
+
+# Signing material and local secrets (never commit)
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+
+# OS noise
+.DS_Store
+Thumbs.db
