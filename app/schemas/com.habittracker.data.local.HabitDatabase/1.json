@@ -1,0 +1,389 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "cbb57b09d85478fb41458c2508ca2d28",
+    "entities": [
+      {
+        "tableName": "habits",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `icon` TEXT NOT NULL, `color` TEXT NOT NULL, `tracking_type` TEXT NOT NULL, `target_value` REAL NOT NULL DEFAULT 1.0, `unit` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `archived_at` INTEGER, `created_on` TEXT NOT NULL, `archived_on` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "icon",
+            "columnName": "icon",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trackingType",
+            "columnName": "tracking_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetValue",
+            "columnName": "target_value",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "1.0"
+          },
+          {
+            "fieldPath": "unit",
+            "columnName": "unit",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archivedAt",
+            "columnName": "archived_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdOn",
+            "columnName": "created_on",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archivedOn",
+            "columnName": "archived_on",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "habit_schedules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `habit_id` INTEGER NOT NULL, `frequency_type` TEXT NOT NULL, `weekday_mask` INTEGER NOT NULL, `effective_from` TEXT NOT NULL, `effective_until` TEXT, `created_at` INTEGER NOT NULL, FOREIGN KEY(`habit_id`) REFERENCES `habits`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "habitId",
+            "columnName": "habit_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frequencyType",
+            "columnName": "frequency_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weekdayMask",
+            "columnName": "weekday_mask",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveFrom",
+            "columnName": "effective_from",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveUntil",
+            "columnName": "effective_until",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_habit_schedules_habit_id",
+            "unique": false,
+            "columnNames": [
+              "habit_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_habit_schedules_habit_id` ON `${TABLE_NAME}` (`habit_id`)"
+          },
+          {
+            "name": "index_habit_schedules_habit_effective",
+            "unique": false,
+            "columnNames": [
+              "habit_id",
+              "effective_from",
+              "effective_until"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_habit_schedules_habit_effective` ON `${TABLE_NAME}` (`habit_id`, `effective_from`, `effective_until`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "habits",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "habit_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "habit_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `habit_id` INTEGER NOT NULL, `log_date` TEXT NOT NULL, `actual_value` REAL NOT NULL, `target_snapshot` REAL NOT NULL, `status` TEXT NOT NULL, `completed_at` INTEGER, `duration_seconds` INTEGER, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`habit_id`) REFERENCES `habits`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "habitId",
+            "columnName": "habit_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "logDate",
+            "columnName": "log_date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actualValue",
+            "columnName": "actual_value",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetSnapshot",
+            "columnName": "target_snapshot",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAt",
+            "columnName": "completed_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "durationSeconds",
+            "columnName": "duration_seconds",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_habit_logs_habit_id_log_date",
+            "unique": true,
+            "columnNames": [
+              "habit_id",
+              "log_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_habit_logs_habit_id_log_date` ON `${TABLE_NAME}` (`habit_id`, `log_date`)"
+          },
+          {
+            "name": "index_habit_logs_habit_date",
+            "unique": false,
+            "columnNames": [
+              "habit_id",
+              "log_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_habit_logs_habit_date` ON `${TABLE_NAME}` (`habit_id`, `log_date`)"
+          },
+          {
+            "name": "index_habit_logs_log_date",
+            "unique": false,
+            "columnNames": [
+              "log_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_habit_logs_log_date` ON `${TABLE_NAME}` (`log_date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "habits",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "habit_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "habit_reminders",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `habit_id` INTEGER NOT NULL, `reminder_time` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`habit_id`) REFERENCES `habits`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "habitId",
+            "columnName": "habit_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reminderTime",
+            "columnName": "reminder_time",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enabled",
+            "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_habit_reminders_habit_id",
+            "unique": false,
+            "columnNames": [
+              "habit_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_habit_reminders_habit_id` ON `${TABLE_NAME}` (`habit_id`)"
+          },
+          {
+            "name": "index_habit_reminders_habit_id_reminder_time",
+            "unique": true,
+            "columnNames": [
+              "habit_id",
+              "reminder_time"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_habit_reminders_habit_id_reminder_time` ON `${TABLE_NAME}` (`habit_id`, `reminder_time`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "habits",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "habit_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cbb57b09d85478fb41458c2508ca2d28')"
+    ]
+  }
+}

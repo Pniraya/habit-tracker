@@ -32,6 +32,9 @@
 | 2026-11-05 | 工具迁移到 `D:\AndroidToolchain` 后 `clean assembleDebug` | **SUCCESSFUL**（50s，36 tasks） | 新 `ANDROID_HOME` 端到端可用 | TASK-002 |
 | 2026-11-05 | `gradlew test`（含首个单测） | **FAILED（环境）** | `ClassNotFoundException: worker.org.gradle.process.internal.worker.GradleWorkerMain`；沙箱禁止 worker 管道，非代码失败 | TASK-003 |
 | 2026-11-05 | `HypervisorPresent` / `VirtualizationFirmwareEnabled` | False / True | 未启用 WHPX，x86_64 模拟器不可行 | TASK-003 |
+| 2026-11-05 | `gradlew assembleDebug`（含 KSP/Room 2.6.1） | **SUCCESSFUL**（2m 32s） | 导出 `app/schemas/.../1.json`（12 187 bytes） | TASK-004 |
+| 2026-11-05 | `node tools/verify-schema.mjs`（真实 SQLite，40 项） | **40/40 PASS** | 28 项约束行为 + 12 项 schema parity（列/索引/外键） | TASK-004 |
+| 2026-11-05 | 违反 `status` 不变量的直接 `UPDATE` | 拒绝（`habit_logs: invalid log`） | 触发器兜底，满足 §12 该项 | TASK-004 |
 
 ## Known Test Gaps
 - Android 工程创建前无法运行 Gradle 构建；本机连 Android SDK 与 Gradle Wrapper 都不存在。
