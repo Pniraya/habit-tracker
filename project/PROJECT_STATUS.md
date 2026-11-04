@@ -47,7 +47,7 @@
 - 仓库是否已初始化：已初始化（`2026-11-04`；审查前确认**不存在**仓库）
 - 当前分支：`main`（`git init` 默认 `master` 已重命名）
 - 工作区状态：基线检查点后为干净状态；无远程、未推送
-- 最近 commit：`d0f470a chore: import governance baseline and design references`（49 个跟踪文件）
+- 最近 commit：`82a8bff docs: record TASK-000 governance review, status and handoff` → 其后有一次针对本文件字段的修正提交；基线检查点 `d0f470a chore: import governance baseline and design references`（49 个跟踪文件）
 - 注意：首个 commit 使用一次性身份 `-c user.name`/`-c user.email`，未写入仓库配置
 
 以上字段已于 `2026-11-04` 用实际 `git status` / `git log` 结果替换；后续任务结束需继续维护。

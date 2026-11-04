@@ -7,8 +7,8 @@
 - 当前阶段：`Gate 0` — 治理与基线确认（未通过；TBD 与基线修订未关闭）
 - 当前任务：`TASK-000`（`DONE`）→ 下一任务 `TASK-001`（等待批准）
 - 当前 Git 分支：`main`（本地，无远程）
-- 最近 commit：`d0f470a chore: import governance baseline and design references`
-- `git status --short` 摘要：审查开始前无仓库；基线检查点后干净；本交接与状态更新提交后应再次为空
+- 最近 commit：`82a8bff docs: record TASK-000 governance review, status and handoff`；基线检查点 `d0f470a chore: import governance baseline and design references`
+- `git status --short` 摘要：审查开始前无仓库；基线检查点与记录提交后均为空（干净工作区，无远程）
 
 ## Completed This Session
 - 只读审查 4 份根文档、`project/` 全部 9 份治理文件、5 份概念稿（`orgins/`）

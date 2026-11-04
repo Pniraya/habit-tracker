@@ -4,7 +4,7 @@
 
 ## Latest Run
 - 日期时间：`2026-11-04 23:55 (+09:00)`
-- 分支 / commit：`main` @ `d0f470a`
+- 分支 / commit：`main`（审查执行时尚无仓库，故无 commit）→ 证据入库于基线检查点 `d0f470a`
 - 环境：Windows；JDK 21.0.2（`JAVA_HOME=D:\javajdk21`）；**无 Android SDK / Android Studio / Gradle CLI**
 - 结果：构建与单元测试 `NOT_RUN`（无工程）；治理审查检查见 `Runs` 表
 
