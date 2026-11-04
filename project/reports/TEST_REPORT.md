@@ -29,6 +29,9 @@
 | 2026-11-05 | `gradlew test` | BUILD SUCCESSFUL / 全部 `NO-SOURCE` | 无测试用例，不得记为“测试通过” | TASK-003 |
 | 2026-11-05 | `adb devices` | 空列表 | 无设备；`emulator`/`system-images` 未安装，真机验证 NOT_RUN | TASK-003 |
 | 2026-11-05 | 四个 SDK 包 SHA-1 vs 官方 `repository2-3.xml` | 4/4 VERIFIED | 腾讯镜像下载 + 官方哈希校验 | TASK-002 |
+| 2026-11-05 | 工具迁移到 `D:\AndroidToolchain` 后 `clean assembleDebug` | **SUCCESSFUL**（50s，36 tasks） | 新 `ANDROID_HOME` 端到端可用 | TASK-002 |
+| 2026-11-05 | `gradlew test`（含首个单测） | **FAILED（环境）** | `ClassNotFoundException: worker.org.gradle.process.internal.worker.GradleWorkerMain`；沙箱禁止 worker 管道，非代码失败 | TASK-003 |
+| 2026-11-05 | `HypervisorPresent` / `VirtualizationFirmwareEnabled` | False / True | 未启用 WHPX，x86_64 模拟器不可行 | TASK-003 |
 
 ## Known Test Gaps
 - Android 工程创建前无法运行 Gradle 构建；本机连 Android SDK 与 Gradle Wrapper 都不存在。

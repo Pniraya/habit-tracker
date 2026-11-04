@@ -46,9 +46,9 @@
 ## 4. 快速命令
 
 ```powershell
-# 本机工具链（不在仓库内，换机需重装）
-$env:JAVA_HOME = "D:\javajdk17"      # 基线要求 JDK 17
-$env:ANDROID_HOME = "D:\AndroidSdk"  # API 35 / build-tools 35.0.0 / platform-tools
+# 本机工具链集中在一个目录（不在仓库内，换机需重装）
+. D:\AndroidToolchain\env.ps1        # 设置 ANDROID_HOME / JAVA_HOME / PATH
+pwsh -NoProfile -File D:\AndroidToolchain\verify.ps1   # 一键构建并校验 APK
 
 gradlew.bat assembleDebug   # 已验证：SUCCESSFUL
 gradlew.bat test            # 已验证：SUCCESSFUL，但当前无测试用例（NO-SOURCE）
