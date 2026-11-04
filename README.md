@@ -8,12 +8,12 @@
 
 | 项目 | 状态 |
 |---|---|
-| 阶段 | `Gate 0` — 治理与基线确认 |
-| 当前任务 | `TASK-001`（`NOT_STARTED`，等待用户裁决 8 项基线问题） |
-| 代码实现 | `NOT_STARTED`（仓库内无 `app/`、无 `*.gradle.kts`、无 `*.kt`） |
-| 最近构建 | `NOT_RUN`（未安装 Android SDK，无法执行） |
-| 最近测试 | `NOT_RUN` |
-| Git | `main` 分支，本地仓库，无远程；基线检查点 `d0f470a` |
+| 阶段 | `Gate 1` — 骨架已构建，真机安装与导航未验证 |
+| 当前任务 | `TASK-003`（`PARTIAL`，待设备验证） |
+| 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳） |
+| 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，2m 38s，APK 9.4 MB |
+| 最近测试 | `SUCCESS` 但全部 `NO-SOURCE`（尚无测试用例） |
+| Git | `main`，本地仓库，无远程；基线检查点 `d0f470a` |
 
 ## 2. 文档地图
 
@@ -46,10 +46,14 @@
 ## 4. 快速命令
 
 ```powershell
-git status --short          # 工作区状态
-git log --oneline -5        # 最近提交
-gradlew.bat assembleDebug   # 工程创建后可用（当前 NOT_RUN）
-gradlew.bat test            # 工程创建后可用（当前 NOT_RUN）
+# 本机工具链（不在仓库内，换机需重装）
+$env:JAVA_HOME = "D:\javajdk17"      # 基线要求 JDK 17
+$env:ANDROID_HOME = "D:\AndroidSdk"  # API 35 / build-tools 35.0.0 / platform-tools
+
+gradlew.bat assembleDebug   # 已验证：SUCCESSFUL
+gradlew.bat test            # 已验证：SUCCESSFUL，但当前无测试用例（NO-SOURCE）
+adb devices                 # 当前为空：无真机、未装模拟器
+pwsh -NoProfile -File tools/check-governance.ps1
 ```
 
 ## 5. 验证
@@ -62,4 +66,4 @@ pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 
 ## 6. 下一步
 
-`TASK-001`：关闭 Gate 0 —— 固化 8 项基线决策（ADR-005~010 + 三份文档最小修订）。等待用户批准后执行；详见 `project/tasks/TASK-001.md`。
+`TASK-003` 收尾：补 `emulator` 与 `system-images;android-35;google_apis`（或接真机），完成“Android 15 设备可安装并启动、三页可导航”的验证，然后关闭 Gate 1 进入 Gate 2（Room 数据层）。详见 `project/tasks/TASK-003.md`。

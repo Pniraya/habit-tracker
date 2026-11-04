@@ -25,7 +25,10 @@
 | 2026-11-05 | 临时克隆注入：同样改动 + 同 commit 新增 ADR | PASS | `[PASS] baseline changes carry an ADR`，RESULT OK，exit 0 | TASK-001 |
 | 2026-11-05 | 按 ADR-005~010 修订 `DATABASE.md`/`ARCHITECTURE.md`/`REQUIREMENTS.md` 后运行检查器 | exit 0 | 13 项全 PASS | TASK-001 |
 | 2026-11-05 | `Select-String` 一致性复核（`禁用提醒`、`weekday_mask BETWEEN`、`exportedAt`、`平均用时`） | 均符合预期 | 归档不再改 `enabled`；掩码下界 1；时间戳为数字；平均用时仅剩“V1 不提供” | TASK-001 |
-| 2026-11-05 | `gradlew assembleDebug` / `test` | NOT_RUN | 仍无工程与 SDK | TASK-001 |
+| 2026-11-05 | `gradlew assembleDebug` | **SUCCESSFUL**（2m 38s，35 tasks） | APK 9.4 MB；`aapt2 dump badging`：`com.habittracker`、minSdk 26、targetSdk 35 | TASK-003 |
+| 2026-11-05 | `gradlew test` | BUILD SUCCESSFUL / 全部 `NO-SOURCE` | 无测试用例，不得记为“测试通过” | TASK-003 |
+| 2026-11-05 | `adb devices` | 空列表 | 无设备；`emulator`/`system-images` 未安装，真机验证 NOT_RUN | TASK-003 |
+| 2026-11-05 | 四个 SDK 包 SHA-1 vs 官方 `repository2-3.xml` | 4/4 VERIFIED | 腾讯镜像下载 + 官方哈希校验 | TASK-002 |
 
 ## Known Test Gaps
 - Android 工程创建前无法运行 Gradle 构建；本机连 Android SDK 与 Gradle Wrapper 都不存在。

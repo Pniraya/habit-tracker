@@ -13,8 +13,8 @@
 
 | ID | 功能 | 需求/设计 | 实现状态 | 自动化验证 | 真机验证 |
 |---|---|---|---|---|---|
-| F-001 | Android 工程骨架 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
-| F-002 | 今日页与导航 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
+| F-001 | Android 工程骨架 | 已定义 | VERIFIED | VERIFIED | NOT_STARTED |
+| F-002 | 今日页与导航 | 已定义 | IMPLEMENTED_UNVERIFIED | NOT_STARTED | NOT_STARTED |
 | F-003 | 创建/编辑习惯 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
 | F-004 | 归档/恢复习惯 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
 | F-005 | DAILY/WEEKDAYS/CUSTOM 计划 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |

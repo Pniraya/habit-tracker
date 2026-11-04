@@ -4,47 +4,46 @@
 
 ## 当前状态
 
-- 项目阶段：`Gate 0` 已关闭 → 进入 `Gate 1` 准备（`TASK-002` 环境）
-- 当前任务：`TASK-002` — 准备 Android 构建环境（`NOT_STARTED`，等安装批准）；`TASK-001`、`TASK-000` 均已 `DONE`
+- 项目阶段：`Gate 1` — 工程骨架已构建；真机安装与导航未验证
+- 当前任务：`TASK-003` 收尾（`PARTIAL`，待设备验证）；`TASK-001`、`TASK-002` 已 `DONE`
 - 总体状态：`IN_PROGRESS`
-- 代码实现状态：`NOT_STARTED`（递归清点：无 `*.gradle*`、`*.kts`、`*.toml`、`*.kt`、`AndroidManifest.xml`）
-- 最近验证构建：`NOT_RUN`（无工程、无 Android SDK）
-- 最近验证测试：`NOT_RUN`
-- 最近治理一致性检查：`PASS`（2026-11-05，`tools/check-governance.ps1`：13 项检查，13 PASS / 0 WARN / 0 FAIL）
-- 最后核对时间：`2026-11-05 01:20 (+09:00)`
+- 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳；`assembleDebug` 通过，但无测试、无真机验证）
+- 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，2m 38s，APK 9.4 MB）
+- 最近验证测试：`SUCCESS` 但全部 `NO-SOURCE`（尚无测试用例，不算测试通过）
+- 最近治理一致性检查：`PASS`（2026-11-05，13 项检查）
+- 最后核对时间：`2026-11-05 02:10 (+09:00)`
 
-## 已有设计资产
+## 已有设计资产与实现
 
-- [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：三份基线，已完成与 ADR 一致的修订
-- [x] `project/REQUIREMENTS.md`：需求基线，TBD 第 1/5/6 项已关闭
+- [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：已按 `ADR-005~010` 修订
+- [x] `project/REQUIREMENTS.md`：TBD 第 1/5/6 项已关闭
 - [x] `project/decisions/ADR-001`~`ADR-010`：全部 `ACCEPTED`
-- [x] `project/FEATURE_MATRIX.md`：F-016 平均用时 → `OUT_OF_SCOPE`（ADR-010）
+- [x] `project/FEATURE_MATRIX.md`：F-001 构建验证通过、F-002 未验证、F-016 `OUT_OF_SCOPE`
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
-- [x] `README.md`、`project/reports/RELEASE_REPORT.md`、`project/tasks/TASK-000~003.md`
-- [x] `tools/check-governance.ps1`：13 项治理检查（含「改基线须带 ADR」，双向验证）
-- [ ] Android Studio 工程创建并通过首次构建（环境缺口见下）
+- [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~003`、`tools/check-governance.ps1`
+- [x] 构建环境：`D:\AndroidSdk`（API 35 / build-tools 35.0.0 / platform-tools）、`D:\Gradle\gradle-8.9`、JDK 17
+- [x] Android 工程骨架：Wrapper、Version Catalog、`:app`、主题 token、三页导航
+- [ ] 真机/模拟器安装与三页导航验证
 
 ## 当前待办
 
-1. 执行 `TASK-002`：安装 Android SDK / cmdline-tools（或 Android Studio），把 `JAVA_HOME` 指向 `D:\javajdk17`。
-2. 执行 `TASK-003`：创建 Android 单模块工程（`:app`）、Version Catalog、Wrapper，完成首次 `assembleDebug`。
-3. 每个任务结束按 `AGENTS.md` §10 生命周期更新状态、测试报告与交接。
+1. 补 `emulator` 与 `system-images;android-35;google_apis`（或接真机），完成 `TASK-003` 的设备验证。
+2. 通过后关闭 Gate 1，进入 Gate 2：Room Entity/DAO/Database、schema export、Migration 基础设施。
+3. 每个任务结束按 `AGENTS.md` §10 更新状态、测试报告与交接。
 
 ## 阻塞项与风险
 
-- 已由 `ADR-005~010` 关闭：归档/创建日期时区、平均用时无数据源、`HabitLog.status` 冗余、计划区间与频率校验、归档/恢复提醒冲突、备份时间戳冲突、今日完成数分母。
-- 仍存在的设计缺口：`habits` 的 BOOLEAN 约束（`target_value=1` 且 `unit IS NULL`）尚未在 SQL 表达；数值型“撤销”的 UI 语义未定；恢复默认策略（合并/清空）未定。
-- 环境缺口（2026-11-05 实测）：未安装 Android SDK / Android Studio / adb / Gradle CLI；`JAVA_HOME=D:\javajdk21` 与基线 JDK 17 不一致，但 `D:\javajdk17`（17.0.13）已存在。
-- 网络与磁盘可用：`dl.google.com`、`repo1.maven.org`、`services.gradle.org` 均返回 200；D 盘剩余 98.6 GB。`TASK-002` 只差安装动作。
-- 尚未从真实 Android 工程验证 SDK、Gradle、Kotlin、Compose 与 Room 的版本组合。
-- `temp.md` 为用户输入草稿，已由 `.gitignore` 排除，不作为基线或验收依据。
+- 无真机、无模拟器：`adb devices` 为空，`emulator`/`system-images` 未安装，Gate 1 的“设备可安装启动”无法验证。
+- 无任何单元测试：`gradlew test` 只证明任务可运行。
+- 依赖经腾讯镜像获取（官方 SHA-1 只用在校验 SDK 包上，Maven 依赖未逐包校验），镜像不可用时回退到 `google()` 会极慢。
+- Android SDK 许可文件由 AI 按标准哈希写入，等同于代表用户接受条款，需用户复核。
+- 仍存在的设计缺口：`habits` 的 BOOLEAN 约束未在 SQL 表达；数值型“撤销”UI 语义未定；恢复默认策略未定。
+- 尚未验证 Room/统计/提醒相关实现（Gate 2+ 未开始）。
 
 ## Git 状态
 
-- 仓库是否已初始化：已初始化（`2026-11-04`；审查前确认**不存在**仓库）
-- 当前分支：`main`（`git init` 默认 `master` 已重命名）
-- 工作区状态：干净；无远程、未推送
+- 仓库：已初始化（`main`，无远程、未推送）
+- 工作区：构建产物、`local.properties`、`.gradle/`、`.kotlin/` 均已忽略
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
-- 注意：提交使用一次性身份 `-c user.name`/`-c user.email`，未写入仓库配置
 
-以上字段已于 `2026-11-05` 按实际 `git status` / `git log` / 检查器结果更新；后续任务结束需继续维护。
+以上字段已于 `2026-11-05` 按实际构建结果、`adb devices` 与检查器结果更新。
