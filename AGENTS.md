@@ -96,7 +96,8 @@
 - `project/PROJECT_STATUS.md`：当前阶段、当前任务、阻塞项、最后验证；
 - `project/FEATURE_MATRIX.md`：仅更新有实现/测试证据的状态；
 - `project/handoffs/LAST_HANDOFF.md`：下一会话可直接恢复的交接信息；
-- `project/reports/TEST_REPORT.md`：重要测试记录。
+- `project/reports/TEST_REPORT.md`：重要测试记录；
+- `project/reports/RELEASE_REPORT.md`：发布证据与已知限制（仅发布时填写）。
 
 不要为了让进度看起来完整而批量勾选功能。规划完成、代码完成、测试通过、真机验证是不同状态。
 
@@ -135,3 +136,57 @@
 - 下一项建议任务
 
 不要把建议、推测或尚未执行的操作写成已完成事实。
+
+## 10. AI 会话生命周期
+
+每次会话按固定顺序执行，上一阶段没有产出就不进入下一阶段：
+
+| # | 阶段 | 动作 | 必须留下的证据 |
+|---|---|---|---|
+| 1 | Bootstrap | 按 §2 顺序读取规则、状态、路线、需求、设计文档、交接与当前 TASK 文件 | 已读清单与核对到的 Git 状态 |
+| 2 | Inspect | 核对源码、构建配置、依赖、数据库 schema、测试实际结果；确认文档与仓库无冲突 | 实际命令与输出摘要 |
+| 3 | Plan | 明确本次范围、预计文件清单、验收条件、风险、验证命令 | 简短计划（可写在 TASK 文件 §9） |
+| 4 | Implement | 只完成当前 TASK 的 Scope | 变更文件清单 |
+| 5 | Verify | 构建、测试、静态检查、完整 diff 审查 | 命令、退出状态、失败摘要 |
+| 6 | Persist | 更新 TASK 记录、`PROJECT_STATUS.md`、`FEATURE_MATRIX.md`（仅限有证据项）、`TEST_REPORT.md` | 更新后的文件 |
+| 7 | Handoff | 写 `LAST_HANDOFF.md`；提交聚焦 commit，或明确记录未提交原因 | commit 摘要与下一安全操作 |
+
+规则：
+- 未完成阶段 5 不得进入阶段 6；没有验证结果时只能写 `NOT_RUN`/`PARTIAL`/`BLOCKED`。
+- 任一阶段发现 §3 所列冲突，立即停止相关实现，输出最小修订方案等待批准。
+
+## 11. 文件分级与保护清单
+
+AI 对文件的修改权限按三级划分（依据 ADR-004）：
+
+| 级别 | 文件 | AI 权限 |
+| --- | --- | --- |
+| 产品与架构基线 | `AGENTS.md`、`ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`、`project/REQUIREMENTS.md`、`README_GOVERNANCE.md` | 只能提出修改建议；必须经用户批准并新增 ADR 后才可改动 |
+| 任务状态与进度 | `project/PROJECT_STATUS.md`、`project/FEATURE_MATRIX.md`、`project/ROADMAP.md`、`project/tasks/**`、`project/handoffs/**`、`project/reports/**` | 可以更新，但必须有实际依据；不得为让进度好看而勾选 |
+| 源代码与测试 | `app/**`、`gradle/**`、`*.gradle.kts` | 在当前 TASK 范围内可以修改 |
+
+- 只读资产：`orgins/**`（视觉概念稿）、`project/reports/BASELINE_REVIEW.md`。不得将其作为生产代码或验收依据。
+- 修改受保护文件的最小流程：指出冲突与理由 → 提交最小修订方案 → 用户批准 → 新增 ADR → 修改文档 → 同步状态文件。
+- 即使用户在会话中口头指示修改，也必须留下 1 份 ADR 记录依据与该指示的来源。
+- 数据库 schema、备份格式、迁移策略属于高风险改动，改动前必须存在可回退的 Git 检查点。
+
+## 12. 角色分工与验证顺序
+
+- `Planner`：理解需求、拆任务、定文件范围与验收条件。
+- `Developer`：实现代码与测试，更新文档。
+- `Reviewer`：独立核对 Diff、架构一致性、测试证据与回归风险。建议在 Developer 完成后用新会话执行，避免自评过宽。
+
+验证顺序不可颠倒：编译器 → 单元/集成测试 → 静态检查 → Diff 审查 → 独立评审。任何 AI 的“看起来没问题”都不能替代测试结果；未经验证的代码不得合并到 `main`。
+
+## 13. Git 事件与操作
+
+| 事件 | 操作 |
+| --- | --- |
+| 完成一个小任务 | 一个聚焦 commit |
+| 功能开发完成并通过验收 | 合并到 `main` |
+| 高风险数据库/迁移/备份改动前 | 创建可回退检查点（commit 或 tag） |
+| AI 修改导致异常 | 先审查 diff 与测试结果，再回滚 |
+| 发布 V1 | 打 tag，并填写 `RELEASE_REPORT.md` |
+
+禁止项：未经授权 `push --force`、重写历史、删除分支、自动推送远程、`reset --hard` 丢弃用户改动。
+

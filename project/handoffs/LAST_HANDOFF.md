@@ -3,59 +3,57 @@
 > 每次 AI 会话结束前更新。记录事实，不写愿望或推测。
 
 ## Snapshot
-- 日期时间（含时区）：`2026-11-04 23:55 +09:00`
-- 当前阶段：`Gate 0` — 治理与基线确认（未通过；TBD 与基线修订未关闭）
-- 当前任务：`TASK-000`（`DONE`）→ 下一任务 `TASK-001`（等待批准）
+- 日期时间（含时区）：`2026-11-05 00:00 +09:00`
+- 当前阶段：`Gate 0` — 治理与基线确认（治理层已完成，基线决策未关闭）
+- 当前任务：`TASK-001`（`NOT_STARTED`，阻塞于用户裁决）→ 后续 `TASK-002`、`TASK-003`
 - 当前 Git 分支：`main`（本地，无远程）
-- 最近 commit：`82a8bff docs: record TASK-000 governance review, status and handoff`；基线检查点 `d0f470a chore: import governance baseline and design references`
-- `git status --short` 摘要：审查开始前无仓库；基线检查点与记录提交后均为空（干净工作区，无远程）
+- 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
+- `git status --short` 摘要：除未跟踪的 `temp.md`（用户草稿）外工作区干净
 
 ## Completed This Session
-- 只读审查 4 份根文档、`project/` 全部 9 份治理文件、5 份概念稿（`orgins/`）
-- 核实 `BASELINE_REVIEW.md` 的 A1–A4、B1–B5 共 9 项：全部成立；B4 为直接文档冲突
-- 新增 9 项评审未覆盖的问题（分层冲突、归档/恢复矛盾、SQL 未表达文字约束、`created_at` 同类时区问题、冗余索引、权限清单缺失、token 不完整、概念稿范围小于需求、治理文件不自洽）
+- 完整只读审查（TASK-000）：4 份根文档 + `project/` 全部治理文件 + 5 份概念稿；核实 BASELINE_REVIEW 9 项并新增 9 项冲突
 - 环境实测：无 Android SDK / Studio / adb / Gradle CLI；默认 JDK 21，另有 JDK 17
-- `git init` + `main` 分支 + `.gitignore` + 基线检查点 `d0f470a`
-- 写入 `project/tasks/TASK-000.md`，更新 `PROJECT_STATUS.md`、`TEST_REPORT.md`、本文件
+- Git 仓库初始化（`main`）、`.gitignore`、基线检查点 `d0f470a`
+- 按 `temp.md` 方案补齐治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-001~003`、`ADR-004`、`AGENTS.md` §10–§13
 
 ## Files Changed
-- 新增：`.gitignore`、`project/tasks/TASK-000.md`
-- 更新：`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/handoffs/LAST_HANDOFF.md`
-- 未改动：`AGENTS.md`、`ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`、`README_GOVERNANCE.md`、`project/REQUIREMENTS.md`、`project/ROADMAP.md`、`project/FEATURE_MATRIX.md`、`project/decisions/*`、`orgins/*`
+- 新增：`.gitignore`、`README.md`、`project/tasks/TASK-000~003.md`、`project/reports/RELEASE_REPORT.md`、`project/decisions/ADR-004-governance-file-tiers.md`
+- 更新：`AGENTS.md`（§6 增加发布报告；新增 §10–§13）、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/handoffs/LAST_HANDOFF.md`
+- 未改动：`ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`、`project/REQUIREMENTS.md`、`project/ROADMAP.md`、`project/FEATURE_MATRIX.md`、`project/reports/BASELINE_REVIEW.md`、`orgins/**`
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `git rev-parse --is-inside-work-tree`（审查前） | exit 1 | 无仓库 |
+| `git rev-parse --is-inside-work-tree`（审查前） | exit 1 | 审查前无仓库 |
 | 递归文件搜索（gradle/kts/toml/kt/Manifest） | 0 命中 | 无 Android 工程 |
 | `java -version` | exit 0 / 21.0.2 | JDK 21 默认 |
 | SDK / gradle / adb 探测 | 空 / False / 未找到 | 环境不具备构建条件 |
-| `git init` + 首个 commit | exit 0 | `d0f470a`，49 文件 |
-| `gradlew.bat assembleDebug` / `test` | NOT_RUN | 无工程，禁止写成通过 |
+| `git init` + 基线 commit | exit 0 | `d0f470a`，49 文件 |
+| `git diff --check`（每次提交前） | exit 0 | 无空白错误 |
+| `gradlew.bat assembleDebug` / `test` | NOT_RUN | 无工程，不得写成通过 |
 
 ## Incomplete Work
-- ADR-004~007 未创建；`ARCHITECTURE.md`/`DATABASE.md` 的 4 处冲突未修订
-- 6 项产品/技术决策未答复
-- 环境未准备（SDK、Studio、Gradle 运行 JDK）
+- `TASK-001` 未开始：8 项决策待用户裁决，ADR-005~009 未创建，三份基线文档未修订
+- `TASK-002` 未开始：Android SDK / Gradle 运行 JDK 未准备
+- `TASK-003` 未开始：无 `app/`、无 Version Catalog、无 Gradle Wrapper
 
 ## Known Issues / Risks
-- 归档日期与创建日期的时区语义未定义（`archived_at`/`created_at` 为 Instant，统计使用本地日期）
-- `HabitLog.status` 持久化与派生值可能不一致，无 DB 层不变量
-- 归档“禁用提醒”与恢复“沿用 enabled”互斥，可能静默丢失用户提醒配置
-- 备份时间戳格式两处冲突（ISO 8601 与 epoch milliseconds）
-- `DATABASE.md` 的文字约束（BOOLEAN 的 target/unit、mask 与 frequency 一致性）未在 SQL 中表达
-- 无 Android SDK，Gate 1 的任何构建结论目前都不可能存在
+- 归档/创建日期时区语义、`HabitLog.status` 冗余、计划校验位置、归档与提醒 `enabled` 冲突、备份时间戳格式均未关闭
+- `DATABASE.md` 文字约束未在 SQL 表达；`ARCHITECTURE.md` §5.2 与 §3.2 分层职责矛盾
+- 平均用时无数据来源（F-016 仍 `BLOCKED`）
+- 无 SDK，因此不存在任何构建证据
+- `temp.md` 未跟踪，可能被误当作基线；它只是用户提供的方案草稿
 
 ## Decisions Made
-- 2026-11-04：初始化 Git 仓库并创建首个检查点（本地，无远程；未推送）
-- 已批准 ADR：ADR-001、ADR-002、ADR-003（本次未新增）
-- 尚未批准：归档/创建日期时区语义、status 策略、计划校验位置、归档提醒方案、备份时间戳格式、平均用时去留
+- ADR-004：文件三级权限 + 受保护清单 + 改动须 ADR（依据用户“按 temp.md 修改”指令）
+- 任务拆分：`TASK-001`（Gate 0 关闭）、`TASK-002`（环境）、`TASK-003`（Gate 1 骨架）
+- 尚未批准：8 项基线决策（见 `TASK-001` §5 表格，含推荐默认）
 
 ## Next Safe Action
-1. 用户就 6 项待决问题答复（推荐默认：归档与创建各存本地日期列；status 保留持久化 + Domain 单写入口；校验放 Repository 事务；归档不写 enabled=0；备份统一 epoch ms；平均用时移出 V1）。
-2. 批准后创建 ADR-004~007 并对三份设计文档做最小修订（先建 commit 检查点，改动前再确认）。
-3. 环境准备：安装 Android SDK/cmdline-tools 或 Android Studio，并确定 Gradle 运行 JDK。
+1. 用户在 `project/tasks/TASK-001.md` §5 上确认或修改 8 项决策。
+2. 批准后：写 ADR-005~009 → 改 `ARCHITECTURE.md`/`DATABASE.md`/`REQUIREMENTS.md` 最少必要行 → 更新 `FEATURE_MATRIX` F-016 → 提交。
+3. 并行可做 `TASK-002`：安装 SDK、确定 JDK 17。
 
 ## Recovery Notes
-- 下一会话必须先核对的事实：`git log --oneline`、`git status --short`、`Get-ChildItem -Force` 根目录是否出现 `app/` 或 `gradlew`
-- 不要重复执行/覆盖的操作：不要重复 `git init`；不要修改 `orgins/` 概念稿；不要在 ADR 获批前改 `ARCHITECTURE.md`/`DATABASE.md`
+- 下一会话先核对：`git log --oneline -5`、`git status --short`、根目录是否存在 `app/` 或 `gradlew`、`TASK-001` 状态
+- 不要重复：不要再次 `git init`；不要改 `orgins/**`；不要在 ADR 获批前修改三份基线文档；不要把 `temp.md` 当作已批准基线
