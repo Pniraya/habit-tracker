@@ -166,6 +166,36 @@ if (-not $hasGradle) {
     Add-Pass 'release report honest' 'Gradle project present; review release evidence manually'
 }
 
+# 11. Any commit that modifies a protected baseline file must also touch an ADR
+$protected = @('AGENTS.md','ARCHITECTURE.md','DATABASE.md','DEVELOPMENT.md','project/REQUIREMENTS.md','README_GOVERNANCE.md')
+$violations = @()
+foreach ($c in @(git rev-list HEAD)) {
+    $entries = @(git show --name-status --format= $c)
+    $touched = @()
+    $hasAdr = $false
+    foreach ($e in $entries) {
+        if ($e -match '^[AMD]\s+project/decisions/ADR-') { $hasAdr = $true }
+        foreach ($p in $protected) {
+            if ($e -match ('^[MD]\s+' + [regex]::Escape($p) + '$')) { $touched += $p }
+        }
+    }
+    # A whitespace-only edit (e.g. trimming a trailing blank line) is not a baseline change.
+    # Compare the two blobs with all whitespace removed instead of relying on diff flags.
+    $realChanges = @()
+    foreach ($p in $touched) {
+        $parent = (git rev-list --parents -n 1 $c) -split ' '
+        if ($parent.Count -lt 2) { $realChanges += $p; continue }
+        $newText = ((git show ($c + ':' + $p)) -join '') -replace '\s', ''
+        $oldText = ((git show ($parent[1] + ':' + $p)) -join '') -replace '\s', ''
+        if ($newText -ne $oldText) { $realChanges += $p }
+    }
+    if ($realChanges.Count -gt 0 -and -not $hasAdr) {
+        $violations += ($c.Substring(0, 7) + ': ' + ($realChanges -join ', '))
+    }
+}
+if ($violations.Count -eq 0) { Add-Pass 'baseline changes carry an ADR' 'every commit touching a protected file also touches an ADR' }
+else { Add-Fail 'baseline changes carry an ADR' ((($violations | Select-Object -First 5) -join '; ')) }
+
 # Report
 $fail = @($results | Where-Object { $_.Status -eq 'FAIL' })
 $warn = @($results | Where-Object { $_.Status -eq 'WARN' })

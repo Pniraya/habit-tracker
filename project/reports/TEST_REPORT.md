@@ -20,6 +20,9 @@
 | 2026-11-05 | 同上，在临时克隆中注入 2 处缺陷后运行 | exit 1 | 期望失败：状态文件残留 `UNKNOWN`、无测试证据的 `VERIFIED` 行；证明检查器非空转 | TASK-000 |
 | 2026-11-05 | HTTPS HEAD：`dl.google.com/dl/android/maven2`、`repo1.maven.org`、`services.gradle.org` | 200 / 200 / 200 | 依赖与 Wrapper 下载可行；环境只缺安装，不缺网络 | TASK-002 |
 | 2026-11-05 | `D:\javajdk17\bin\java.exe -version` | exit 0 / 17.0.13 | 基线要求的 JDK 17 本机已存在，可作 Gradle 运行 JDK | TASK-002 |
+| 2026-11-05 | `check-governance.ps1`（13 项，新增「改基线须带 ADR」） | exit 0 | 13 PASS / 0 WARN / 0 FAIL；首轮曾抓出 `235941f` 仅改 AGENTS.md 尾空行，已用「忽略空白后比对 blob」精确豁免 | TASK-001 |
+| 2026-11-05 | 临时克隆注入：改 `DATABASE.md` 且无 ADR | FAIL | `[FAIL] baseline changes carry an ADR  77d9246: DATABASE.md`，exit 1 | TASK-001 |
+| 2026-11-05 | 临时克隆注入：同样改动 + 同 commit 新增 ADR | PASS | `[PASS] baseline changes carry an ADR`，RESULT OK，exit 0 | TASK-001 |
 
 ## Known Test Gaps
 - Android 工程创建前无法运行 Gradle 构建；本机连 Android SDK 与 Gradle Wrapper 都不存在。

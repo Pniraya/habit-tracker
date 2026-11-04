@@ -10,7 +10,7 @@
 - 代码实现状态：`NOT_STARTED`（已由递归文件清点证明：无 `*.gradle*`、无 `*.kts`、无 `*.toml`、无 `*.kt`、无 `AndroidManifest.xml`）
 - 最近验证构建：`NOT_RUN`（无工程、无 Android SDK）
 - 最近验证测试：`NOT_RUN`
-- 最近治理一致性检查：`PASS`（2026-11-05，`tools/check-governance.ps1`：12 项检查，11 PASS / 1 WARN / 0 FAIL）
+- 最近治理一致性检查：`PASS`（2026-11-05，`tools/check-governance.ps1`：13 项检查，13 PASS / 0 WARN / 0 FAIL）
 - 最后核对时间：`2026-11-04 23:55 (+09:00)`
 
 ## 已有设计资产
@@ -25,14 +25,15 @@
 - [x] `project/reports/RELEASE_REPORT.md`：发布证据模板
 - [x] `project/tasks/TASK-001~003.md`：Gate 0 关闭 / 环境准备 / 工程骨架
 - [x] `project/decisions/ADR-004`：文件分级与保护清单；`AGENTS.md` §10–§13
-- [x] `tools/check-governance.ps1`：12 项治理一致性检查（含反向测试验证）
-- [ ] 现有三份设计文档完成一致性修订（等待 ADR-005~009 批准）
+- [x] `tools/check-governance.ps1`：13 项治理一致性检查（含双向反向测试验证）
+- [x] `project/decisions/ADR-005~010`：6 份 `PROPOSED` 决策草案（覆盖 8 项待决问题，等待批准）
+- [ ] 现有三份设计文档完成一致性修订（等待 ADR-005~010 批准）
 - [ ] Android Studio 工程创建并通过首次构建（环境缺口见“阻塞项与风险”）
 
 ## 当前待办
 
-1. 用户就 `TASK-001` §5 的 8 项待决问题给出答复（推荐默认已写入该任务文件）。
-2. 批准后执行 `TASK-001`：写入 ADR-005~009，并对 `ARCHITECTURE.md`、`DATABASE.md`、`project/REQUIREMENTS.md` 做最小修订。
+1. 用户审阅 `ADR-005~010`（已按推荐默认写成 `PROPOSED`）并批准或否决；批准后只需把状态改为 `ACCEPTED` 并执行文档改动。
+2. 批准后执行 `TASK-001`：写入 ADR-005~010，并对 `ARCHITECTURE.md`、`DATABASE.md`、`project/REQUIREMENTS.md` 做最小修订。
 3. 执行 `TASK-002`：安装 Android SDK / cmdline-tools（或 Android Studio），确定 Gradle 运行 JDK（当前默认 21，基线写 17）。
 4. 执行 `TASK-003`：创建 Android 单模块工程（`:app`），首次 Gradle Sync 与 `assembleDebug`。
 5. 每个任务结束按 `AGENTS.md` §10 生命周期更新状态、测试报告与交接。
