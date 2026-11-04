@@ -44,7 +44,7 @@
 - 目前尚未从真实 Android 工程验证 SDK、Gradle、Kotlin、Compose 与 Room 版本组合。
 - 环境缺口（2026-11-04 实测）：未安装 Android SDK / Android Studio / adb / Gradle CLI；`JAVA_HOME=D:\javajdk21` 与基线 JDK 17 不一致，需决策。
 - 审查新增的文档冲突：`ARCHITECTURE.md` §5.2 让 Domain 流程触发提醒取消，与 §3.2“Domain 不依赖 Android”矛盾；`DATABASE.md` §9 归档“禁用提醒”与恢复“沿用 `enabled`”互相排斥；`DATABASE.md` §4.1/§4.2 的文字约束未在 SQL 中表达；备份时间戳 ISO 与 epoch milliseconds 两处不一致。
-- 仓库根目录存在未跟踪的 `temp.md`（用户提供的治理方案草稿，709 行），是否入库或忽略尚未决定，因此工作区不是完全干净。
+- 仓库根目录的 `temp.md`（用户提供的治理方案草稿，709 行）已写入 `.gitignore`：它是输入材料，不作为基线、验收或实现依据。
 - 新增的 `TASK-001~003` 均为 `NOT_STARTED`；`TASK-001` 依赖用户裁决，`TASK-002/003` 依赖环境安装。
 
 ## Git 状态

@@ -33,3 +33,6 @@ secrets.properties
 # OS noise
 .DS_Store
 Thumbs.db
+
+# Local input material (not a governance artifact, not a baseline)
+temp.md

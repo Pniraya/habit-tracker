@@ -8,7 +8,7 @@
 - 当前任务：`TASK-001`（`NOT_STARTED`，阻塞于用户裁决）→ 后续 `TASK-002`、`TASK-003`
 - 当前 Git 分支：`main`（本地，无远程）
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
-- `git status --short` 摘要：除未跟踪的 `temp.md`（用户草稿）外工作区干净
+- `git status --short` 摘要：干净（`temp.md` 为用户输入草稿，已由 `.gitignore` 排除，保留在磁盘上）
 
 ## Completed This Session
 - 完整只读审查（TASK-000）：4 份根文档 + `project/` 全部治理文件 + 5 份概念稿；核实 BASELINE_REVIEW 9 项并新增 9 项冲突
