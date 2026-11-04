@@ -189,4 +189,3 @@ AI 对文件的修改权限按三级划分（依据 ADR-004）：
 | 发布 V1 | 打 tag，并填写 `RELEASE_REPORT.md` |
 
 禁止项：未经授权 `push --force`、重写历史、删除分支、自动推送远程、`reset --hard` 丢弃用户改动。
-
