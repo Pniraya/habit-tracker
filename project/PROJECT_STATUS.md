@@ -10,6 +10,7 @@
 - 代码实现状态：`NOT_STARTED`（已由递归文件清点证明：无 `*.gradle*`、无 `*.kts`、无 `*.toml`、无 `*.kt`、无 `AndroidManifest.xml`）
 - 最近验证构建：`NOT_RUN`（无工程、无 Android SDK）
 - 最近验证测试：`NOT_RUN`
+- 最近治理一致性检查：`PASS`（2026-11-05，`tools/check-governance.ps1`：12 项检查，11 PASS / 1 WARN / 0 FAIL）
 - 最后核对时间：`2026-11-04 23:55 (+09:00)`
 
 ## 已有设计资产
@@ -24,6 +25,7 @@
 - [x] `project/reports/RELEASE_REPORT.md`：发布证据模板
 - [x] `project/tasks/TASK-001~003.md`：Gate 0 关闭 / 环境准备 / 工程骨架
 - [x] `project/decisions/ADR-004`：文件分级与保护清单；`AGENTS.md` §10–§13
+- [x] `tools/check-governance.ps1`：12 项治理一致性检查（含反向测试验证）
 - [ ] 现有三份设计文档完成一致性修订（等待 ADR-005~009 批准）
 - [ ] Android Studio 工程创建并通过首次构建（环境缺口见“阻塞项与风险”）
 
@@ -42,7 +44,8 @@
 - `HabitLog.status` 与 `actual_value`、`target_snapshot`、`completed_at` 存在冗余一致性要求，需定义唯一计算来源及写入约束。
 - 计划区间不重叠无法仅靠普通 SQLite CHECK 约束保证，需在事务层强制校验并测试。
 - 目前尚未从真实 Android 工程验证 SDK、Gradle、Kotlin、Compose 与 Room 版本组合。
-- 环境缺口（2026-11-04 实测）：未安装 Android SDK / Android Studio / adb / Gradle CLI；`JAVA_HOME=D:\javajdk21` 与基线 JDK 17 不一致，需决策。
+- 环境缺口（2026-11-05 实测）：未安装 Android SDK / Android Studio / adb / Gradle CLI；`JAVA_HOME=D:\javajdk21` 与基线 JDK 17 不一致，但 `D:\javajdk17`（17.0.13）已存在，可直接指定。
+- 网络与磁盘已确认可用：`dl.google.com`（AGP/SDK）、`repo1.maven.org`、`services.gradle.org` 均返回 200；D 盘剩余 98.6 GB。因此 `TASK-002` 只差安装动作，不存在网络阻断。
 - 审查新增的文档冲突：`ARCHITECTURE.md` §5.2 让 Domain 流程触发提醒取消，与 §3.2“Domain 不依赖 Android”矛盾；`DATABASE.md` §9 归档“禁用提醒”与恢复“沿用 `enabled`”互相排斥；`DATABASE.md` §4.1/§4.2 的文字约束未在 SQL 中表达；备份时间戳 ISO 与 epoch milliseconds 两处不一致。
 - 仓库根目录的 `temp.md`（用户提供的治理方案草稿，709 行）已写入 `.gitignore`：它是输入材料，不作为基线、验收或实现依据。
 - 新增的 `TASK-001~003` 均为 `NOT_STARTED`；`TASK-001` 依赖用户裁决，`TASK-002/003` 依赖环境安装。

@@ -33,6 +33,7 @@
 | `project/reports/RELEASE_REPORT.md` | 发布证据与已知限制 | 发布时 | 可更新（需证据） |
 | `project/reports/BASELINE_REVIEW.md` | 基线静态审查结论 | 低 | 只读 |
 | `project/decisions/ADR-xxx.md` | 技术决策记录 | 有新决策时 | 只增不改（改状态除外） |
+| `tools/check-governance.ps1` | 治理一致性检查脚本（只读） | 规则变化时 | 可修改（不得降低检查强度） |
 | `orgins/**` | 视觉概念稿（HTML 参考） | 只读 | 不得当作生产代码 |
 
 ## 3. 工作流
@@ -51,6 +52,14 @@ gradlew.bat assembleDebug   # 工程创建后可用（当前 NOT_RUN）
 gradlew.bat test            # 工程创建后可用（当前 NOT_RUN）
 ```
 
-## 5. 下一步
+## 5. 验证
+
+```powershell
+pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
+```
+
+脚本只读，检查 12 项：必备文件、状态文件残留 `UNKNOWN`、`TASK/ADR` 引用、功能矩阵状态词表与证据、交接快照是否填写、Markdown 相对链接、冲突标记与行尾空白、本地草稿是否误入库、`.gitignore` 覆盖、发布报告是否在无工程时声称 `PASS`。它只判断「文档是否自洽」，不判断「代码是否正确」——后者只能靠构建与测试。
+
+## 6. 下一步
 
 `TASK-001`：关闭 Gate 0 —— 固化 8 项基线决策（ADR-005~009 + 三份文档最小修订）。等待用户批准后执行；详见 `project/tasks/TASK-001.md`。

@@ -16,6 +16,10 @@
 | 2026-11-04 | 递归搜索 `*.gradle*`、`*.kts`、`*.toml`、`gradlew*`、`*.kt`、`AndroidManifest.xml` | 0 命中 | 无 Android 工程、无构建配置、无源码 | TASK-000 |
 | 2026-11-04 | `java -version`；`$env:ANDROID_HOME`；`Test-Path %LOCALAPPDATA%\Android\Sdk`；`Get-Command gradle,adb` | 21.0.2 / 空 / False / 未找到 | 环境不具备构建条件 | TASK-000 |
 | 2026-11-04 | `gradlew.bat assembleDebug`；`gradlew.bat test` | NOT_RUN | 无 Wrapper、无 SDK，无法执行；不得记为通过 | TASK-000 |
+| 2026-11-05 | `pwsh -NoProfile -File tools/check-governance.ps1` | exit 0 | 12 项检查 11 PASS / 1 WARN（ADR-005~009 尚未创建，属计划内）/ 0 FAIL | TASK-000 |
+| 2026-11-05 | 同上，在临时克隆中注入 2 处缺陷后运行 | exit 1 | 期望失败：状态文件残留 `UNKNOWN`、无测试证据的 `VERIFIED` 行；证明检查器非空转 | TASK-000 |
+| 2026-11-05 | HTTPS HEAD：`dl.google.com/dl/android/maven2`、`repo1.maven.org`、`services.gradle.org` | 200 / 200 / 200 | 依赖与 Wrapper 下载可行；环境只缺安装，不缺网络 | TASK-002 |
+| 2026-11-05 | `D:\javajdk17\bin\java.exe -version` | exit 0 / 17.0.13 | 基线要求的 JDK 17 本机已存在，可作 Gradle 运行 JDK | TASK-002 |
 
 ## Known Test Gaps
 - Android 工程创建前无法运行 Gradle 构建；本机连 Android SDK 与 Gradle Wrapper 都不存在。

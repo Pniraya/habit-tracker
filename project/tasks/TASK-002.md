@@ -44,4 +44,9 @@
 ## 9. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| NOT_RUN | NOT_RUN | 尚未安装 |
+| `D:\javajdk17\bin\java.exe -version` | exit 0，`17.0.13` | 基线 JDK 17 已在本机，无需下载 |
+| HTTPS HEAD `dl.google.com/dl/android/maven2/.../gradle-8.7.3.pom` | 200（1586 ms） | Google Maven 可达 |
+| HTTPS HEAD `repo1.maven.org/.../kotlin-stdlib-2.0.21.pom` | 200（2309 ms） | Maven Central 可达 |
+| HTTPS HEAD `services.gradle.org/distributions/gradle-8.9-bin.zip` | 200（7210 ms） | Gradle Wrapper 可下载 |
+| `Get-PSDrive D` | 剩余 98.6 GB | 空间充足 |
+| `Test-Path %LOCALAPPDATA%\Android\Sdk`；`Get-Command adb,sdkmanager` | False / 未找到 | **SDK 仍未安装**，任务未开始 |
