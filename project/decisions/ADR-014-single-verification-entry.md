@@ -18,6 +18,12 @@
 3. `project/tasks/TASK_TEMPLATE.md` §10 要求记录一行 `verify-all` 的实际结果。
 4. `check-governance.ps1` 新增第 21 项：`TASK-009` 及以后的任务文件必须出现 `verify-all` 证据，否则 FAIL；`TASK-001`~`TASK-008` 作为历史记录豁免（与 `ADR-013` 的 TASK-007 切点同一处理方式）。
 
+## 受保护文件的最小改动
+
+- `AGENTS.md` §5「建议命令」段：删除 3 行旧命令，新增 4 行（单入口 + 定位失败 + `gradlew test` 不可用的告警 + 其他检查）。§5 其余条款未动。
+- `project/tasks/TASK_TEMPLATE.md` §10：增加 1 行要求与 1 行示例表头。
+- 除此之外未改动任何基线文档；`ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`、`project/REQUIREMENTS.md` 均未触碰。
+
 ## 被否决的方案
 
 - **CI**：仓库无远程、无 GitHub Actions 运行环境；本地跑 CI 等价于脚本。

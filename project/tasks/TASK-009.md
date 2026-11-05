@@ -76,5 +76,5 @@
 - 状态：`PARTIAL`
 - 阶段：Gate 2
 - 验收：通过 5 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **OK (40 tests)**
+- 最近测试记录：2026-11-05 / **VERIFY ALL PASS**（exit 0）
 <!-- close-task:end -->

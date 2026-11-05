@@ -346,7 +346,12 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     if ($f.BaseName -notmatch '^TASK-(\d{3})$') { continue }
     if ([int]$Matches[1] -lt 9) { continue }
     $taskText = Get-Content -Raw -Path $f.FullName
-    if ($taskText -notmatch 'verify-all') { $gateProblems += ($f.BaseName + ' has no verify-all evidence') }
+    # Anchor on the Verification Evidence table, not on any mention: a task that merely lists the
+    # script in its Scope must not pass this check.
+    $sections = $taskText -split '## 10\. Verification Evidence', 2
+    if ($sections.Count -lt 2) { $gateProblems += ($f.BaseName + ' has no Verification Evidence section'); continue }
+    $evidence = ($sections[1] -split "\n## ", 2)[0]
+    if ($evidence -notmatch '(?m)^\|[^\r\n]*verify-all[^\r\n]*\|') { $gateProblems += ($f.BaseName + ' has no verify-all evidence row in section 10') }
 }
 if ($gateProblems.Count -eq 0) { Add-Pass 'verify-all evidence' 'post-ADR-014 tasks record a verify-all run' }
 else { Add-Fail 'verify-all evidence' ($gateProblems -join '; ') }
