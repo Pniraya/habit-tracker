@@ -63,7 +63,10 @@ node tools/verify-dao.mjs                        # 已验证：21/21（DAO 的 S
 adb devices                                      # 真机需手动连接（USB 调试已可用）；模拟器不可用：无 WHPX/Hyper-V
 pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply
 pwsh -NoProfile -File tools/check-governance.ps1
+pwsh -NoProfile -File tools/replay-governance-probes.ps1   # 重放 15 个治理探针（P5–P19）
 ```
+
+`replay-governance-probes.ps1` 会**临时改写** `TASK-019`、`TEST_REPORT`、manifest 与 build 文件，用 `git show HEAD:` 取原件、`git checkout --` 还原；探测路径上有未提交改动时它直接 `[DIRTY]` 中止，不会覆盖别人的工作。
 
 ## 5. 验证
 

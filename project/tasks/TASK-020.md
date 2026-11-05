@@ -1,11 +1,11 @@
 # TASK-020: 离线守卫与检查器余留加固
 
-- 状态：`PARTIAL`（三项加固已实现，探针 14 项全对，待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE` 于 `4f4f5f5`，第 3 轮）
 - 阶段：`Gate 2`
 - 优先级：`P3`
 - 依赖：`TASK-017`（检查器加固）、`TASK-019`（F-015 状态依据）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 `FEATURE_MATRIX.md` 的 F-015「离线核心功能」标为 `VERIFIED`，依据是 manifest 没有 `INTERNET` 权限、依赖里没有网络库。这是人工核对的事实，**没有自动守卫**：任何人加一行权限或一个库，矩阵不会变红。
@@ -65,21 +65,22 @@
 ## 11. Completion Review
 - [x] 验收标准满足（10/10）
 - [x] 测试实际运行（15 个探针 + 基线 + 全量门禁）
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（第 3 轮）
 
 ## 12. Handoff
 - 之后回到功能开发：`F-009` 连续天数（矩阵里第一个未实现的产品功能）。
 - 遗留（评审建议）：第 14 项只比对「当前任务」的任务号与阶段、不比对状态词——本轮 `PROJECT_STATUS` 写 `NOT_STARTED` 而其余三处写 `PARTIAL` 没被拦住，两轮才由人工发现。后续可让第 14 项比对状态词。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-020.md`（第 3 轮覆盖）
+- 审查 commit：`4f4f5f5`
+- 结论：`APPROVE`（15 个探针在 4f4f5f5 上重跑，0 failed；两条阻断已修）
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-020
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 2
 - 验收：通过 10 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (71 tests)**
