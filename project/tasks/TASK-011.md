@@ -1,11 +1,11 @@
 # TASK-011: Today 页面的 ViewModel/Presenter 接线
 
-- 状态：`PARTIAL`（实现与单测完成，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE`，合入 `main`）
 - 阶段：`Gate 3`
 - 优先级：`P0`
 - 依赖：`TASK-008`（UseCase）、`TASK-010`（DAO SQL 验证）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 把已经验收的 UseCase 接到界面上：Today 页显示今天应做的习惯、读取当天日志、点击即可记录完成，且写入失败时把领域拒绝的原因显示出来而不是崩溃。
@@ -37,7 +37,7 @@
 - [x] `tools/run-unit-tests.ps1` 通过、`assembleDebug` 通过
 
 ## 7. Tests
-- `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新增 `TodayPresenterTest`，7 项）
+- `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新增 `TodayPresenterTest`，最终 9 项）
 - `gradlew.bat assembleDebug`
 
 ## 8. Risks and Decisions
@@ -48,6 +48,7 @@
 
 ## 9. Implementation Log
 - 2026-11-05：新增 Presenter/ViewModel/UiState 与页面接线；首次编译失败 `foundation.layout.weight` 为 internal import，删除后 47 项单测通过、构建 28s。
+- 2026-11-05：顺手修了 `tools/close-task.ps1` 的一处缺陷（把 `assembleDebug` 行当作「最近测试记录」，导致摘要显示构建耗时而非测试结果），过滤改为 `run-unit-tests|verify-schema|verify-dao`。属工具缺陷修复，按 `ADR-014` 的同类先例记录于此。
 - 2026-11-05：独立评审首轮 `REJECT`：数值习惯 `toggle()` 会写入 1.0（真缺陷）；"负值拒绝"测试无法鉴别是否走了 use case；`TEST_REPORT`/`LAST_HANDOFF`/`Known Test Gaps` 未接上 Today。已修：`toggle` 只对 BOOLEAN 生效并提示，UI 对非 BOOLEAN 行禁用点击；新增"休息日写入被 use case 拒绝"测试（只有 use case 会拒绝该场景）。
 - 2026-11-05：`TodayViewModel` 首次写成 `presenter.cancel()`，但 Presenter 不拥有 scope；改为 ViewModel 持有并取消自己的 scope，避免取消调用方传入的 scope。
 
@@ -64,7 +65,7 @@
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（第 3 轮通过，`REVIEW-TASK-011.md` @ `38f05a1`）
 
 ## 12. Handoff
 - 下一步：评审后合入 `main`；随后补新建习惯页面与数值输入 UI（任务文件尚未创建）。
@@ -72,13 +73,15 @@
 
 ## 13. Independent Review
 - Reviewer record：`project/reviews/REVIEW-TASK-011.md`
-- 结论：`PENDING`
+- 第 1 轮：`REJECT`（`362925f`）：数值习惯 `toggle()` 写入 1.0（真缺陷）、"负值拒绝"测试无鉴别力、三处文档未接上 Today。
+- 第 2 轮：`REJECT`（`110d3b4`）：代码与测试通过，仅 4 处计数（47/7 应为 49/9）。
+- 第 3 轮：`APPROVE`（`38f05a1`）：计数修正，变异结论继续有效（绕过 use case → 休息日测试变红；数值习惯探针 → NPE 失败）。
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-011
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 7 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (49 tests)**
