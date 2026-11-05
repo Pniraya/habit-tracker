@@ -63,6 +63,46 @@ class TodayPresenterTest {
         }
 
     @Test
+    fun onlyReturningToTheForegroundRefreshes() {
+        assertTrue(TodayPresenter.refreshesOn("ON_RESUME"))
+        assertFalse(TodayPresenter.refreshesOn("ON_CREATE"))
+        assertFalse(TodayPresenter.refreshesOn("ON_START"))
+        assertFalse(TodayPresenter.refreshesOn("ON_PAUSE"))
+    }
+
+    @Test
+    fun theMidnightTimerAimsAtTheNextLocalMidnight() {
+        fun at(text: String) = java.time.LocalDateTime.parse(text)
+
+        // One second before midnight: one second, not a day.
+        assertEquals(1_000L, TodayPresenter.millisUntilNextMidnight(at("2026-11-05T23:59:59")))
+        // Exactly at midnight: the whole following day.
+        assertEquals(86_400_000L, TodayPresenter.millisUntilNextMidnight(at("2026-11-06T00:00:00")))
+        // Leap day and year end must not be special-cased into a wrong answer.
+        assertEquals(12L * 3_600_000L, TodayPresenter.millisUntilNextMidnight(at("2028-02-28T12:00:00")))
+        assertEquals(3_600_000L, TodayPresenter.millisUntilNextMidnight(at("2026-12-31T23:00:00")))
+    }
+
+    @Test
+    fun crossingMidnightShowsTheNewDay() = runBlocking {
+        // No database row changes at 00:00, so nothing else would rebuild the list.
+        var clock = monday
+        val presenter = TodayPresenter(
+            repository = repository,
+            recordProgress = RecordHabitProgressUseCase(repository),
+            scope = scope,
+            today = { clock },
+            now = { now },
+        )
+        assertEquals(monday, presenter.state.value.date)
+
+        clock = monday.plusDays(1)
+        presenter.refresh()
+
+        assertEquals(monday.plusDays(1), presenter.state.value.date)
+    }
+
+    @Test
     fun everyHabitCountsItsOwnDays() = runBlocking {
         // Two habits with different histories. If a batch read mixed the rows up, both rows would
         // report the same streak; the reviewer showed that no test noticed that (TASK-022 U4).

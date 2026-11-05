@@ -194,7 +194,8 @@ const waterId = insertHabit.run("Water", "drop", "#8FAFC4", "NUMERIC", 2000, "ml
 insertSchedule.run(readId, "CUSTOM", 1, "2026-01-05", "2026-01-31", 10);
 // The open version is the one closeVersion targets; keep its id instead of assuming fixture order.
 const openVersionId = insertSchedule.run(readId, "DAILY", 127, "2026-02-01", null, 11).lastInsertRowid;
-insertReminder.run(readId, "08:00", 1, 10, 10);
+// 08:00:00, not 08:00: Converters writes HH:mm:ss, and the fixture must use what the app stores.
+insertReminder.run(readId, "08:00:00", 1, 10, 10);
 // A second habit with its own open version, so the batch queries are proved to span more than one id.
 insertSchedule.run(waterId, "DAILY", 127, "2026-01-02", null, 20);
 

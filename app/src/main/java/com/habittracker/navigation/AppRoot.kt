@@ -9,7 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -27,6 +31,7 @@ import com.habittracker.data.repository.RoomHabitRepository
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.feature.create.CreateHabitPresenter
 import com.habittracker.feature.create.CreateHabitScreen
+import com.habittracker.feature.today.TodayPresenter
 import com.habittracker.feature.today.TodayScreen
 import com.habittracker.feature.today.TodayViewModel
 
@@ -65,6 +70,36 @@ fun AppRoot() {
                 val context = LocalContext.current
                 val todayViewModel: TodayViewModel = viewModel(factory = TodayViewModel.factory(context))
                 val state by todayViewModel.state.collectAsState()
+                // A rebuild is only triggered by database changes, and midnight changes nothing in
+                // the database: without this the screen would keep showing yesterday's date and
+                // yesterday's rows (TASK-024).
+                // Deprecated in this Compose BOM, but the replacement (androidx.lifecycle.compose)
+                // is not a dependency and adding one for this is not worth it (TASK-024 review).
+                @Suppress("DEPRECATION")
+                val lifecycleOwner = LocalLifecycleOwner.current
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (TodayPresenter.refreshesOn(event.name)) todayViewModel.refresh()
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
+                // Staying in the foreground across 00:00 fires no lifecycle event, so wait for the
+                // next local midnight and rebuild then. A manual clock or timezone change while the
+                // screen stays on is still not covered (registered as a known gap, TASK-024).
+                LaunchedEffect(todayViewModel) {
+                    // Entering the destination can also be a date change (another tab was showing
+                    // while midnight passed), and that produces no lifecycle event.
+                    if (todayViewModel.state.value.date != java.time.LocalDate.now()) {
+                        todayViewModel.refresh()
+                    }
+                    while (true) {
+                        kotlinx.coroutines.delay(
+                            TodayPresenter.millisUntilNextMidnight(java.time.LocalDateTime.now()) + 1_000L,
+                        )
+                        todayViewModel.refresh()
+                    }
+                }
                 val lastError by todayViewModel.lastError.collectAsState()
                 TodayScreen(
                     state = state,
