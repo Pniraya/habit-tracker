@@ -7,7 +7,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -17,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.habittracker.feature.profile.ProfileScreen
 import com.habittracker.feature.statistics.StatisticsScreen
 import com.habittracker.feature.today.TodayScreen
+import com.habittracker.feature.today.TodayViewModel
 
 @Composable
 fun AppRoot() {
@@ -49,7 +53,18 @@ fun AppRoot() {
             startDestination = AppDestination.Today.route,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(AppDestination.Today.route) { TodayScreen() }
+            composable(AppDestination.Today.route) {
+                val context = LocalContext.current
+                val todayViewModel: TodayViewModel = viewModel(factory = TodayViewModel.factory(context))
+                val state by todayViewModel.state.collectAsState()
+                val lastError by todayViewModel.lastError.collectAsState()
+                TodayScreen(
+                    state = state,
+                    lastError = lastError,
+                    onToggle = todayViewModel::toggle,
+                    onDismissError = todayViewModel::dismissError,
+                )
+            }
             composable(AppDestination.Statistics.route) { StatisticsScreen() }
             composable(AppDestination.Profile.route) { ProfileScreen() }
         }
