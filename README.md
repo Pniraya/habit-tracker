@@ -9,13 +9,13 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 2` — 数据层与 Domain 规则已建，设备验证未完成 |
-| 当前任务 | `TASK-006`（`DONE`，治理一致性改造） |
+| 当前任务 | `TASK-007`（`PARTIAL`，实现与自动验证完成，待独立评审） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，36s，APK 9.4 MB |
 | 最近测试 | `PASS` — 27 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
 | 最近数据层校验 | `PASS` — `node tools/verify-schema.mjs`，40/40 |
-| ADR | `ADR-001`~`ADR-012` 全部 `ACCEPTED` |
-| Git | `main`（稳定分支），本地仓库，无远程；基线检查点 `d0f470a` |
+| ADR | `ADR-001`~`ADR-013` 全部 `ACCEPTED` |
+| Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
 
 ## 2. 文档地图
 
@@ -35,6 +35,7 @@
 | `project/reports/RELEASE_REPORT.md` | 发布证据与已知限制 | 发布时 | 可更新（需证据） |
 | `project/reports/BASELINE_REVIEW.md` | 基线静态审查结论 | 低 | 只读 |
 | `project/REVIEW_CHECKLIST.md` | Reviewer 独立评审清单 | 规则变化时 | 可修改 |
+| `project/reviews/REVIEW-TASK-xxx.md` | 已完成任务的独立评审结论 | 每次拟合入 `main` 前 | 可新增 |
 | `project/decisions/ADR-xxx.md` | 技术决策记录 | 有新决策时 | 只增不改（改状态除外） |
 | `tools/check-governance.ps1` | 治理一致性检查脚本（只读） | 规则变化时 | 可修改（不得降低检查强度） |
 | `tools/close-task.ps1` | 任务收尾：生成状态摘要并同步 README/状态快照 | 每任务结束 | 可修改 |
@@ -58,7 +59,7 @@ gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
 pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：27 项通过（绕过 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
 adb devices                                      # 当前为空：无真机、未装模拟器
-pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-005 -Apply
+pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply
 pwsh -NoProfile -File tools/check-governance.ps1
 ```
 
@@ -68,14 +69,14 @@ pwsh -NoProfile -File tools/check-governance.ps1
 pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 ```
 
-脚本只读，检查 19 项：必备文件、状态文件残留 `UNKNOWN`、`TASK/ADR` 引用、功能矩阵状态词表与证据、交接快照是否填写、Markdown 相对链接、冲突标记与行尾空白、本地草稿是否误入库、`.gitignore` 覆盖、发布报告是否与工程状态矛盾、**改受保护基线是否同时带 ADR**（仅空白改动豁免），以及四项状态同步检查：
+脚本只读，检查 20 项：必备文件、状态文件残留 `UNKNOWN`、`TASK/ADR` 引用、功能矩阵状态词表与证据、交接快照是否填写、Markdown 相对链接、冲突标记与行尾空白、本地草稿是否误入库、`.gitignore` 覆盖、发布报告是否与工程状态矛盾、**改受保护基线是否同时带 ADR**（仅空白改动豁免），以及四项状态同步检查：
 
 - `README` 的当前任务/阶段必须与 `PROJECT_STATUS` 一致；
 - 每个 ADR 必须在 `PROJECT_STATUS` 中被覆盖，且引用处写的状态词必须与 ADR 文件一致；
 - 有 Gradle 工程时 `RELEASE_REPORT` 不得再写“尚无 Android 工程”，`assembleDebug` 也不得仍为 `NOT_RUN`；
 - `TEST_REPORT` 的 `Latest Run` 必须与 `Runs` 表最后一行（日期与结果）一致；
 - `main` 上的 `PARTIAL` 任务必须在 `PROJECT_STATUS` 的「在册例外」登记；
-- `project/REVIEW_CHECKLIST.md` 必须存在且含六个评审小节。
+- `project/REVIEW_CHECKLIST.md` 必须存在且含六个评审小节；`TASK-007` 起的 `DONE` 任务必须有独立 Reviewer 的 `APPROVE` 记录。
 
 它只判断「文档是否自洽」，不判断「代码是否正确」——后者只能靠构建与测试。
 
