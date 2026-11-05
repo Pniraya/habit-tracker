@@ -2,6 +2,7 @@ package com.habittracker.feature.create
 
 import com.habittracker.data.local.entity.FrequencyType
 import com.habittracker.data.local.entity.TrackingType
+import com.habittracker.domain.model.NewHabit
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.FakeHabitRepository
 import kotlinx.coroutines.CoroutineScope
@@ -22,12 +23,32 @@ class CreateHabitPresenterTest {
     private val today = LocalDate.of(2026, 11, 2)
     private val now = 1_762_300_000_000L
 
-    private fun presenter() = CreateHabitPresenter(
-        createHabit = CreateHabitUseCase(repository),
+    private fun presenter() = presenterWith(CreateHabitUseCase(repository)::invoke)
+
+    private fun presenterWith(create: suspend (NewHabit, LocalDate, Long) -> Long) = CreateHabitPresenter(
+        createHabit = create,
         scope = CoroutineScope(Dispatchers.Unconfined),
         today = { today },
         now = { now },
     )
+
+    @Test
+    fun aDomainRejectionIsTranslatedAtTheCallSite() {
+        // Mutation guard: this is the only test that fails if onFailure stops calling messageFor and
+        // starts writing failure.message into the form again (the TASK-012 English-leak regression).
+        val presenter = presenterWith { _, _, _ ->
+            throw IllegalArgumentException("NUMERIC habit needs a unit")
+        }
+        presenter.onNameChange("Water")
+        presenter.onTrackingTypeChange(TrackingType.NUMERIC)
+        presenter.onTargetValueChange("2000")
+        presenter.onUnitChange("ml")
+
+        presenter.save()
+
+        assertEquals(CreateHabitPresenter.NO_UNIT, presenter.form.value.error)
+        assertNull(presenter.form.value.createdHabitId)
+    }
 
     @Test
     fun blankNameIsRejectedWithoutTouchingTheRepository() {
@@ -122,8 +143,9 @@ class CreateHabitPresenterTest {
 
         presenter.save()
 
-        assertNotNull(presenter.form.value.error)
-        assertTrue(presenter.form.value.error!!.contains("needs a unit"))
+        // The message is Chinese and produced locally: the English domain text must not surface.
+        assertEquals(CreateHabitPresenter.NO_UNIT, presenter.form.value.error)
+        assertEquals(0, repository.createCalls)
         assertNull(presenter.form.value.createdHabitId)
     }
 
@@ -152,6 +174,38 @@ class CreateHabitPresenterTest {
         val stored = runBlocking { repository.getHabit(id!!) }
         assertNull(stored!!.unit)
         assertEquals(1.0, stored.targetValue, 0.0)
+    }
+
+    @Test
+    fun domainRejectionsAreTranslatedForTheUser() {
+        // HabitRules throws English `require` messages; none of them may reach the screen.
+        assertEquals(
+            CreateHabitPresenter.NO_UNIT,
+            errorMessageFor(IllegalArgumentException("NUMERIC habit needs a unit")),
+        )
+        assertEquals(
+            CreateHabitPresenter.BLANK_NAME,
+            errorMessageFor(IllegalArgumentException("habit name must not be blank")),
+        )
+        assertEquals(
+            CreateHabitPresenter.NO_UNIT_UNEXPECTED,
+            errorMessageFor(IllegalArgumentException("BOOLEAN habit must not have a unit")),
+        )
+        assertEquals(
+            CreateHabitPresenter.BAD_TARGET,
+            errorMessageFor(IllegalArgumentException("NUMERIC habit target must be positive")),
+        )
+        assertEquals(
+            CreateHabitPresenter.SAVE_FAILED,
+            errorMessageFor(IllegalStateException("habit insert returned no id")),
+        )
+    }
+
+    @Test
+    fun anUnknownFailureKeepsAChineseMessage() {
+        val message = errorMessageFor(RuntimeException("constraint failed"))
+        assertEquals(CreateHabitPresenter.SAVE_FAILED, message)
+        assertFalse(message.contains("constraint"))
     }
 
     @Test

@@ -128,7 +128,9 @@ fun TodayScreen(
 
 @Composable
 private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
-    var text by remember(habit.id) { mutableStateOf(if (habit.actualValue > 0.0) habit.actualValue.toLong().toString() else "") }
+    // Decimals must survive the prefill: showing 0.5 as "0" made one tap on 记录 overwrite the
+    // stored 0.5 with 0. The rule lives in the presenter so a JVM test can pin it.
+    var text by remember(habit.id) { mutableStateOf(TodayPresenter.prefillText(habit.actualValue)) }
     // Negative input is refused here so the dialog does not close and discard what was typed.
     val parsed = text.trim().toDoubleOrNull()?.takeIf { it >= 0.0 }
     AlertDialog(
@@ -136,10 +138,10 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
         title = { Text(habit.name) },
         text = {
             Column {
-                Text("今天的目标 " + habit.targetValue.toLong() + " " + (habit.unit ?: ""))
+                Text("今天的目标 " + TodayPresenter.formatQuantity(habit.targetValue) + " " + (habit.unit ?: ""))
                 OutlinedTextField(
                     value = text,
-                    onValueChange = { text = it },
+                    onValueChange = { text = normaliseQuantityInput(it) },
                     label = { Text("实际完成") },
                     singleLine = true,
                     // Decimal, not Number: actualValue is a Double, so 0.5 L must be typeable.
@@ -188,11 +190,7 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Un
 
 private fun subtitle(habit: TodayHabit): String = when {
     habit.isRestingToday -> "今天不在计划内"
-    habit.trackingType == TrackingType.NUMERIC -> {
-        val target = habit.targetValue.toLong()
-        val actual = habit.actualValue.toLong()
-        actual.toString() + " / " + target + " " + (habit.unit ?: "")
-    }
+    habit.trackingType == TrackingType.NUMERIC -> TodayPresenter.progressText(habit.actualValue, habit.targetValue, habit.unit)
     habit.isCompleted -> "今天已完成"
     else -> "点一下标记完成"
 }
