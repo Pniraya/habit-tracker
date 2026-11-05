@@ -12,6 +12,7 @@ import com.habittracker.domain.calculation.LogStatusRules
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.DailyLog
 import com.habittracker.domain.model.Habit
+import com.habittracker.domain.model.HabitSchedule
 import com.habittracker.domain.model.NewHabit
 import com.habittracker.domain.repository.HabitRepository
 import kotlinx.coroutines.flow.Flow
@@ -65,6 +66,15 @@ class RoomHabitRepository(private val database: HabitDatabase) : HabitRepository
         habitDao.observeActive().map { habits -> habits.map(HabitEntity::toDomain) }
 
     override suspend fun getHabit(habitId: Long): Habit? = habitDao.findById(habitId)?.toDomain()
+
+    override suspend fun activeSchedule(habitId: Long, date: LocalDate): HabitSchedule? {
+        val versions = scheduleDao.findVersionsOn(habitId, date)
+        check(versions.size <= 1) { "overlapping schedule versions on " + date }
+        return versions.firstOrNull()?.toDomain()
+    }
+
+    override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? =
+        logDao.findByDate(habitId, date)?.toDomain()
 
     override suspend fun archiveHabit(habitId: Long, today: LocalDate, now: Long) {
         val changed = habitDao.archive(id = habitId, archivedAt = now, archivedOn = today, updatedAt = now)

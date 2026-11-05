@@ -37,6 +37,8 @@
 | 2026-11-05 | 违反 `status` 不变量的直接 `UPDATE` | 拒绝（`habit_logs: invalid log`） | 触发器兜底，满足 §12 该项 | TASK-004 |
 | 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（JUnit4 直接运行，绕过测试 worker） | **OK (27 tests)** | `LogStatusRulesTest`、`ScheduleRulesTest`、`AppRoutesTest` | TASK-005 |
 | 2026-11-05 | `pwsh -File tools/check-governance.ps1`（扩展至 19 项） | exit 0，19 PASS | 首轮 1 FAIL：`TASK-001`/`TASK-004` 的 ADR 状态与 ADR 文件不一致；修复后通过 | TASK-006 |
+| 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（UseCase 层） | **OK (40 tests)** | 新增 13 项：计划日拒绝、布尔半值拒绝、负值拒绝、归档拒绝写入、建习惯同时建计划版本 | TASK-008 |
+| 2026-11-05 | `gradlew.bat assembleDebug`（UseCase 层） | **SUCCESSFUL**（38s） | runner 增加 `kotlinx-coroutines-core` 到测试 classpath | TASK-008 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | FAILED（环境） | 系统 TEMP `D:\cpp_tmp` 拒绝写入编译日志；随后将日志改至已忽略的 `.gradle` | TASK-007 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | PASS（27 项） | 修复日志路径后直接 JUnit runner 通过 | TASK-007 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/check-governance.ps1` | exit 0，20 PASS | 包含独立评审记录与功能分支 PARTIAL 判断 | TASK-007 |

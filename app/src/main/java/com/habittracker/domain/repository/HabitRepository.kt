@@ -3,6 +3,7 @@ package com.habittracker.domain.repository
 import com.habittracker.data.local.entity.FrequencyType
 import com.habittracker.domain.model.DailyLog
 import com.habittracker.domain.model.Habit
+import com.habittracker.domain.model.HabitSchedule
 import com.habittracker.domain.model.NewHabit
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -32,6 +33,11 @@ interface HabitRepository {
         effectiveFrom: LocalDate,
         now: Long,
     )
+
+    /** Returns the schedule version valid on [date], or null when the date is not covered. */
+    suspend fun activeSchedule(habitId: Long, date: LocalDate): HabitSchedule?
+
+    suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog?
 
     /** Writes the single daily row with status and completedAt computed by the domain rule. */
     suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog
