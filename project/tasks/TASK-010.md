@@ -54,7 +54,7 @@
 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 20 项断言、8 个触发器 |
 | 变异 1：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）** | `observeActive after archive expected 1, got 2` |
 | 变异 2：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）** | 两条边界断言均 `got []` |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 40 项、DAO SQL 20/20、`assembleDebug` 20s、空白 0s |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21 项通过、单测 40 项、DAO SQL 20/20、`assembleDebug` 20s、空白 0s（另有 1 个 WARN，来自评审记录内 `TASK-011` 的引用，非本任务文件） |
 
 ## 11. Completion Review
 - [x] 验收标准全部满足（5/5）
