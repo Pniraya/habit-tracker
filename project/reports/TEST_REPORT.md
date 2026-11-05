@@ -44,7 +44,8 @@
 | 2026-11-05 | 恢复 TASK-007 为 `PARTIAL` 后运行治理检查 | exit 0，20 PASS | 功能分支不会被要求登记为 main 上的 PARTIAL 例外 | TASK-007 |
 | 2026-11-05 | `gradlew.bat assembleDebug`（UseCase 层） | **SUCCESSFUL**（38s） | UseCase 进入主源码集 | TASK-008 |
 | 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（UseCase 层，测试加强后） | **OK (40 tests)** | 13 项新增；断言改为校验仓库实存值，不再依赖 fake 计算的状态 | TASK-008 |
-| 2026-11-05 | 受控负向验证：删除 `RecordHabitProgressUseCase` 的归档校验后运行单测 | **FAILED，1 项失败**（预期） | 证伪 `archivedHabitsRejectWrites`：删除校验才变红，恢复后 40 项全绿 | TASK-008 |
+| 2026-11-05 | 受控负向验证：删除 `RecordHabitProgressUseCase` 的归档校验后运行单测 | **FAILED，1 项失败**（预期） | 证伪 `archivedHabitsRejectWrites`：删除校验才变红 | TASK-008 |
+| 2026-11-05 | 恢复校验后复跑 `tools/run-unit-tests.ps1` | **OK (40 tests)** | 变异全部还原，`git diff --stat` 为空 | TASK-008 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。

@@ -5,7 +5,7 @@
 ## 当前状态
 
 - 项目阶段：`Gate 2` — 数据层进行中；Gate 1 的设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-008`（`PARTIAL`，UseCase 层与单测完成，首轮独立评审 `REJECT` 已修复待复审）；`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-008`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳 + Room schema v1 + Domain/Repository/UseCase；构建通过，约束经真实 SQLite 验证，DAO/Repository 运行时与真机未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，UseCase 层后 38s）

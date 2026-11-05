@@ -9,9 +9,9 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 2` — 数据层与 Domain 规则已建，设备验证未完成 |
-| 当前任务 | `TASK-008`（`PARTIAL`，UseCase 层与单测完成，首轮评审 `REJECT` 已修复待复审） |
+| 当前任务 | `TASK-008`（`DONE`，独立评审 `APPROVE`，已合入 `main`） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
-| 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，36s，APK 9.4 MB |
+| 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
 | 最近测试 | `PASS` — 40 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
 | 最近数据层校验 | `PASS` — `node tools/verify-schema.mjs`，40/40 |
 | ADR | `ADR-001`~`ADR-013` 全部 `ACCEPTED` |
