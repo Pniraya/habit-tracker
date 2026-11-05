@@ -63,7 +63,7 @@
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
 - **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新（`verify-dao.mjs`，21 项）。
-- **未覆盖（UI）**：Today 页的状态机有 7 项 JVM 覆盖；Compose 渲染与交互仅编译进 APK，未经 Robolectric/设备验证。
+- **未覆盖（UI）**：Today 页的状态机有 9 项 JVM 覆盖；Compose 渲染与交互仅编译进 APK，未经 Robolectric/设备验证。
 - **未覆盖**：Room 的 Cursor/实体映射；TypeConverter 往返；`Flow` 失效通知；`withTransaction` 边界与并发写入；Room 由 `@Upsert`/`@Insert` **生成的** SQL（harness 验证的是同一冲突列上等价语句的语义与唯一索引存在，不能证明 Room 会选用该冲突列）。
 - 无真机、无模拟器：`adb devices` 为空且 `HypervisorPresent=False`，设备验证全部 `NOT_RUN`。
 - 数值型“撤销”语义、恢复默认策略仍未定（见 `project/reports/BASELINE_REVIEW.md`）。

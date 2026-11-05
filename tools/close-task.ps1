@@ -37,7 +37,7 @@ $open = ([regex]::Matches($acceptance, '(?m)^\s*- \[ \] ')).Count
 # unrelated claims (for example an old ADR status) into this task file.
 $lastRun = ""
 # Governance-check rows are not test results, so they never become the "latest test record".
-$runs = @(Get-Content -Path 'project/reports/TEST_REPORT.md' | Where-Object { $_ -match '^\|\s*20' } | Where-Object { $_ -notmatch 'check-governance' } | Where-Object { $_ -match 'run-unit-tests|verify-schema|assembleDebug' })
+$runs = @(Get-Content -Path 'project/reports/TEST_REPORT.md' | Where-Object { $_ -match '^\|\s*20' } | Where-Object { $_ -notmatch 'check-governance' } | Where-Object { $_ -match 'run-unit-tests|verify-schema|verify-dao' })
 if ($runs.Count -gt 0) {
     $cells = @($runs[-1].Split('|') | ForEach-Object { $_.Trim() })
     if ($cells.Count -ge 5) { $lastRun = $cells[1] + ' / ' + $cells[3] }

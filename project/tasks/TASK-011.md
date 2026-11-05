@@ -55,12 +55,12 @@
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (49 tests)** | 新增 9 项：加载/切换/再切换/数值/休息日/拒绝/归档/数值不可点击/休息日写入被 use case 拒绝 |
-| `gradlew.bat assembleDebug` | **SUCCESSFUL**（28s） | 首次失败：`androidx.compose.foundation.layout.weight` 为 internal，删除该 import |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 47 项、DAO SQL 21 项、构建 18-28s、空白干净 |
+| `gradlew.bat assembleDebug` | **SUCCESSFUL**（19-28s，冷热差异） | 首次失败：`androidx.compose.foundation.layout.weight` 为 internal，删除该 import |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 49 项、DAO SQL 21 项、构建 19-28s、空白干净 |
 
 ## 11. Completion Review
 - [x] 验收标准全部满足（7/7）
-- [x] 相关测试实际运行（47 项）
+- [x] 相关测试实际运行（49 项）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
 - [x] 文档/状态已更新
@@ -81,5 +81,5 @@
 - 状态：`PARTIAL`
 - 阶段：Gate 3
 - 验收：通过 7 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **SUCCESSFUL**（28s）
+- 最近测试记录：2026-11-05 / **OK (49 tests)**
 <!-- close-task:end -->
