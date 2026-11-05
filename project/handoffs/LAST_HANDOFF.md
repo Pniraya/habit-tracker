@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-022`（Today 查询批量化）实现完成、**第 1 轮独立评审 `REJECT`，正在按阻断项修复**；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
+- 当前任务：`TASK-024`（`NOT_STARTED`，接缝补洞）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
 - 当前 Git 分支：`feat/today-queries`（`TASK-022` 修复中）；`main`（本地，无远程）@ `bfb3150`；`feat/streak` 已合并、保留未删（另有 14 个历史分支同样保留）
 - 最近 commit：`b73e03b perf(today): load the list in four queries`（`TASK-022` 实现，评审后修复尚未提交）
 - **会话状态：可继续**——`TASK-021` 已闭环（独立评审第 2 轮 `APPROVE`），下一条从 `TASK-022` 开始

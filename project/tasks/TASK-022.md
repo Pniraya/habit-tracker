@@ -1,11 +1,11 @@
 # TASK-022: Today 列表的查询批量化（N+1 与全量重算）
 
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：`Gate 3`
 - 优先级：`P2`
 - 依赖：`TASK-021`（连续天数引入第三个每习惯查询）
 - 创建日期：`2026-11-05`
-- 完成日期：待评审通过后
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 `TodayPresenter.describe()` 每个习惯要 4 次查询（活跃计划、当日日志、全部计划版本、区间日志），`snapshot()` 在每次 Flow 发射与每次 `record()` 后全量重跑；20 个习惯点按一次约 160 次查询。把列表加载改成常数次查询。
@@ -56,7 +56,7 @@
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (91 tests)** | 新增 5 项：两个查询计数、每习惯归属、`fromLoaded` 的 3 项（状态过滤、窗口外行、昨天漏今天补） |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (91 tests)** | 相对 86 的增量 5 项：每习惯归属（含 `isCompleted`）、`fromLoaded` 的 3 项（状态过滤、窗口外行、昨天漏今天补）、外加 1 项查询计数从旧口径修正 |
 | 变异 MA：`snapshot()` 退回逐习惯 `activeSchedule` | **FAILED（2 项）** | `theWholeListLoadsInAConstantNumberOfQueries`、`aTapRefreshesTheListOnce` |
 | 变异 MB：`snapshot()` 里多做一次批量读（旧重复刷新） | **FAILED（2 项）** | 同上两条，证明「只刷新一次」被断言住 |
 | 复评变异 U2：Room 去掉 `logsInRangeFor` override | **COMPILE FAILED**（已修后） | 接口改为 abstract 后漏 override 无法编译；修复前 86 项全绿 |
@@ -66,7 +66,7 @@
 ## 11. Completion Review
 - [x] 验收标准满足（3/3）
 - [x] 测试实际运行（91 项 + 5 组变异 + DAO 3 组）
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（第 3 轮，`0f77faa`）
 
 ## 12. Handoff
 - 之后：`F-010`/`F-011` 统计页（同一套批量加载可复用）。
@@ -75,13 +75,13 @@
 - Reviewer record：`project/reviews/REVIEW-TASK-022.md`
 - 第 1 轮：`REJECT`（`b73e03b`，3 条阻断）
 - 第 2 轮：`REJECT`（`0e0d5db`，代码不再阻塞，剩 2 条文档/覆盖声称问题）
-- 第 3 轮：待复审
+- 第 3 轮：`APPROVE`（`0f77faa`，0 阻断）
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-022
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 3 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (91 tests)**
