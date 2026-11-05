@@ -1,11 +1,11 @@
 # TASK-014: 领域规则上移到 UseCase
 
-- 状态：`PARTIAL`（实现与单测完成，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE` 于 `621186d`，第 1 轮）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-012`（暴露该问题）、`TASK-013`
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 把 `validateName` 与 `normalizeTarget` 从 `RoomHabitRepository` 上移到 `CreateHabitUseCase`，并在 `HabitRepository.createHabit` 的接口契约里写明调用方需保证什么。
@@ -64,21 +64,24 @@
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（`621186d`，第 1 轮）
 
 ## 12. Handoff
 - 下一步：评审 `APPROVE` 后合入 `main`；之后 `TASK-015`（治理计数一致性）或 `TASK-016`（界面细节）。
 - 遗留：`RoomHabitRepository` 去掉校验后的行为只有源码级证据，没有运行时测试。
 
 ## 13. Independent Review
-- Reviewer record：`project/reviews/REVIEW-TASK-014.md`（待创建）
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-014.md`
+- 结论：`APPROVE`（第 1 轮）
+- 评审独立确认：`app/src/main` 中 `repository.createHabit` 只有 `CreateHabitPresenter` 通过注入的 `CreateHabitUseCase` 一处调用，没有生产代码绕过；触发器仍拒绝非法行（`verify-schema.mjs` 40/40，含 BOOLEAN 带单位、NUMERIC 无单位两条真实 SQLite 断言）
+- 评审指出 `createCalls == 0` 的语义在本任务后变强：fake 不再能抛错，0 只能由 UseCase 拒绝解释
+- 非阻塞项并入 `TASK-016`：`RoomHabitRepository.kt` 的死 import、`theRepositoryItselfNoLongerValidates` 应改名、§8 补「触发器不 trim」与可执行证据出处
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-014
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 5 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (63 tests)**

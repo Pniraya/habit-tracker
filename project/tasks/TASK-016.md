@@ -18,6 +18,9 @@
 - `check-governance` 第 21 项的正则只认 `TBD|NOT_RUN`，中文「未运行」能通过——与 `TASK-015` 同源。
 
 ## 3. Scope
+- 删除 `RoomHabitRepository.kt` 中已无引用的 `import ...HabitRules`（`TASK-014` 评审发现；字面上让人以为数据层还在管规则）。
+- 把 `theRepositoryItselfNoLongerValidates` 改名为 `theFakeRepositoryStoresWhateverItIsGiven`，避免读者误以为在断言 `RoomHabitRepository`。
+- 在 `TASK-014` §8 补「触发器只保证合法、不保证归一化（不 trim）；若将来绕过 UseCase 会存下首尾空白」，并注明 `verify-schema.mjs` 的对应断言。
 - 用 `FloatingActionButton` 的默认尺寸推导底边留白（或提为常量），让改动时几何关系可读。
 - 数值输入改为 `KeyboardType.Decimal`，并在真机确认能输入 `0.5`。
 - 修正加载态断言注释与其在 §8 的口径（契约锁，不是可达状态）。
