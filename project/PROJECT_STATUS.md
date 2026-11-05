@@ -11,7 +11,7 @@
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 21-23s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 21/21 验证 DAO 的 SQL 语义、CAS 更新与级联删除）
 - 最近验证测试：`PASS`（71 项，`tools/run-unit-tests.ps1`，`docs/feature-matrix`）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
-- 最近治理一致性检查：`PASS`（2026-11-05，21 项检查；含独立评审记录与 verify-all 证据检查）
+- 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
 - 最后核对时间：`2026-11-05`
 
 ## 已有设计资产与实现
