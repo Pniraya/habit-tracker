@@ -9,7 +9,7 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-014`（`PARTIAL`，领域规则上移到 UseCase，待独立评审） |
+| 当前任务 | `TASK-014`（`DONE`，已合入 `main`）；下一项 `TASK-015`（治理计数一致性） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
 | 最近测试 | `PASS` — 63 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |

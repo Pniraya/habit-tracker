@@ -5,12 +5,12 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-014`（`PARTIAL`，领域规则上移到 UseCase，待独立评审）；`TASK-013` 已 `DONE` 合入 `main`；`TASK-012` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`feat/domain-validation`（本地，无远程）；`main` @ `421fb21`；已合并分支保留未删
+- 当前任务：无（`TASK-014` 已 `DONE`，第 1 轮独立评审 `APPROVE` 于 `621186d`，合入 `main` @ `2984e85`）；`TASK-012`/`TASK-013` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`main`（本地，无远程）@ `2984e85`；已合并分支 `feat/*` / `fix/*` 保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
-- `TASK-007`~`TASK-013` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口
+- `TASK-007`~`TASK-014` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase
 - `TASK-012` 三轮评审：第 1 轮 `REJECT`（unit 状态泄漏真缺陷 + 三份文档未同步）、第 2 轮 `REJECT`（仅计数不一致）、第 3 轮 `APPROVE`
 - 真机首次接入：`iQOO Neo7 SE`（`V2238A`，Android 15），走通「建习惯 → 今日出现 → 打卡 → 落库」，行级证据在 `project/reports/DEVICE_DUMP-2026-11-05.md`；读库后执行过 `adb shell pm clear`，故该 dump 是唯一行级证据
 - `TASK-013`：Today 页非空时显示 `+` 浮动按钮（空态仍用原按钮），判断规则上移到 `TodayPresenter.showsCreateAction` 并加单测；数值输入框改数字键盘；真机验证可建第 2 个习惯
@@ -39,7 +39,7 @@
 - `check-governance` 第 15/21 项不比对 `OK (N tests)` 的计数，`TASK-012` 出现过「Latest Run 57 / 末行 58」仍过检的盲区
 
 ## Next Safe Action
-1. 独立评审 `TASK-014`（通过则 `DONE`、`verify-all`、合入 `main`）
+1. `TASK-014` 已合入；评审的非阻塞项（死 import、测试改名、§8 触发器边界）已并入 `TASK-016`
 2. **TASK-015（P2）**：给 `check-governance` 增加「`OK (N tests)` 计数一致」与中文占位符检测
 3. **TASK-016（P2）**：界面细节收尾（FAB 魔数推导、`KeyboardType.Decimal`、加载态注释口径）
 4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度
