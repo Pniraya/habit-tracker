@@ -5,23 +5,23 @@
 ## 当前状态
 
 - 项目阶段：`Gate 2` — 数据层进行中；Gate 1 的设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-008`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-009`（`PARTIAL`，单一验证入口完成，待独立评审）；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳 + Room schema v1 + Domain/Repository/UseCase；构建通过，约束经真实 SQLite 验证，DAO/Repository 运行时与真机未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 21s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs`，40/40，含 schema parity）
 - 最近验证测试：`PASS`（40 项，`tools/run-unit-tests.ps1`，在 `main` @ `d7998ad` 上复跑）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
-- 最近治理一致性检查：`PASS`（2026-11-05，20 项检查；含独立评审记录检查）
+- 最近治理一致性检查：`PASS`（2026-11-05，21 项检查；含独立评审记录与 verify-all 证据检查）
 - 最后核对时间：`2026-11-05`
 
 ## 已有设计资产与实现
 
 - [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：已按 `ADR-005~010` 修订
 - [x] `project/REQUIREMENTS.md`：TBD 第 1/5/6 项已关闭
-- [x] `project/decisions/ADR-001`~`ADR-013`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据）
+- [x] `project/decisions/ADR-001`~`ADR-014`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
 - [x] `project/FEATURE_MATRIX.md`：F-001 构建验证通过、F-002 未验证、F-016 `OUT_OF_SCOPE`
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
-- [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~008`、`tools/check-governance.ps1`、`tools/close-task.ps1`、`project/REVIEW_CHECKLIST.md`
+- [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（21 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`
 - [x] 构建环境：`D:\AndroidToolchain`（`sdk` + `gradle` + `env.ps1` + `verify.ps1`），JDK 17 在 `D:\javajdk17`
 - [x] Android 工程骨架：Wrapper、Version Catalog、`:app`、主题 token、三页导航
 - [x] 数据层 schema v1：四表 + 外键 + 索引 + Converter + schema export（`TASK-004`）

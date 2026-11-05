@@ -86,9 +86,10 @@
 只有验收标准全部满足，且验证结果有证据时，才能标记 `DONE`。如果环境不支持执行测试，标记 `BLOCKED` 或 `PARTIAL`，明确未验证项，不得写“测试通过”。
 
 建议命令（按项目实际 Gradle Wrapper 和任务调整）：
-- Windows：`gradlew.bat assembleDebug`、`gradlew.bat test`
-- macOS/Linux：`./gradlew assembleDebug`、`./gradlew test`
-- 检查：`git diff --check`、`git status --short`
+- 收尾统一入口：`pwsh -NoProfile -File tools/verify-all.ps1` —— 依次运行治理检查、单元测试、`assembleDebug`、`git diff --check`，任一步失败即非零退出；日志在 `.gradle/logs/`。
+- 定位失败时再单独运行：`tools/check-governance.ps1`、`tools/run-unit-tests.ps1`、`gradlew.bat assembleDebug`。
+- `gradlew.bat test` 在本机沙箱内不可用（Gradle 测试 worker 被禁），以 `tools/run-unit-tests.ps1` 的结果为准，不得记为“测试通过”。
+- 其他检查：`git diff --check`、`git status --short`。
 
 ## 6. 状态文件维护
 
