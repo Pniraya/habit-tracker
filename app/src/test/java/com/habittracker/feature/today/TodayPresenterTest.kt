@@ -160,6 +160,19 @@ class TodayPresenterTest {
     }
 
     @Test
+    fun aRecordedDecimalIsShownAsADecimal() {
+        // Regression: the subtitle cast actualValue to Long, so 0.5 rendered as "0".
+        assertEquals("0.5 / 2000 ml", TodayPresenter.progressText(0.5, 2000.0, "ml"))
+    }
+
+    @Test
+    fun wholeNumbersKeepNoTrailingDecimalPoint() {
+        assertEquals("2000 / 2000 ml", TodayPresenter.progressText(2000.0, 2000.0, "ml"))
+        assertEquals("0.25 / 1.5 h", TodayPresenter.progressText(0.25, 1.5, "h"))
+        assertEquals("0 / 8", TodayPresenter.progressText(0.0, 8.0, null))
+    }
+
+    @Test
     fun theCreateActionAppearsOnlyOnceTheListHasRows() {
         assertFalse(TodayPresenter.showsCreateAction(TodayUiState(monday, emptyList(), isLoading = false)))
         // Loading with rows still hides the action: the list is not real yet.

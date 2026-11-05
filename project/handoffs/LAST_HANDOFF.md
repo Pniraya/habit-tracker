@@ -5,12 +5,12 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-016`（`DONE`，独立评审 `APPROVE`，真机小数输入已补验）；`TASK-012`~`TASK-015` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main`（本地，无远程）@ `6c0f30e`；已合并分支保留未删
+- 当前任务：`TASK-018`（`PARTIAL`，错误文案中文化与小数显示，待独立评审）；`TASK-012`~`TASK-016` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`fix/error-text`（本地，无远程）；`main` @ `52e89c1`；已合并分支保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
-- `TASK-007`~`TASK-014` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase
+- `TASK-007`~`TASK-016` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase、治理计数检查、界面细节
 - `TASK-012` 三轮评审：第 1 轮 `REJECT`（unit 状态泄漏真缺陷 + 三份文档未同步）、第 2 轮 `REJECT`（仅计数不一致）、第 3 轮 `APPROVE`
 - 真机首次接入：`iQOO Neo7 SE`（`V2238A`，Android 15），走通「建习惯 → 今日出现 → 打卡 → 落库」，行级证据在 `project/reports/DEVICE_DUMP-2026-11-05.md`；读库后执行过 `adb shell pm clear`，故该 dump 是唯一行级证据
 - `TASK-013`：Today 页非空时显示 `+` 浮动按钮（空态仍用原按钮），判断规则上移到 `TodayPresenter.showsCreateAction` 并加单测；数值输入框改数字键盘；真机验证可建第 2 个习惯
@@ -24,7 +24,8 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (63 tests)** | `TASK-014` 新增 4 项：无单位数值被拒、带单位布尔被拒、单位 trim、fake 不再校验 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (67 tests)** | `TASK-018` 新增 4 项：小数显示、整数去 `.0`、领域消息映射、未知错误回退 |
+| 真机（`iQOO Neo7 SE`） | **通过** | 列表 `0.5 / 2000 ml`；缺单位提示 `数值习惯需要填写单位` |
 | 变异：`showsCreateAction` 去掉 `!state.isLoading &&` | **FAILED（1 项）** | 加载态断言变红；还原后全绿 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（43s） | 缺 `PaddingValues`/`KeyboardOptions` 导入，已补 |
 | 真机走查 | **通过** | 建 1 项 → `+` 出现 → 进新建页 → 建第 2 项 → 列表 2 行 |
@@ -36,10 +37,10 @@
 - Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：无自动化验证
 - 表单由 `remember` 持有，旋转会丢失输入
 - 统计页、我的页仍为占位
-- `check-governance` 第 15/21 项不比对 `OK (N tests)` 的计数，`TASK-012` 出现过「Latest Run 57 / 末行 58」仍过检的盲区
+- `TASK-015` 已让 `check-governance` 比对 `OK (N tests)` 计数与中文占位符；但评审用 P5–P8 探针证明仍有边界缺陷（结果列无判定词也能过、摘要缺计数即跳过、计数扫全文被污染），已立 `TASK-017`
 
 ## Next Safe Action
-1. 合入 `TASK-016`（已 `APPROVE`，真机补验通过）
+1. 独立评审 `TASK-018`（通过则 `DONE`、合入 `main`）
 2. **TASK-018（P1，任务文件待建）**：中文界面弹出英文领域错误（`NUMERIC habit needs a unit`）；Today 列表把 `actualValue` 转 `Long` 显示，`0.5` 显示成 `0`；`Decimal` 下逗号小数未归一化；`FabSize` 注释补 Material 规格版本
 2. **TASK-017（P2）**：治理检查加固——`TASK-015` 评审用 P5–P8 打穿四个洞（结果列无判定词也能过、摘要不写「单测」就跳过、计数扫全文被 `Known Gaps` 污染、合法备注致假阳性）
 4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度

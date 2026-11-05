@@ -73,7 +73,8 @@ class CreateHabitPresenter(
             runCatching { createHabit(draft(form), today(), now()) }
                 .onSuccess { id -> _form.update { it.copy(isSaving = false, createdHabitId = id) } }
                 .onFailure { failure ->
-                    _form.update { it.copy(isSaving = false, error = failure.message ?: "保存失败") }
+                    // Never surface a raw domain message: HabitRules speaks English.
+                    _form.update { it.copy(isSaving = false, error = messageFor(failure)) }
                 }
         }
     }
@@ -81,9 +82,12 @@ class CreateHabitPresenter(
     private fun validate(form: CreateHabitForm): String? = when {
         form.name.isBlank() -> BLANK_NAME
         form.trackingType == TrackingType.NUMERIC && parseTarget(form) == null -> BAD_TARGET
+        form.trackingType == TrackingType.NUMERIC && form.unit.isBlank() -> NO_UNIT
         form.frequency == FrequencyType.CUSTOM && form.weekdays.isEmpty() -> NO_WEEKDAYS
         else -> null
     }
+
+    private fun messageFor(failure: Throwable): String = errorMessageFor(failure)
 
     private fun parseTarget(form: CreateHabitForm): Double? =
         form.targetValue.trim().toDoubleOrNull()?.takeIf { it > 0.0 }
@@ -108,7 +112,27 @@ class CreateHabitPresenter(
         const val BLANK_NAME: String = "名称不能为空"
         const val BAD_TARGET: String = "目标值必须是大于 0 的数字"
         const val NO_WEEKDAYS: String = "自定义频率至少要选一天"
+        const val NO_UNIT: String = "数值习惯需要填写单位"
+        const val NO_UNIT_UNEXPECTED: String = "「完成 / 未完成」的习惯不能填单位"
+        const val SAVE_FAILED: String = "保存失败，请检查输入"
         const val DEFAULT_ICON: String = "star"
         const val DEFAULT_COLOR: String = "#5B8C6A"
+    }
+}
+
+/**
+ * Maps a domain rejection to something the user can read. The domain speaks English (`require`
+ * messages from HabitRules), so `Throwable.message` must never reach the UI directly; an unmapped
+ * failure falls back to a generic line. Top-level and internal so it is testable on the JVM.
+ */
+internal fun errorMessageFor(failure: Throwable): String {
+    val raw = failure.message.orEmpty()
+    return when {
+        raw.contains("must not be blank") -> CreateHabitPresenter.BLANK_NAME
+        raw.contains("needs a unit") -> CreateHabitPresenter.NO_UNIT
+        raw.contains("must not have a unit") -> CreateHabitPresenter.NO_UNIT_UNEXPECTED
+        raw.contains("must be positive") -> CreateHabitPresenter.BAD_TARGET
+        raw.contains("must be exactly 1") -> CreateHabitPresenter.BAD_TARGET
+        else -> CreateHabitPresenter.SAVE_FAILED
     }
 }

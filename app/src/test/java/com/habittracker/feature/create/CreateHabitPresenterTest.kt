@@ -122,8 +122,9 @@ class CreateHabitPresenterTest {
 
         presenter.save()
 
-        assertNotNull(presenter.form.value.error)
-        assertTrue(presenter.form.value.error!!.contains("needs a unit"))
+        // The message is Chinese and produced locally: the English domain text must not surface.
+        assertEquals(CreateHabitPresenter.NO_UNIT, presenter.form.value.error)
+        assertEquals(0, repository.createCalls)
         assertNull(presenter.form.value.createdHabitId)
     }
 
@@ -152,6 +153,38 @@ class CreateHabitPresenterTest {
         val stored = runBlocking { repository.getHabit(id!!) }
         assertNull(stored!!.unit)
         assertEquals(1.0, stored.targetValue, 0.0)
+    }
+
+    @Test
+    fun domainRejectionsAreTranslatedForTheUser() {
+        // HabitRules throws English `require` messages; none of them may reach the screen.
+        assertEquals(
+            CreateHabitPresenter.NO_UNIT,
+            errorMessageFor(IllegalArgumentException("NUMERIC habit needs a unit")),
+        )
+        assertEquals(
+            CreateHabitPresenter.BLANK_NAME,
+            errorMessageFor(IllegalArgumentException("habit name must not be blank")),
+        )
+        assertEquals(
+            CreateHabitPresenter.NO_UNIT_UNEXPECTED,
+            errorMessageFor(IllegalArgumentException("BOOLEAN habit must not have a unit")),
+        )
+        assertEquals(
+            CreateHabitPresenter.BAD_TARGET,
+            errorMessageFor(IllegalArgumentException("NUMERIC habit target must be positive")),
+        )
+        assertEquals(
+            CreateHabitPresenter.SAVE_FAILED,
+            errorMessageFor(IllegalStateException("habit insert returned no id")),
+        )
+    }
+
+    @Test
+    fun anUnknownFailureKeepsAChineseMessage() {
+        val message = errorMessageFor(RuntimeException("constraint failed"))
+        assertEquals(CreateHabitPresenter.SAVE_FAILED, message)
+        assertFalse(message.contains("constraint"))
     }
 
     @Test

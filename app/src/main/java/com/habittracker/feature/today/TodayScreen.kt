@@ -139,7 +139,8 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
                 Text("今天的目标 " + habit.targetValue.toLong() + " " + (habit.unit ?: ""))
                 OutlinedTextField(
                     value = text,
-                    onValueChange = { text = it },
+                    // Some IMEs emit a comma for the decimal key; toDoubleOrNull only reads '.'.
+                    onValueChange = { text = it.replace(',', '.') },
                     label = { Text("实际完成") },
                     singleLine = true,
                     // Decimal, not Number: actualValue is a Double, so 0.5 L must be typeable.
@@ -188,11 +189,7 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Un
 
 private fun subtitle(habit: TodayHabit): String = when {
     habit.isRestingToday -> "今天不在计划内"
-    habit.trackingType == TrackingType.NUMERIC -> {
-        val target = habit.targetValue.toLong()
-        val actual = habit.actualValue.toLong()
-        actual.toString() + " / " + target + " " + (habit.unit ?: "")
-    }
+    habit.trackingType == TrackingType.NUMERIC -> TodayPresenter.progressText(habit.actualValue, habit.targetValue, habit.unit)
     habit.isCompleted -> "今天已完成"
     else -> "点一下标记完成"
 }

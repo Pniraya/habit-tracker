@@ -106,5 +106,18 @@ class TodayPresenter(
          * here rather than in the composable so it can be tested on the JVM.
          */
         fun showsCreateAction(state: TodayUiState): Boolean = !state.isLoading && state.habits.isNotEmpty()
+
+        /**
+         * "0.5 / 2000 ml". Formatting used to sit in the composable and cast to Long, so a recorded
+         * 0.5 rendered as "0"; it lives here now so the JVM tests can pin the decimal behaviour.
+         */
+        fun progressText(actual: Double, target: Double, unit: String?): String {
+            val suffix = if (unit.isNullOrBlank()) "" else " " + unit
+            return formatQuantity(actual) + " / " + formatQuantity(target) + suffix
+        }
+
+        /** Drops the trailing ".0" for whole numbers and keeps decimals otherwise. */
+        fun formatQuantity(value: Double): String =
+            java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
     }
 }
