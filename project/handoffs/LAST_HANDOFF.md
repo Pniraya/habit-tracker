@@ -5,10 +5,10 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-024`（`PARTIAL`，接缝补洞，待独立评审）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
-- 当前 Git 分支：`feat/seam-hardening`（`TASK-024` 第 1、2 轮阻断已修，等待第 3 轮复评）；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
+- 当前任务：`TASK-025`（`NOT_STARTED`，真机 instrumented 测试 spike）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
+- 当前 Git 分支：`main`（本地，无远程），`feat/seam-hardening` 已合并、保留未删；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（交接记录与代码修复同一次提交时，写死哈希必然立刻过期）
-- **会话状态：可继续**——`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-024` 第 1 轮 6 条、第 2 轮 5 条阻断均已修复，等待第 3 轮复评（与本文末 Next Safe Action 一致）
+- **会话状态：可继续**——`TASK-022`、`TASK-024` 均已 `DONE` 合入 `main`；下一条从 `TASK-025` 开始（真机 instrumented 测试 spike）
 
 ## Completed This Session
 - `TASK-021`（F-009 当前/最长连续天数）：`StreakRules` 纯函数一次正向遍历同时给出当前与最长；`GetStreakUseCase` 取全部计划版本 + 区间内 `COMPLETED` 日志；`TodayPresenter.streakText` 决定文案（`0/0` 不显示、`0/7` 显示「最长 7 天」、`3/7` 显示「连续 3 天 · 最长 7 天」）
@@ -53,7 +53,7 @@
 - **子进程变异可能留下脏工作区**：评审死亡时留下 `from = today`，直接提交会合入缺陷。恢复后必须复跑测试确认。
 
 ## Next Safe Action
-1. **`TASK-024`**：第 2 轮评审的 5 条阻断已修（午夜算术抽出并单测、证据按 HEAD 重测、进入今日页时也刷新、本文件按提交后事实重写、外部答复补来源行），等待第 3 轮复评
+1. **`TASK-025`**：`connectedDebugAndroidTest` spike——先加最小 `androidTest` 与依赖，在真机上跑一次，记录真实结果；通过则补 Room 映射与 Compose 冒烟，失败则记录报错并改走 `uiautomator dump`
 2. 之后功能顺序：`F-010`/`F-011` 统计页与热力图 → `F-012`/`F-013` 提醒 → `F-014` 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
 3. 遗留重构（未立任务）：`CreateHabitPresenter` 构造参数为函数类型，评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」
 4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿，再读 `TASK-024`；其后的候选是 `TASK-025`（真机 instrumented 测试 spike）与 `TASK-023`（统计页）。

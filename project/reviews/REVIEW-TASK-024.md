@@ -1,37 +1,35 @@
-# REVIEW-TASK-024: 独立评审记录（第 3 轮）
+# REVIEW-TASK-024: 独立评审记录（第 4 轮 · 终审）
 
 - 审查任务：`TASK-024`（接缝补洞：转换器、差分、翻日、往返）
-- 审查 commit：`11facff6ba5ba487522a98e3806609a7e1444aa7`（分支 `feat/seam-hardening`，基线 `main` @ `427e7cc0345b83425ef39b12f34a9991798eda62`；第 1 轮 `3b58062`、第 2 轮 `f700d4b`）
-- Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现；只读核对 + 自造变异）
+- 审查 commit：`4a0daef11793dc40ad670a7b755e3becbc887d8d`（分支 `feat/seam-hardening`，基线 `main` @ `427e7cc0345b83425ef39b12f34a9991798eda62`；前序：第 1 轮 `3b58062`、第 2 轮 `f700d4b`、第 3 轮 `11facff`）
+- Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现；四轮均为只读核对 + 自造变异）
 - 独立性：`INDEPENDENT`
 - 日期：`2026-11-05`
 
-评审开始 `git status --short` 为空。4 组变异串行执行，逐组 `git checkout -- <path>` 还原并当场复查；结束时工作区只剩本评审文件。门禁与变异**串行**，未与任何 Gradle 任务并发。
+评审开始 `git status --short` 为空；结束时工作区只剩本评审文件。门禁单独串行执行，未与任何 Gradle 任务并发。
 
 ## 1. Scope
 
-- [x] 本轮改动（`f700d4b..11facff`，10 文件）与第 2 轮 5 条阻断逐条对应：午夜算术抽出并单测、证据按 HEAD 重测、进入今日页也刷新、交接重写、外部答复补来源。
-- [x] 无新依赖、无权限、无 Gradle module、无 schema/迁移改动；生产改动只有 `TodayPresenter.millisUntilNextMidnight`（纯函数）与 `AppRoot` 的 6 行接线。
-- [x] `TASK-023` 承接「计划版本区间不得重叠」的不变量（不改 `DATABASE.md` 冻结基线）是正确处置；若之后要改基线，必须走 ADR，本轮不要求。
-- [ ] `TASK-024.md:63` 的 verify-all 证据行仍写「单测 104」。
+- [x] 本轮 `11facff..4a0daef` **只改文档**：`git diff --name-only` 仅 `project/tasks/TASK-024.md`、`project/handoffs/LAST_HANDOFF.md`、`project/reviews/REVIEW-TASK-024.md`（上轮评审记录入库）；**无 `app/**`、无 `tools/**`、无 `gradle/**`**。
+- [x] 因此第 3 轮在 `11facff` 上实测的 4 组变异（R3-MH2=1 红、R3-M1=3 红、R3-ME=2 红、R3-ENTRY=0 红）与全部测试结论在本 commit 继续有效：被测代码逐字节未变。
+- [x] 第 3 轮两条阻断逐条对应：证据行改 105、`LAST_HANDOFF` 的 `:9`/`:11` 改为「第 1、2 轮阻断已修，等待复评」并与 `Next Safe Action` 一致。
+- [x] 顺带补的两项非阻断改进（§9 第 1/2 轮日志、§8 DST 边界）都在 Scope 内，未夹带代码。
 
 ## 2. Diff 核对
 
-- [x] `git diff --check` 干净；无冲突标记；无删除测试（105 = 104 + 1）。
-- [x] `millisUntilNextMidnight(now: LocalDateTime): Long` 是纯函数：不读时钟、不碰 Android，`Duration.between(now, 次日 atStartOfDay())` 无时区依赖，结果与设备时区无关（只随墙上时钟变化）。
-- [x] Composable 只剩「睡到点 + 刷新」，算术在 presenter 里——与 `TASK-013`/`refreshesOn` 的处置一致。
-- [x] 进入今日页的补刷（`AppRoot` 的 `if (state.value.date != LocalDate.now())`）逻辑正确：首次组合、进程重建、后台返回、跨日切回四种情况都不会误刷或漏刷。
-- [ ] 该补刷比较是 UI 接线，无测试（见 §6.2，非阻断）。
+- [x] `git diff --check` 无空白错误；无冲突标记；无文件删除；无依赖/权限/module 变化。
+- [x] `TASK-024.md:63` 现为「治理 22/22、0 警告；单测 105、DAO 27、构建 19-20s」，与门禁实测（23s 运行、19-20s 构建）一致。
+- [x] §8 新增「进入今日页（日期不一致时立即刷新）」与 DST 说明；DST 那句的技术判断正确：`Duration.between(LocalDateTime, LocalDateTime)` 是墙钟差，DST 切换日实际触发点可偏差约 1 小时，不会显示错日期。
+- [x] §9 新增第 1、2 轮修复日志，与 §10 证据行、与三轮评审记录对得上。
 
 ## 3. 架构与数据
 
-- [x] 无 schema 变更；存储格式四处（`DATABASE.md` 2、`Converters`、`verify-dao.mjs` 夹具、`ConvertersTest`）仍一致。
-- [x] `TASK-024` §8 现在准确描述差分 oracle 的定位：只抓单边漂移；`WEEKDAYS_MASK` 变异会红但原因是 `require(mask == weekdayMask)` 抛异常，不是 oracle 判别。§10 M4 的措辞也与 §8 一致了。
-- [x] `EXTERNAL_REVIEW_ANSWERS.md` 补了来源块：逐字粘贴、作者/模型版本/会话 id 未保留、仓库内无法独立核实、只能作设计参考、不能当作「独立第三方已验证」。这句话把该文件的证据地位降到了正确的高度——第 1、2 轮关于「不可核对的外部依据」的阻断到此真正闭合。
+- [x] 本 commit 未触碰任何代码，第 3 轮已确认的架构结论不变：纯函数 `refreshesOn`/`millisUntilNextMidnight` 承载规则，Composable 只做接线；无 schema/迁移改动；`DATABASE.md` 冻结基线未动，「版本区间不得重叠」由 `TASK-023` 承接。
+- [x] 存储格式四处（`DATABASE.md` 2 / `Converters` / `verify-dao.mjs` 夹具 `08:00:00` / `ConvertersTest`）仍一致。
 
 ## 4. 验证证据
 
-### 4.1 门禁（`pwsh -NoProfile -File tools/verify-all.ps1`，串行）
+### 4.1 门禁（`pwsh -NoProfile -File tools/verify-all.ps1`，串行，HEAD=`4a0daef`）
 
 | 步骤 | 实测 | 退出码 |
 |---|---|---|
@@ -42,59 +40,51 @@
 | `git diff --check` | `no whitespace errors` | 0 |
 | 合计 | `RESULT: VERIFY ALL PASS` | **0** |
 
-三个数字全部复现：**105 单测、27 DAO、治理 22/22 · 0 警告、exit 0**。
+### 4.2 累积变异证据（在 `3b58062` / `f700d4b` / `11facff` 上实测；`4a0daef` 代码未变，结论继续有效）
 
-### 4.2 本轮变异（HEAD 实测，逐组还原）
+| 变异 | 结果 | 打中的断言 |
+|---|---|---|
+| 日期格式 `yyyy-M-d`（M1） | 3 红 | `ConvertersTest` ISO 文本 / 往返 / 闰日 |
+| `refresh()` 空实现（M2） | 1 红 | `crossingMidnightShowsTheNewDay` |
+| `>=` → `>`（M3） | 11 红 | 状态规则及其下游 |
+| `else if (day != today)` → `else`（M4） | 5 红 | 含差分，但非唯一 |
+| `WEEKDAYS_MASK` 31→30（ME） | 2 红 | 掩码守卫 + 差分（`require` 抛异常，非 oracle 判别） |
+| `refreshesOn` ON_RESUME→ON_CREATE（MH） | 1 红 | `onlyReturningToTheForegroundRefreshes` |
+| 午夜算术 `plusDays(1)`→`plusDays(2)`（MH2） | 1 红 | `theMidnightTimerAimsAtTheNextLocalMidnight` |
+| `effectiveUntil` 开区间（MA） | 3 红 | 差分 + 2 条旧测试 |
+| `bitFor` 位移旋转（MB） | 7 红 | 差分 + 6 条 |
+| 进入页补刷 `!=` 取反（ENTRY） | 0 红 | UI 接线，已声明缺口 |
 
-| # | 变异 | 位置 | 红 | 打红的测试 | 与作者声明 |
-|---|---|---|---|---|---|
-| R3-MH2 | 午夜算术 `plusDays(1)` → `plusDays(2)` | `TodayPresenter.millisUntilNextMidnight` | **1** | `theMidnightTimerAimsAtTheNextLocalMidnight` | 一致；该变异在抽出前是 105 全绿 |
-| R3-M1 | 日期格式 `yyyy-M-d` | `Converters:18` | **3** | `localDateIsStoredAsIsoText`、`aStoredDateParsesBackToTheSameDay`、`leapDaysSurviveTheRoundTrip` | 一致（已从过期的 2 修正为 3） |
-| R3-ME | `WEEKDAYS_MASK` 31→30 | `ScheduleRules:16` | **2** | `weekdaysMaskIsMondayToFriday` + 差分（`require` 抛异常） | 一致（§8 现已写明红的原因不是 oracle 判别） |
-| R3-ENTRY | 进入页补刷条件 `!=` 取反 | `AppRoot` | **0** | 无，`OK (105 tests)` | UI 接线，见 §6.2（非阻断） |
-
-新增的 4 条断言（23:59:59→1000、00:00→86_400_000、闰日 12h、年末 1h）确实钉住了算术：`plusDays(2)`、`atStartOfDay()→atTime(1,0)` 一类改动都会被至少一条打红，且断言不依赖设备时区（`Duration.between(LocalDateTime, LocalDateTime)` 是墙上时钟差）。
+没有一次变异是「全绿且应当红」；两个曾经零覆盖的接缝（接线规则、午夜算术）现在各自有一条专门的断言把它按住。
 
 ## 5. 文档与分支
 
-- [x] `README.md:15` / `PROJECT_STATUS.md:13` / `TEST_REPORT.md:9` 与 Runs 末行 / `TASK-024` 自动摘要：**105 项**一致；DAO 27/27、治理 22 项一致；`TEST_REPORT` 的变异汇总（M1=3、M2=1、M3=11、M4=5、ME=2、MH=1、MH2=1）与我的实测逐一相符。
-- [x] `TEST_REPORT.md:7` 头部是 `feat/seam-hardening`（`TASK-024`，基线 `main` @ `427e7cc`）。
-- [x] `TASK-024` §5/§6/§8/§11 与自动摘要一致；§10 的 M1（3 项）、M4（不是唯一红线）、ME（require 抛异常）、MH2 四行都与实测一致。
-- [x] `LAST_HANDOFF.md:10` 改为「以 `git log -1 --oneline` 为准」，避免再次被「写死哈希」钉死；`:31` 改为 22/22 · 0 警告并说明 TASK-025 消除了第 1 轮 warning；`:56` 改为等待第 3 轮复评。
-- [ ] **`LAST_HANDOFF.md:9`/`:11` 仍是第 1 轮口径**：`:9` 写「`TASK-024` 第 1 轮 `REJECT` 后修复中，旧 HEAD `3b58062`」（实际已到 `11facff`，且第 2 轮阻断已修）；`:11` 写「正在修 6 条阻断」，与同一文件 `:56` 的「第 2 轮 5 条已修，等待第 3 轮复评」直接冲突。下一会话按 Snapshot 恢复会重做第 1 轮的活。
-- [ ] **`TASK-024.md:63` 的 verify-all 行仍写「单测 104」**（其余 8 处都是 105）。本轮的主题就是「证据按 HEAD 重测」，遗漏的恰是汇总行；同行的「构建 ~25s」实测为 19–20s（量级无妨，可一并改）。
-- [ ] `TASK-024` §9（Implementation Log）没有第 2/3 轮的条目，只有 §10 证据行；不属于硬性要求，但与「Implementation Log 记录实际过程（含失败与重试）」的模板有落差。
+- [x] **计数一致**：`README.md:15` 105、`PROJECT_STATUS.md:13` 105、`TEST_REPORT.md:9` 与 Runs 末行 105、`TASK-024` §6/§10 首行/§11/自动摘要 105、`LAST_HANDOFF:29` 105、本 commit 的 §10 汇总行 105；DAO 27、治理 22 项四处一致。
+- [x] **`LAST_HANDOFF` Snapshot 与 Next Safe Action 现在说同一件事**：`:9`/`:11`/`:56` 都是「第 1、2 轮阻断已修，等待复评」；`:10` 用 `git log -1 --oneline` 避免哈希过期；`:31` 是实测的 22/22 · 0 警告。
+- [x] `EXTERNAL_REVIEW_ANSWERS.md` 的来源声明仍在，明确「逐字粘贴、作者与模型版本未保留、仓库内无法独立核实、只能作设计参考」——`TASK-024` 的立项依据因此可核对到正确的高度。
+- [x] 分支符合 `AGENTS.md` §7：`PARTIAL` 任务留在 `feat/seam-hardening`，未进 `main`；commit 信息聚焦（`docs(seams): align the last two stale lines`）且与实际改动一致。
+- [ ] 非阻断：`LAST_HANDOFF:9/11` 的「等待第 3 轮复评」编号已过期（本轮是第 4 轮）。这是「交接先于评审提交」的必然产物；建议在合入 commit 里顺手改成「等待第 4 轮/待合入」，不构成阻断。
 
 ## 6. 结论
 
-- 结论：`REJECT`
-- 证据：门禁 `VERIFY ALL PASS`（exit 0，`22/22 · 0 warnings`、`OK (105 tests)`、`checks: 27`）；第 2 轮 5 条阻断已关闭（R3-MH2 打红新测试、M1=3/ME=2 与重测值一致、进入页补刷已加、交接与外部答复已改）；**剩余仅 2 处文档事实错误**，各一行，不涉及代码或测试。
-- 需修复项（按严重度编号）：
+- 结论：`APPROVE`
+- 需修复项：**无**（0 条阻断）。
+- 批准依据：
+  1. 门禁在 `4a0daef` exit 0：**105 单测 / DAO 27 / 治理 22·22·0 警告 / 构建 19s / `diff --check` 干净**，与作者声明逐项一致；
+  2. 四轮累计 10 组变异全部打红正确的断言（唯一 0 红的是已声明的 UI 接线），没有「改坏了却全绿」的残留；
+  3. 审查期发现的两个接缝缺口（接线零覆盖、午夜算术零覆盖）都已用「规则抽成纯函数 + 单测」的结构性方式关闭，不是靠加断言凑数；
+  4. 文档在 HEAD 上自洽：105 / 27 / 22 三组数字在 8 处一致，`LAST_HANDOFF` 的 Snapshot 与 Next Safe Action 同口径，外部依据的可信度声明如实；
+  5. `AGENTS.md` §7 的合入条件（构建通过、适用测试通过、任务验收完成、独立 `APPROVE` 记录）全部满足。
+- 合入后应做（不属于本评审阻断，属流程收尾）：
+  1. 合入 `main` 后把 `TASK-024` 状态从 `PARTIAL` 改为 `DONE`，并把 `LAST_HANDOFF` 的轮次编号与 `Next Safe Action` 更新为「TASK-024 已合入，下一条 `TASK-025`」；
+  2. `project/PROJECT_STATUS.md` / `README.md` 的「当前任务」在合入时同步切换为 `TASK-025`（或下一项）；
+  3. 保留本记录于仓库：`AGENTS.md` §5 要求 `DONE` 任务有独立 `APPROVE` 记录。
 
-1. **`TASK-024.md:63` 证据行写「单测 104」**：本轮其余八处（`README:15`、`PROJECT_STATUS:13`、`TEST_REPORT:9`、Runs 末行、§6、§10 首行、§11、自动摘要）都是 105，只有 verify-all 汇总行没跟上。改成 105（顺带把「构建 ~25s」改成实测的 19–20s）。这是本任务第 2 轮自己立的规矩——「证据必须按 HEAD 重测」——的最后一次违反。
+### 6.1 仍然存在、但已声明且被接受的限制（供 `TASK-025`/`TASK-023` 接手）
 
-2. **`LAST_HANDOFF.md:9` 与 `:11` 仍是第 1 轮口径**：`:9` 的「第 1 轮 `REJECT` 后修复中，旧 HEAD `3b58062`」应改为「第 2 轮 5 条阻断已修，HEAD `11facff`，等待第 3 轮复评」；`:11` 的「正在修 6 条阻断」与 `:56` 冲突，应统一为第 2 轮之后的真实状态。`LAST_HANDOFF` 是下一会话唯一入口，Snapshot 与 Next Safe Action 必须说同一件事。
-
-两条都不需要重跑测试或变异：改完即可提交，第 4 轮只需核对这两行与门禁。
-
-### 6.1 三轮阻断的关闭情况
-
-| 轮次/阻断 | 状态 | 证据 |
-|---|---|---|
-| R1-1 `ON_RESUME` 接线零覆盖 | 关闭 | R2-MH 1 红；`refreshesOn` 单测 |
-| R1-2 翻日只覆盖后台→前台 | 关闭 | 午夜定时器 + 进入页补刷；R3-MH2 打红 |
-| R1-3 `LAST_HANDOFF` 未同步 | **本轮仍未关闭**（换了新的过期点） | 见阻断 2 |
-| R1-4 `TEST_REPORT` 头部/警告数 | 关闭 | `:7`、治理实测 22/0 |
-| R1-5 `TASK-024` 自相矛盾/归因/悬空引用 | 关闭（除 §10 汇总行的 104） | §5/§6/§8/§11 一致；外部答复已存在且已标注可信度 |
-| R1-6 差分独立性被夸大 | 关闭 | §8 已写明「只抓单边漂移」「红来自 require 守卫」 |
-| R2-1 午夜算术零覆盖 | 关闭 | R3-MH2 1 红 |
-| R2-2 证据未按 HEAD 重测 | **大部分关闭**，剩 §10 汇总行 | 见阻断 1 |
-| R2-3 前台跨 0 点仍有洞 | 关闭 | `AppRoot` 进入页比较 + 定时器 |
-| R2-4 `LAST_HANDOFF` 提交前快照 | **部分关闭**（`:9`/`:11` 未改） | 见阻断 2 |
-| R2-5 外部答复无出处 | 关闭 | 来源块明确「无法独立核实、只能作设计参考」 |
-
-### 6.2 非阻断（记录，不再要求）
-
-- **进入页补刷比较无测试**（R3-ENTRY：把 `!=` 取反后 105 全绿）。它与 `AppRoot` 的 `event.name` 传参同属已声明的 UI 接线缺口；若将来再动这块，可照样抽一个 `shouldRefreshOnEntry(stateDate, today)` 纯函数，但本轮不要求——代码本身按四种进入路径逐条核对是正确的。
-- **墙上时钟 Duration 的 DST 边界**：`millisUntilNextMidnight` 用 `LocalDateTime` 差，跨夏令时切换日会多睡/少睡最多 1 小时（提前刷或晚 1 小时刷，仍落在同一天，不会显示错日期）。目标用户时区 `Asia/Shanghai` 无夏令时；若要严谨，可在 §8 的「未覆盖」里加一句「夏令时切换日定时器可偏差 ≤1h」。
-- `refresh()` 与 Flow collector 的 last-writer-wins、`LogStatusRoundTripTest` 的内存内序列、差分生成器不含重叠/未来版本：三项已声明；「版本区间不得重叠」已由 `TASK-023` 承接，不再要求本任务处理。
+- `refresh()` 与 Flow collector 的 last-writer-wins 竞争未消除（`TASK-024` §8 已声明）；
+- `LogStatusRoundTripTest` 是内存内序列，不是穿过 Room/converter 的真往返（本机无 Gradle 测试路径，已声明）；
+- 差分 oracle 只抓单边漂移，掩码常量与闭区间约定仍与实现共享（§8 已如实降级，不再宣称「第二双眼睛」）；
+- 差分生成器不产生重叠版本或未来版本；「版本区间不得重叠」由 `TASK-023` 的不变量承接；
+- 前台手动改系统时间/时区、DST 切换日的定时器偏差未覆盖（§8 已列）；
+- UI 接线（`AppRoot` 的 `event.name` 传参与进入页比较）仍只有代码走查，无自动化——等 `TASK-025` 的 instrumented spike 结果。

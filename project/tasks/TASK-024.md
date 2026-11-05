@@ -1,11 +1,11 @@
 # TASK-024: 接缝补洞（转换器、差分、翻日、往返）
 
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-022`
 - 创建日期：`2026-11-05`
-- 完成日期：待评审通过后
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 补上最便宜、又最可能自发现缺陷的接缝测试：存储格式往返、连续天数的差分校验、跨午夜翻日、数值撤销往返。
@@ -67,20 +67,23 @@
 ## 11. Completion Review
 - [x] 验收标准满足（5/5）
 - [x] 测试实际运行（105 项 + 7 组变异）
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（第 4 轮，`4a0daef`）
 
 ## 12. Handoff
 - 之后：`TASK-025` 试 `connectedDebugAndroidTest`。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-024.md`
+- 第 1 轮：`REJECT`（`3b58062`，6 条：接线零覆盖、翻日过度声称、差分独立性、文档不同步、引用不存在文件、任务自相矛盾）
+- 第 2 轮：`REJECT`（`f700d4b`，5 条：午夜算术零覆盖、证据未按 HEAD 重测、前台跨 0 点、handoff 旧口径、外部答复无出处）
+- 第 3 轮：`REJECT`（`11facff`，2 条文档：证据表 104、handoff 第 1 轮口径）
+- 第 4 轮：`APPROVE`（`4a0daef`，0 阻断；10 组变异全部命中正确断言）
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-024
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 5 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (105 tests)**
