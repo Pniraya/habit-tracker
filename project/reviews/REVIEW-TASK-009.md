@@ -1,96 +1,101 @@
 # REVIEW-TASK-009: 独立评审记录
 
 - 审查任务：`TASK-009`
-- 审查 commit：`2e7777b24b610faf6d4c1403f88034844b2e8701`
-- 审查范围：`git diff main...HEAD`（`14eb69d`..`2e7777b`，2 个提交：`c15da03` + `2e7777b`，8 文件 +209/−10）
+- 审查 commit：`1d6d3edd8a1fe1f8a2e3d222d51db4dbcad744de`
+- 审查范围：`git diff main...HEAD`（`14eb69d`..`1d6d3ed`，3 个提交：`c15da03` + `2e7777b` + `1d6d3ed`，11 文件 +343/−32）
 - Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现）
 - 独立性：`INDEPENDENT`
 - 日期：`2026-11-05`
+- 轮次：第 2 轮（复审）。第 1 轮针对 `2e7777b` 的结论为 `REJECT`，仅因 `LAST_HANDOFF.md` / `TEST_REPORT.md` 未记录本次运行；该记录已被本次提交覆盖。
 
-评审时工作区状态：`git status --short` 空（评审前），`git log --oneline -3` = `2e7777b` / `c15da03` / `14eb69d`。评审过程中只做受控变异并立即还原，最终 `git status --short` 仅显示本文件。
+评审时工作区：`git status --short` 空；`git log --oneline -3` = `1d6d3ed` / `2e7777b` / `c15da03`。评审中的变异均用临时副本还原，复核后 `git status --short` 复为空。
 
 ## 1. Scope
 
-**裁决：通过（文件范围符合），但 Scope 中一处承诺未兑现（见 §5）。**
+**裁决：通过。**
 
-- 改动文件与 TASK-009 §5 Expected Files 对应：新增 `tools/verify-all.ps1`、`ADR-014`、`TASK-009.md`；修改 `AGENTS.md`、`TASK_TEMPLATE.md`、`check-governance.ps1`、`README.md`、`PROJECT_STATUS.md`。
-- 无顺手重构、无产品代码、无依赖、无 Gradle/module、无权限、无 schema（与 §4 Out of Scope 一致）。
-- 唯一不符：§5 把 `project/handoffs/LAST_HANDOFF.md` 列为修改文件，实际 diff 未触及，详见 §5。
+- 文件与 TASK-009 §5 Expected Files 全部对应：新增 `tools/verify-all.ps1`、`ADR-014`、`TASK-009.md`；修改 `AGENTS.md`（§5）、`TASK_TEMPLATE.md`（§10）、`tools/check-governance.ps1`（第 21 项）、`README.md`、`PROJECT_STATUS.md`、`LAST_HANDOFF.md`、`TEST_REPORT.md`、`TASK-009.md`，以及本次提交纳入的 `REVIEW-TASK-009.md`。
+- 无产品代码、无依赖、无 module、无权限、无 schema 改动（`git diff main...HEAD --name-only` 只含 markdown 与 `tools/*.ps1`）。
+- 无顺手重构：`check-governance.ps1` 仅追加第 21 项及其配套注释，既有 20 项未改。
 
 ## 2. Diff 核对
 
 **裁决：通过。**
 
-- 每个文件都能对应到验收项：脚本对应 §6 第 1 项，第 21 项对应第 3 项，AGENTS/TEMPLATE 对应第 4 项，README/STATUS 对应 §3 最后一行。
-- `tools/check-governance.ps1` 的改动是纯追加（`+11/−0`），未改动既有 20 项判断逻辑，未删除或绕过任何测试。
 - `git diff --check`：**exit 0**，无空白错误；检查器「冲突标记」项 PASS。
-- 第 21 项切点 `[int]$Matches[1] -lt 9` 与第 18 项的 `-lt 7`（`check-governance.ps1:330`）写法一致；豁免在 `ADR-014` 决策 4 明文记录（`TASK-001`~`TASK-008` 为历史记录），并在 `README.md:73`、`TASK_TEMPLATE.md:42` 复述。**属于有意设计且已有文档，不是漏掉的硬编码。**
+- 提交聚焦：`c15da03` 实现门禁 + 基线修订（同 commit 带 `ADR-014`）；`2e7777b` 只删一句指向未创建任务文件的引用；`1d6d3ed` 只补证据与检查器锚定。没有把不相关改动塞进同一提交。
+- 第 21 项锚定在 §10 表格行，而非全文任意提及（见 §4 变异 A）：`check-governance.ps1:351-354` 先按 `## 10. Verification Evidence` 切段，再要求 `(?m)^\|[^\r\n]*verify-all[^\r\n]*\|`。
+- 切点 `[int]$Matches[1] -lt 9` 与第 18 项 `-lt 7` 同构；豁免在 `ADR-014` 决策 4、`README.md:73`、`TASK_TEMPLATE.md:42` 三处记录，属有意设计。
 
 ## 3. 架构与数据
 
-**裁决：通过（不涉及架构/数据面），受保护基线的授权判定为「依据成立但偏薄」。**
+**裁决：通过。**
 
-- 不触及 `ARCHITECTURE.md`/`DATABASE.md` 的行为约束、分层、schema、迁移；无 Room/Composable/DAO 改动。
-- `AGENTS.md` 属于 §11 受保护基线：本 commit 内同时带 ADR，检查器「baseline changes carry an ADR」PASS。
-- 授权链核对：`ADR-014` 记录了用户原话「你来决定便是」，并说明该指令紧接 AI「补 `verify-all.ps1`」的提议。这满足 §11 的书面要求（ADR + 指令来源），且上下文就是本脚本，**不构成越权**。
-- 但 ADR 对提议内容只是转述（「补 `verify-all.ps1`，约 30 分钟……」），没有记录该提议同时包含「改 `AGENTS.md` §5 与 `TASK_TEMPLATE.md` §10」。读者无法从 ADR 本身确认用户批准了受保护文件的修改。判定为**非阻塞的薄弱点**（见 §6 建议 4）。
+- 不触及 `ARCHITECTURE.md`/`DATABASE.md` 的分层、schema、迁移、日期口径；无 Room/Composable/DAO/Receiver 改动。
+- `AGENTS.md` 是 §11 受保护基线：同 commit 内带 `ADR-014`，检查器「baseline changes carry an ADR」PASS。
+- 授权链：`ADR-014` 记录用户原话「你来决定便是」及其紧接的 AI 提议；本轮新增「受保护文件的最小改动」一节，逐条写明 `AGENTS.md` §5 删 3 行/增 4 行、`TASK_TEMPLATE.md` §10 增 1 条要求与示例，并声明其余基线文档未动。经与 `git diff main...HEAD -- AGENTS.md` 核对，行数与范围**一致**。授权依据成立，不构成越权。
+- 未改任何产品行为，故不涉及 ADR 与架构一致性冲突。
 
 ## 4. 验证证据
 
-**裁决：通过（脚本行为与记录数字经实测复核）。**
+**裁决：通过（脚本行为、失败传播与第 21 项均经变异实测）。**
 
-| 复核项 | 我实际执行 | 结果 |
+| 复核项 | 实际执行 | 结果 |
 |---|---|---|
-| 治理检查 | `pwsh -NoProfile -File tools/check-governance.ps1` | 21/21 PASS，exit **0** |
-| 统一入口 | `pwsh -NoProfile -File tools/verify-all.ps1` | VERIFY ALL PASS，exit **0**；步进 7s/29s/25s，构建 24s，单测 `OK (40 tests)` |
+| 统一入口 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**，exit **0**；治理 7s / 单测 25s `OK (40 tests)` / 构建 21s `BUILD SUCCESSFUL` / 空白 0s |
+| 治理检查 | `pwsh -NoProfile -File tools/check-governance.ps1` | `SUMMARY: 21 checks, 21 passed, 0 warnings, 0 failed` / `RESULT: OK`，exit **0** |
 | 空白检查 | `git diff --check` | exit **0** |
-| 单步失败是否传递 | 删掉 `TASK-009` 中 `verify-all` 字样后跑 verify-all | 治理步 exit **1**（`[FAIL] verify-all evidence  TASK-009 has no verify-all evidence`），其余三步 exit 0，汇总 `RESULT: VERIFY ALL FAILED (check-governance.ps1)`，进程 exit **1** |
-| 后失败是否掩盖先失败 | 同时注入治理违规 + 行尾空白 | 治理 exit 1、空白 exit 2，汇总同时列出两步，`uncommitted changes: 2 file(s)`，进程 exit **1**；后一步没有掩盖前一步 |
-| 第 21 项是否空转 | 仅保留 §5 Scope 里的 `tools/verify-all.ps1` 提及，删除 §10 证据行与其余字样 | 仍 **21/21 PASS**（详见 §6 建议 1） |
-| 变异还原 | — | 两次变异后 `git status --short` 均恢复为空 |
+| 变异 A：保留 §5 的 `verify-all` 提及，替换 §10 证据行 | 改动后运行 checker | `[FAIL] verify-all evidence  TASK-009 has no verify-all evidence row in section 10`，20 passed / 1 failed，exit **1**；此时文件内仍有 12 处 `verify-all` 字样——**锚定生效，不再被任意提及骗过** |
+| 变异 B：§10 行改成 `| verify-all | TBD | TBD |` | 改动后运行 checker | 仍 21/21 PASS（见 §7 建议 1，非阻塞） |
+| 变异还原 | 从临时副本恢复 | `git status --short` 空，`git diff --check` exit 0 |
+| 门禁失败传播（第 1 轮已实测，代码未改） | 仅治理违规 / 治理+空白双违规 | 前者 exit 1 且后三步仍 exit 0，汇总 `FAILED (check-governance.ps1)`；后者汇总两步、exit 1——早失败不被掩盖，后失败不掩盖先失败 |
 
-- TASK-009 §10 声称的「21 项检查」「40 项单测」**可精确复现**；「`assembleDebug` 22s」我实测 21s/24s/25s（三次），**秒数不可精确复现**，量级正确，不作为缺陷。
-- 「首次 FAIL 于 `ADR-014 not covered by PROJECT_STATUS`」这一历史陈述无法在不回退 `PROJECT_STATUS.md` 的前提下复现；对应当前状态已修复，不记为伪造。
-- 构建失败、单测失败这两条分支未直接注入：两者与治理步使用同一 `$LASTEXITCODE` 机制，治理步已实测通过；作为「未直接验证项」记录。
+- `assembleDebug` 秒数：本轮实测 20s / 21s，第 1 轮 21/24/25s；TASK-009 §10 写的 22s 属同一量级，非精确可复现，不作为缺陷。
+- 未直接注入构建失败/单测失败分支（与已实测的治理步共用 `$LASTEXITCODE` 机制），如实记为未直接验证项。
 
 ## 5. 文档与分支
 
-**裁决：不通过（两份状态文档与实际不符）。**
+**裁决：通过（上轮两项阻塞已闭合）。**
 
-已同步、核对无误的部分：
-- `README.md:12` 当前任务 `TASK-009`；`:58` 新增 `verify-all` 命令行；`:73` 检查数 21 项——与实际 21 项一致。
-- `PROJECT_STATUS.md` 当前任务 `TASK-009`、ADR 列表 `ADR-001`~`ADR-014`、工具列表含 `check-governance.ps1`（21 项）与 `tools/verify-all.ps1`、最近治理检查 21 项 PASS——均与实际一致。
-- 分支：`TASK-009` 为 `PARTIAL` 且留在 `feat/verify-all-gate`，检查器「partial tasks registered」PASS；两个 commit 信息与内容相符。
+- `README.md`：当前任务 `TASK-009`、命令表含 `verify-all`、检查器「21 项」——与实际 21 项一致。
+- `PROJECT_STATUS.md`：当前任务 `TASK-009`、ADR 列表 `ADR-001`~`ADR-014`、工具列表含 `verify-all.ps1` 与「`check-governance.ps1`（21 项）」、最近治理检查 21 项 PASS——一致。
+- `LAST_HANDOFF.md`：Snapshot 已改为 `TASK-009` / `feat/verify-all-gate` / `main` @ `14eb69d`；`Verification Actually Run` 首行为 `verify-all` 并给出 21/21 与分步耗时；`Next Safe Action` 已改为「复审 `REVIEW-TASK-009.md` → Room/DAO 运行时验证」。检查器「handoff snapshot filled」PASS。
+- `TEST_REPORT.md`：`Latest Run` 改为 `tools/verify-all.ps1` PASS（治理 21/21 + 40 项 + 构建 + 空白）；`Runs` 追加 3 行（首次 FAILED / 第 21 项负向验证 / 补登记后 PASS），最后一行为 PASS，故「test report summary matches」PASS——实测确认。
+- `TASK-009`：§11「文档/状态已更新」现已成立；`close-task` 摘要更新为 `VERIFY ALL PASS`。
+- 分支与提交：`TASK-009` 仍为 `PARTIAL` 留在 `feat/verify-all-gate`，检查器「partial tasks registered」PASS；三个提交信息与内容相符。
 
-不符合项（阻塞）：
-1. **`project/handoffs/LAST_HANDOFF.md` 未更新。** Snapshot 仍是「当前任务 `TASK-008`（`DONE`…）」「`main` @ `d7998ad`」「`check-governance.ps1` 20/20 PASS」，`Next Safe Action` 仍写着「独立复审 `REVIEW-TASK-008.md`」。而 TASK-009 §5 明确把该文件列为修改项、§11 已勾选「文档/状态已更新」。下个会话按 §8 读交接会被直接误导回 TASK-008。
-2. **`project/reports/TEST_REPORT.md` 未记录本次运行。** `Latest Run` 仍是 `main` @ `d7998ad`、治理 20/20，`Runs` 表没有 `verify-all` 行；这与 `PROJECT_STATUS.md:14` 的「21 项检查 PASS」直接矛盾，也不满足 `REVIEW_CHECKLIST.md` §3 第 1 条。
-3. 由 1、2 派生：TASK-009 §11「文档/状态已更新」的勾选与事实不符（应改为未完成，或在补完后再勾）。
+## 6. 第 2 轮复审：上轮阻塞项闭合情况
 
-补充说明：这两处恰好是 21 项检查抓不到的盲区——第 21 项只看 TASK 文件里有没有 `verify-all` 字样，交接与测试报告不在其覆盖范围。ADR-014 把该信任边界交给 Reviewer，本次即按此判定。
+| 上轮阻塞项 | 本轮证据 | 状态 |
+|---|---|---|
+| `LAST_HANDOFF.md` 仍停留在 `TASK-008` / `main @ d7998ad` / 20/20 | Snapshot 三项均改写为 TASK-009 / `feat/verify-all-gate` / 21/21；新增 `verify-all` 证据行与新 Next Safe Action（见 `git diff 2e7777b..1d6d3ed`） | **已闭合** |
+| `TEST_REPORT.md` 无本次运行记录，且与 `PROJECT_STATUS.md` 的 20/21 矛盾 | `Latest Run` 改为 verify-all PASS、治理 21/21；`Runs` 增 3 行；最后一行为 PASS，汇总检查 PASS | **已闭合** |
+| TASK-009 §11「文档/状态已更新」与实际不符 | 上述两文件补齐后该勾选成立 | **已闭合** |
+| （非阻塞建议）第 21 项可被任意提及骗过 | 已改为按 §10 表格行锚定；变异 A 实测 FAIL，消息为 `no verify-all evidence row in section 10` | **已采纳** |
+| （非阻塞建议）ADR 未逐字记录授权到哪些基线改动 | 新增「受保护文件的最小改动」一节，行数与实际 diff 一致 | **已采纳** |
 
-## 6. 结论
+## 7. 结论
 
-- 结论：`REJECT`
-- 判定说明：门禁工具本身可用、可失败、不掩盖失败，第 21 项也确实有真实效果；但本次变更同时声称完成了交接与测试报告同步，实际两份文档仍停留在 `TASK-008`，属于 `REVIEW_CHECKLIST.md` §3/§4 的明确未通过项，且会被下一次会话直接采信。修复范围仅为文档，不需要改动脚本。
-- 证据（命令与实测退出码）：
-  - `pwsh -NoProfile -File tools/check-governance.ps1` → `SUMMARY: 21 checks, 21 passed, 0 warnings, 0 failed` / `RESULT: OK` / exit **0**
-  - `pwsh -NoProfile -File tools/verify-all.ps1` → `RESULT: VERIFY ALL PASS` / exit **0**（治理 7s、单测 29s `OK (40 tests)`、构建 24s `BUILD SUCCESSFUL`、空白 0s）
-  - `git diff --check` → 无输出 / exit **0**
-  - 负向验证 1（仅治理违规）：verify-all 治理步 exit **1**，其余 3 步 exit 0，进程 exit **1** —— 早失败不会被后续 PASS 掩盖
-  - 负向验证 2（治理 + 行尾空白）：治理 exit 1、空白 exit 2，`RESULT: VERIFY ALL FAILED (check-governance.ps1, git diff --check)`，进程 exit **1** —— 两步失败都被汇总
-  - 负向验证 3（第 21 项）：删掉 TASK-009 的 `verify-all` 字样 → `[FAIL] verify-all evidence`，21 项中 1 failed，exit **1**；还原后 21/21 PASS
-  - 变异均以临时副本还原，复核后 `git status --short` 为空（仅剩本评审文件）
-- 需修复项：
-  1. 更新 `project/handoffs/LAST_HANDOFF.md`：Snapshot 的当前任务/阶段/分支改为 `TASK-009`（`PARTIAL`，`feat/verify-all-gate`）、治理 21/21、`verify-all` 入口；`Verification Actually Run` 增加 `verify-all` 与 21/21 行；`Next Safe Action` 改为「复审通过后合入 `main`」。
-  2. 在 `project/reports/TEST_REPORT.md` 增加 `TASK-009` 的 `Runs` 行（`verfy-all` 全通过、21 项治理、40 项单测、构建耗时、负向验证），并把 `Latest Run` 更新为本次结果，消除与 `PROJECT_STATUS.md:14` 的 20/21 矛盾。
-  3. 上述两项完成后修正 TASK-009 §11「文档/状态已更新」的勾选，或保持未勾选直至补完。
+- 结论：`APPROVE`
+- 证据（本轮实际命令与退出码）：
+  - `pwsh -NoProfile -File tools/verify-all.ps1` → `RESULT: VERIFY ALL PASS`，exit **0**（治理 7s、单测 25s `OK (40 tests)`、构建 21s、空白 0s）
+  - `pwsh -NoProfile -File tools/check-governance.ps1` → `SUMMARY: 21 checks, 21 passed, 0 warnings, 0 failed` / `RESULT: OK`，exit **0**
+  - `git diff --check` → 无输出，exit **0**
+  - 变异 A（§10 证据行去掉 `verify-all`，§5 提及保留）→ `[FAIL] verify-all evidence  TASK-009 has no verify-all evidence row in section 10`，20 passed / 1 failed，exit **1**
+  - 变异 B（§10 行改为 `| verify-all | TBD | TBD |`）→ 21/21 PASS，exit **0**（残余弱点，见建议 1）
+  - 还原后 `git status --short` 空、`git diff --check` exit **0**
+- 结论说明：门禁可用、可失败、不掩盖失败；第 21 项已从「字样存在」收紧为「§10 表格行存在」并经变异验证；受保护基线的 ADR 记录已具体到行数；上轮两项文档阻塞均已闭合，无新阻塞项。
 
-### 非阻塞建议（不计入需修复项）
+### 非阻塞建议（不影响本结论）
 
-1. 第 21 项是「字样存在」检查，不是「证据」检查：我保留 `TASK-009.md:17` 的 `tools/verify-all.ps1`（Scope 行），删掉 §10 证据行与其余全部字样后，检查器仍 21/21 PASS。建议锚定 §10 表格行（例如匹配 `^\|\s*`pwsh -NoProfile -File tools/verify-all\.ps1`\s*\|\s*(?!TBD)`）或要求出现带退出码/结论的行；至少把 ADR-014 与 TASK-009 §8 的措辞从「存在证据」改为「出现该命令字样」，避免高估这项检查。
-2. `verify-all.ps1:52-55` 的 `git diff --check` 失败时不打印定位信息：步骤体的管道输出被 `$whitespace = Invoke-Step ...` 吞掉（我注入行尾空白时，页面只剩 `exit 2`，具体 `文件:行 trailing whitespace` 不可见），且该步不像前 3 步那样写日志。建议改为 `git diff --check 2>&1 | Tee-Object -FilePath .gradle/logs/verify-whitespace.log`。
-3. `verify-all.ps1:26` 的 `$LASTEXITCODE` 可能是上一步残留：若某步体内没有原生命令（例如 `pwsh` 不存在），会复用它之前的值而误判。建议在 `& $Body` 前置 `$LASTEXITCODE = 0`。
-4. ADR-014「用户授权来源」建议逐字引用当轮提议（含「同步修改 `AGENTS.md` §5 与 `TASK_TEMPLATE.md` §10」），而非转述脚本部分，使 §11 要求的「依据与来源」可独立核验。按本次会话记录，「你来决定便是」紧接该提议，判定为授权成立、非越权。
-5. 构建秒数口径不统一：`README.md:14`「38s」、TASK-009 §10「22s」，我实测 21s/24s/25s。建议文档统一用「约 20–25s」或注明测量时机，避免后续会话把某个秒数当验收阈值。
-6. 未直接注入构建失败/单测失败两条分支（机制与已实测的治理步相同）；如需完全闭环，可在临时克隆里破坏一个测试再跑一次 verify-all。
+1. 第 21 项仍不校验行内容：变异 B 中 `| verify-all | TBD | TBD |` 依然 PASS。建议再加一道廉价约束，例如该行不得同时出现 `TBD`/`NOT_RUN`，或要求含 `PASS` 字样。这与 `ADR-014`「不验证证据新鲜度」的信任边界一致，但 `TBD` 连「证据」都不是。
+2. `ADR-014`「`TASK_TEMPLATE.md` §10：增加 1 行要求与 1 行示例表头」措辞不准：实际是新增 1 行要求 + 替换 1 行示例数据行，表头未变。建议改为「示例行」。
+3. `LAST_HANDOFF.md` 的 `Files Changed` 把 `TASK-008` 的产品源码（`app/src/main/...`、`app/src/test/...`）与 `tools/close-task.ps1`、`run-unit-tests.ps1`、`TASK-008.md` 一并列入本次「修改」。虽可解释为跨会话累计，但容易被读成 TASK-009 动过产品代码。建议分成「本任务（TASK-009）」与「历史（TASK-008）」两段。
+4. `tools/verify-all.ps1:52-55` 的 `git diff --check` 失败时看不到定位信息：步骤体输出被 `$whitespace = Invoke-Step ...` 吞掉（第 1 轮注入行尾空白时只剩 `exit 2`），且该步不写日志。建议 `git diff --check 2>&1 | Tee-Object -FilePath .gradle/logs/verify-whitespace.log`。
+5. `tools/verify-all.ps1:26` 的 `$LASTEXITCODE` 可能是上一步残留；建议 `& $Body` 前重置为 0。
+6. `TASK-009` §5 Expected Files 未列 `project/reviews/REVIEW-TASK-009.md`（它随后被提交进来）；纯文档整洁问题。
+7. `TASK-009` §10 的「`assembleDebug` 22s」与实测 20–21s 有 1–2 秒差；建议统一写成区间（如「约 20–25s」）。
+
+### 提交提醒
+
+本评审记录覆盖的是已入库的 `REVIEW-TASK-009.md`（第 1 轮内容），本次 `APPROVE` 为工作区改动，需随任务一起提交；TASK-009 置 `DONE` 后第 18 项会读取本文件的 `INDEPENDENT` 与 `APPROVE`，请勿在提交前再改写结论字段。

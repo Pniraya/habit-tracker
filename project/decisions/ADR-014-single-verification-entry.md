@@ -21,7 +21,7 @@
 ## 受保护文件的最小改动
 
 - `AGENTS.md` §5「建议命令」段：删除 3 行旧命令，新增 4 行（单入口 + 定位失败 + `gradlew test` 不可用的告警 + 其他检查）。§5 其余条款未动。
-- `project/tasks/TASK_TEMPLATE.md` §10：增加 1 行要求与 1 行示例表头。
+- `project/tasks/TASK_TEMPLATE.md` §10：增加 1 行要求，并把示例数据行换成 `verify-all` 行。
 - 除此之外未改动任何基线文档；`ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`、`project/REQUIREMENTS.md` 均未触碰。
 
 ## 被否决的方案

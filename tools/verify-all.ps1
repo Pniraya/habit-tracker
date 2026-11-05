@@ -22,6 +22,7 @@ function Invoke-Step([string]$Name, [scriptblock]$Body) {
     Write-Host ''
     Write-Host ('--- ' + $Name + ' ---') -ForegroundColor Cyan
     $started = Get-Date
+    $global:LASTEXITCODE = 0
     & $Body
     $exit = $LASTEXITCODE
     $seconds = [int]((Get-Date) - $started).TotalSeconds
@@ -50,7 +51,8 @@ $build = Invoke-Step 'assembleDebug' {
 }
 
 $whitespace = Invoke-Step 'git diff --check' {
-    git diff --check
+    $report = git diff --check
+    $report | Tee-Object -FilePath (Join-Path $logDir 'verify-whitespace.log') | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -eq 0) { Write-Host 'no whitespace errors' }
 }
 

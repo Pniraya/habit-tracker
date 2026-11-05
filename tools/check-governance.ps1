@@ -351,7 +351,9 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     $sections = $taskText -split '## 10\. Verification Evidence', 2
     if ($sections.Count -lt 2) { $gateProblems += ($f.BaseName + ' has no Verification Evidence section'); continue }
     $evidence = ($sections[1] -split "\n## ", 2)[0]
-    if ($evidence -notmatch '(?m)^\|[^\r\n]*verify-all[^\r\n]*\|') { $gateProblems += ($f.BaseName + ' has no verify-all evidence row in section 10') }
+    $row = [regex]::Match($evidence, '(?m)^\|[^\r\n]*verify-all[^\r\n]*\|').Value
+    if (-not $row) { $gateProblems += ($f.BaseName + ' has no verify-all evidence row in section 10') }
+    elseif ($row -match 'TBD|NOT_RUN') { $gateProblems += ($f.BaseName + ' verify-all evidence row is still a placeholder') }
 }
 if ($gateProblems.Count -eq 0) { Add-Pass 'verify-all evidence' 'post-ADR-014 tasks record a verify-all run' }
 else { Add-Fail 'verify-all evidence' ($gateProblems -join '; ') }

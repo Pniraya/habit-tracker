@@ -18,8 +18,13 @@
 - `TASK-009` 首轮独立评审 `REJECT`：`LAST_HANDOFF`/`TEST_REPORT` 未记录本次运行（正是本任务要防的失败），已补
 
 ## Files Changed
+本任务（TASK-009）：
 - 新增：`tools/verify-all.ps1`、`project/decisions/ADR-014-single-verification-entry.md`、`project/tasks/TASK-009.md`、`project/reviews/REVIEW-TASK-009.md`
-- 修改：`AGENTS.md`（§5，受保护文件，依据 `ADR-014`）、`project/tasks/TASK_TEMPLATE.md`（§10）、`tools/check-governance.ps1`（第 21 项）、`tools/close-task.ps1`、`tools/run-unit-tests.ps1`、`README.md`、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/tasks/TASK-008.md`、`app/src/main/java/com/habittracker/domain/{repository,usecase}/*`、`app/src/test/java/com/habittracker/domain/usecase/*`
+- 修改：`AGENTS.md`（§5，受保护文件，依据 `ADR-014`）、`project/tasks/TASK_TEMPLATE.md`（§10）、`tools/check-governance.ps1`（第 21 项）、`tools/close-task.ps1`、`README.md`、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/tasks/TASK-009.md`
+
+历史（本会话早前完成，不属于 TASK-009）：
+- TASK-008 产品源码：`app/src/main/java/com/habittracker/domain/{repository,usecase}/*`、`app/src/test/java/com/habittracker/domain/usecase/*`、`tools/run-unit-tests.ps1`
+- `project/tasks/TASK-008.md`、`project/reviews/REVIEW-TASK-008.md`
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |

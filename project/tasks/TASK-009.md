@@ -1,11 +1,11 @@
 # TASK-009: 单一验证入口 verify-all
 
-- 状态：`PARTIAL`（实现与验证完成，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE`，合入 `main`）
 - 阶段：`Gate 2`
 - 优先级：`P1`
 - 依赖：无
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 把"治理检查 + 单元测试 + 构建 + 空白检查"收敛为一条命令，使交付门禁不再依赖执行者记忆；用检查器强制新任务留下该命令的证据。
@@ -26,6 +26,7 @@
 ## 5. Expected Files
 - 新增：`tools/verify-all.ps1`、`project/decisions/ADR-014-single-verification-entry.md`、`project/tasks/TASK-009.md`
 - 修改：`AGENTS.md`、`project/tasks/TASK_TEMPLATE.md`、`tools/check-governance.ps1`、`README.md`、`project/PROJECT_STATUS.md`、`project/handoffs/LAST_HANDOFF.md`
+- 评审记录：`project/reviews/REVIEW-TASK-009.md`（`DONE` 任务的必需证据）
 
 ## 6. Acceptance Criteria
 - [x] `tools/verify-all.ps1` 依次跑治理检查、单测、构建、空白检查，任一步失败时退出码非零
@@ -51,7 +52,7 @@
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（首次 FAIL） | 首次运行在治理检查步 FAIL：`ADR-014 not covered by PROJECT_STATUS`（新 ADR 未登记），已补登记后重跑全通过；单测 40 项、`assembleDebug` 22s、`git diff --check` 干净 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（首次 FAIL） | 首次运行在治理检查步 FAIL：`ADR-014 not covered by PROJECT_STATUS`（新 ADR 未登记），已补登记后重跑全通过；单测 40 项、`assembleDebug` 21s、`git diff --check` 干净 |
 
 ## 11. Completion Review
 - [x] 验收标准全部满足（5/5）
@@ -60,20 +61,21 @@
 - [x] Diff 已审查：无产品代码、无依赖、无 schema 改动
 - [x] 文档/状态已更新
 - [x] 未完成项已明确记录（CI、hook 按 ADR-014 否决）
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（复审通过，`REVIEW-TASK-009.md` @ `1d6d3ed`）
 
 ## 12. Handoff
 - 下一步：独立复审后合入 `main`；随后开新任务做 Room/DAO 集成测试（任务文件尚未创建）。
 
 ## 13. Independent Review
 - Reviewer record：`project/reviews/REVIEW-TASK-009.md`
-- 结论：`PENDING`
+- 首轮结论：`REJECT`（2026-11-05，commit `2e7777b`）：`LAST_HANDOFF`/`TEST_REPORT` 未记录本次运行；并指出第 21 项"任意提及即通过"偏空转。
+- 复审结论：`APPROVE`（2026-11-05，commit `1d6d3ed`）：两份文档已同步，第 21 项改为锚定 §10 证据表并经变异验证（保留 12 处字样仍 FAIL）。
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-009
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 2
 - 验收：通过 5 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **VERIFY ALL PASS**（exit 0）
