@@ -2,21 +2,27 @@ package com.habittracker.feature.today
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.habittracker.data.local.entity.TrackingType
@@ -44,41 +51,57 @@ fun TodayScreen(
 ) {
     var numericTarget by remember { mutableStateOf<TodayHabit?>(null) }
 
-    Column(modifier = modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-        Text(
-            text = "今日 · " + state.date.format(DateTimeFormatter.ofPattern("M 月 d 日")),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = 20.dp, bottom = 4.dp),
-        )
-
-        if (lastError != null) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
             Text(
-                text = lastError,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.fillMaxWidth().clickable { onDismissError() }.padding(vertical = 8.dp),
+                text = "今日 · " + state.date.format(DateTimeFormatter.ofPattern("M 月 d 日")),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = 20.dp, bottom = 4.dp),
             )
+
+            if (lastError != null) {
+                Text(
+                    text = lastError,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth().clickable { onDismissError() }.padding(vertical = 8.dp),
+                )
+            }
+
+            when {
+                state.isLoading -> Text("读取中…", style = MaterialTheme.typography.bodyMedium)
+                state.habits.isEmpty() -> Column {
+                    Text(
+                        "还没有习惯。先创建一个，今天就会出现。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
+                    )
+                    Button(onClick = onCreate) { Text("新建习惯") }
+                }
+                else -> LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    // Leave room so the last row is not hidden behind the create button.
+                    contentPadding = PaddingValues(bottom = 88.dp),
+                ) {
+                    items(state.habits, key = { it.id }) { habit ->
+                        HabitRow(
+                            habit = habit,
+                            onToggle = { onToggle(habit.id) },
+                            onRecord = { numericTarget = habit },
+                        )
+                    }
+                }
+            }
         }
 
-        when {
-            state.isLoading -> Text("读取中…", style = MaterialTheme.typography.bodyMedium)
-            state.habits.isEmpty() -> Column {
-                Text(
-                    "还没有习惯。先创建一个，今天就会出现。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-                )
-                Button(onClick = onCreate) { Text("新建习惯") }
-            }
-            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(state.habits, key = { it.id }) { habit ->
-                    HabitRow(
-                        habit = habit,
-                        onToggle = { onToggle(habit.id) },
-                        onRecord = { numericTarget = habit },
-                    )
-                }
+        // The empty state owns its own button; once habits exist this is the only create entry.
+        if (TodayPresenter.showsCreateAction(state)) {
+            FloatingActionButton(
+                onClick = onCreate,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "新建习惯")
             }
         }
     }
@@ -112,6 +135,7 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
                     onValueChange = { text = it },
                     label = { Text("实际完成") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
             }
         },

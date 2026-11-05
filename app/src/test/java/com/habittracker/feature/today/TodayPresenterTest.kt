@@ -160,6 +160,37 @@ class TodayPresenterTest {
     }
 
     @Test
+    fun theCreateActionAppearsOnlyOnceTheListHasRows() {
+        assertFalse(TodayPresenter.showsCreateAction(TodayUiState(monday, emptyList(), isLoading = false)))
+        // Loading with rows still hides the action: the list is not real yet.
+        val loading = TodayUiState(
+            date = monday,
+            habits = listOf(
+                TodayHabit(
+                    id = 1,
+                    name = "x",
+                    icon = "star",
+                    color = "#5B8C6A",
+                    trackingType = TrackingType.BOOLEAN,
+                    targetValue = 1.0,
+                    unit = null,
+                    isScheduledToday = true,
+                    status = null,
+                    actualValue = 0.0,
+                ),
+            ),
+            isLoading = true,
+        )
+        assertFalse(TodayPresenter.showsCreateAction(loading))
+
+        val id = createHabit(TrackingType.BOOLEAN, "Read")
+        val state = presenter().state.value
+        assertEquals(1, state.habits.size)
+        assertTrue(TodayPresenter.showsCreateAction(state))
+        assertNotNull(id)
+    }
+
+    @Test
     fun archivedHabitsLeaveTheList() {
         val id = createHabit(TrackingType.BOOLEAN, "Read")
         runBlocking { ArchiveHabitUseCase(repository)(id, monday, now) }

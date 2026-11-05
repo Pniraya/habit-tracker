@@ -99,5 +99,12 @@ class TodayPresenter(
 
     companion object {
         const val NUMERIC_NEEDS_INPUT: String = "数值习惯需要输入数值，暂不支持一键完成"
+
+        /**
+         * The create action is always reachable. The empty state renders its own button inside the
+         * body, so the floating action only appears once there is a list to sit above; the rule lives
+         * here rather than in the composable so it can be tested on the JVM.
+         */
+        fun showsCreateAction(state: TodayUiState): Boolean = !state.isLoading && state.habits.isNotEmpty()
     }
 }
