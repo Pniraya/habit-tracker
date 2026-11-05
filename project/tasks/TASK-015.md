@@ -1,57 +1,85 @@
-# TASK-015: 治理检查补计数一致性
+# TASK-015: 治理检查补计数一致性与中文占位符
 
-- 状态：`NOT_STARTED`
+- 状态：`PARTIAL`（实现与负向验证完成，等待独立评审）
 - 阶段：`Gate 3`
 - 优先级：`P2`
-- 依赖：`TASK-012`（领域与仓储现状）、`TASK-013`
+- 依赖：`TASK-012`（暴露盲区）、`TASK-013`（评审建议）
 - 创建日期：`2026-11-05`
 - 完成日期：`TBD`
 
 ## 1. Objective
-让 `tools/check-governance.ps1` 能发现「`TEST_REPORT` 的 `Latest Run` 计数与最后一条 `Runs` 行不一致」这类问题——`TASK-012` 就在这种不一致下通过过检查。
+让 `tools/check-governance.ps1` 能发现两类此前漏过的假证据：`TEST_REPORT` 的 `Latest Run` 计数与最后一次运行不一致；已开工的任务在 §10 仍写着「未运行」。
 
 ## 2. Context
-`TASK-012` 第 2 轮评审发现：`Latest Run` 写 57、`Runs` 末行是 58，治理检查仍通过。第 15 项只比对日期与 `PASS`/`FAILED` 字样，不比对计数；第 21 项只查 verify-all 行是否存在。
+`TASK-012` 第 2 轮评审发现：`Latest Run` 写「单测 57 项」、`Runs` 末行是 `OK (58 tests)`，而治理检查**依然通过**。第 15 项只比对日期与 `PASS`/`FAILED` 字样，不比对计数。
+`TASK-013` 第 1 轮评审进一步指出：第 21 项的正则只认英文 `TBD|NOT_RUN`，中文「未运行」能直接通过。
 
 ## 3. Scope
-- 解析 `Latest Run` 的 `单测 N 项`，与 `Runs` 表最后一条匹配行的 `OK (N tests)` 比对，不一致即失败。
-- 对 `TASK-0xx` 的「最近测试记录（自动生成）」做同样比对。
-- 新增检查需要正/反例自测，现有 59 项单测不受影响。
+- 第 15 项：从 `Latest Run` 摘要块抽出 `单测 N 项`，与 `Runs` 表中最后一次 `OK (N tests)` 的 N 比对，不一致即 `FAIL`。
+- 第 21 项：`未运行|未执行|尚未` 也视为占位符，但**仅当任务状态不是 `NOT_STARTED`** 时才失败——未开工的任务本来就没有运行可言，把它判失败等于逼迫写假证据。
 
 ## 4. Out of Scope
-- 修改 `TEST_REPORT` 或 `close-task` 的输出格式。
+- 不改变 `TEST_REPORT` / `close-task` 的输出格式。
+- 不新增对整个仓库「所有数字互相一致」的通用检查（成本和误报都高）。
 
 ## 5. Expected Files
-- 待实施时补充
+- 修改：`tools/check-governance.ps1`
+- 新增：`project/tasks/TASK-015.md`；状态文档
 
 ## 6. Acceptance Criteria
-- [ ] 人为把 `Latest Run` 改成 57 而末行是 59，检查必须失败
-- [ ] 一致时检查通过
+- [x] 把 `Latest Run` 的计数改成 57 而末行是 63 时，检查失败且信息指出两个数字
+- [x] 把某个 `DONE` 任务的 verify-all 行改成「未运行」时，检查失败
+- [x] `NOT_STARTED` 任务写「未运行（任务未开始，无代码改动）」仍然通过（现状含 `TASK-016`）
+- [x] 仓库现状 21/21 通过，无新增警告
 
 ## 7. Tests
-- 待实施时补充；至少一组变异证明断言可证伪
+- 负向探针 1：`TEST_REPORT` 的 `单测 63 项` → `单测 57 项`，检查必须 `FAIL`
+- 负向探针 2：`TASK-014` 的 verify-all 行 → 「未运行（临时探针）」，检查必须 `FAIL`
+- 正向对照：`TASK-016`（`NOT_STARTED`）的「未运行」行必须仍然通过
+- `pwsh -NoProfile -File tools/verify-all.ps1`
 
 ## 8. Risks and Decisions
-- 尚未实施，无决策记录
+- **为什么按状态区分**：如果把中文「未运行」一律判失败，`NOT_STARTED` 任务只能编一个假结果；检查的本意是「做完要拿得出证据」，不是「不许承认没做」。
+- **计数只取 `OK (N tests)`**：变异行写的是 `FAILED（N 项）`，不是同一语义，跳过它才能拿到「最后一次真实运行」的 N。
+- 检查本身没有自动化测试（它是 PowerShell 脚本，本机没有 Pester），证据是三次人工探针；这一点如实记录，不写成「已自动化」。
 
 ## 9. Implementation Log
-- 尚未开始
+- 2026-11-05：第 15 项加计数比对；第 21 项加中文占位符识别，并以任务状态 `NOT_STARTED` 作为豁免条件。
+- 2026-11-05：两个负向探针各失败一次并打印出可读信息；还原后 21/21 通过。
+- 2026-11-05：**新检查先误伤了自己**——`TASK-015` §10 里引用了报错原文（含 verify-all 与「未运行」），且排在真实证据行之前，旧选择逻辑取第一行即报错。已改为要求行内出现 `verify-all.ps1` 并取最后一行为准；改后复跑两个负向探针仍各自失败。
+- 2026-11-05：与 `TASK-011` 的告警事故同源（正文引用任务号触发检查）。规则：**引用检查报错原文时，不要连命令名一起抄进表格**。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | 未运行（任务未开始，无代码改动） | — |
+| 负向探针 1：`Latest Run` 63 → 57 | **FAILED（第 15 项）**（预期） | `Latest Run says 单测 57 项 but the last OK row is 63 tests` |
+| 负向探针 2：`TASK-014` 证据行 → 「未运行」 | **FAILED（第 21 项）**（预期） | `TASK-014 verify-all evidence row still says it never ran, but the task is past NOT_STARTED` |
+| 正向对照：`TASK-016`（`NOT_STARTED`）保留「未运行」行 | **PASS** | 未开工任务不被误判 |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | **21/21 passed, 0 warnings** | 还原探针后复跑；证据行改为取最后一条含命令名的行 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21、单测 63 项、DAO SQL 21 项、构建通过 |
 
 ## 11. Completion Review
-- [ ] 验收标准全部满足
-- [ ] 相关测试实际运行
-- [ ] `git diff --check` 通过
-- [ ] Diff 已审查
-- [ ] 文档/状态已更新
+- [x] 验收标准全部满足（4/4）
+- [x] 相关检查实际运行（2 个负向探针 + 1 个正向对照）
+- [x] `git diff --check` 通过
+- [x] Diff 已审查：只改治理脚本，无产品代码、无依赖变化
+- [x] 文档/状态已更新
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
-- 尚未开始。
+- 下一步：评审 `APPROVE` 后合入 `main`；之后 `TASK-016`（界面细节与 `TASK-014` 的 3 条非阻塞项）。
+- 遗留：治理脚本本身无自动化测试（无 Pester），只能靠人工探针。
 
 ## 13. Independent Review
-- 尚未提交评审。
+- Reviewer record：`project/reviews/REVIEW-TASK-015.md`（待创建）
+- 结论：`PENDING`
+
+<!-- close-task:begin -->
+## 状态摘要（自动生成，勿手改）
+
+- 任务：TASK-015
+- 状态：`PARTIAL`
+- 阶段：Gate 3
+- 验收：通过 4 项 / 未通过 0 项
+- 最近测试记录：2026-11-05 / **OK (63 tests)**
+<!-- close-task:end -->

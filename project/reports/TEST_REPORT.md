@@ -4,7 +4,7 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`feat/domain-validation`（`TASK-014`，基线 `main` @ `421fb21`）
+- 分支 / commit：`chore/governance-counts`（`TASK-015`，基线 `main` @ `4f1807a`）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
 - 结果：`tools/verify-all.ps1` `PASS`（治理 21 项检查、0 警告 + 单测 63 项 + DAO SQL 21 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
@@ -66,6 +66,8 @@
 | 2026-11-05 | 变异：`showsCreateAction` 去掉 `!state.isLoading &&` | **FAILED（1 项）**（预期） | 加载态断言变红；还原后 59 项全绿 | TASK-013 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（规则上移 UseCase） | **OK (63 tests)** | 新增 4 项：无单位数值被拒、带单位布尔被拒、单位 trim、fake 不再校验 | TASK-014 |
 | 2026-11-05 | 变异：UseCase 的 `normalizeTarget` → 直接构造 `NormalizedTarget` | **FAILED（4 项）**（预期） | 拒绝与 trim 断言全部变红；还原后 63 项全绿 | TASK-014 |
+| 2026-11-05 | 负向探针：`Latest Run` 计数 63 → 57 | **FAILED（治理第 15 项）**（预期） | `Latest Run says 单测 57 项 but the last OK row is 63 tests` | TASK-015 |
+| 2026-11-05 | 负向探针：`TASK-014` 证据行 → 「未运行」 | **FAILED（治理第 21 项）**（预期） | 已开工任务不得写未运行 | TASK-015 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。

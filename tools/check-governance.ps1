@@ -291,6 +291,15 @@ else {
         if ($runResult -match 'FAIL') { $expected = 'FAILED' }
         elseif ($runResult -match 'PASS|OK|SUCCESS') { $expected = 'PASS' }
         if ($summaryBlock -notmatch $expected) { $testProblems += ('Latest Run does not state ' + $expected + ' (last row: ' + $runResult + ')') }
+        # The date and the PASS/FAILED word can agree while the count is stale (TASK-012 shipped a
+        # summary saying 57 while the last run was 58). Compare the number too.
+        if ($summaryBlock -match '单测\s*(\d+)\s*项') {
+            $claimedCount = [int]$Matches[1]
+            $counts = @([regex]::Matches($testReport, 'OK \((\d+) tests\)') | ForEach-Object { [int]$_.Groups[1].Value })
+            if ($counts.Count -gt 0 -and $counts[-1] -ne $claimedCount) {
+                $testProblems += ('Latest Run says 单测 ' + $claimedCount + ' 项 but the last OK row is ' + $counts[-1] + ' tests')
+            }
+        }
     }
 }
 if ($testProblems.Count -eq 0) { Add-Pass 'test report summary matches' 'Latest Run agrees with the last Runs row' }
@@ -351,9 +360,15 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     $sections = $taskText -split '## 10\. Verification Evidence', 2
     if ($sections.Count -lt 2) { $gateProblems += ($f.BaseName + ' has no Verification Evidence section'); continue }
     $evidence = ($sections[1] -split "\n## ", 2)[0]
-    $row = [regex]::Match($evidence, '(?m)^\|[^\r\n]*verify-all[^\r\n]*\|').Value
+    # Require the script name, and take the LAST matching row: a task may quote an earlier error
+    # message containing the bare words "verify-all evidence" above the real evidence row.
+    $rows = @([regex]::Matches($evidence, '(?m)^\|[^\r\n]*verify-all\.ps1[^\r\n]*\|') | ForEach-Object { $_.Value })
+    $row = if ($rows.Count -gt 0) { $rows[-1] } else { '' }
+    # A task that has not started has no run to report; every other task must show a real result.
+    $notStarted = $taskText -match '- 状态：\s*' + [regex]::Escape($tick) + 'NOT_STARTED' + [regex]::Escape($tick)
     if (-not $row) { $gateProblems += ($f.BaseName + ' has no verify-all evidence row in section 10') }
     elseif ($row -match 'TBD|NOT_RUN') { $gateProblems += ($f.BaseName + ' verify-all evidence row is still a placeholder') }
+    elseif (-not $notStarted -and $row -match '未运行|未执行|尚未') { $gateProblems += ($f.BaseName + ' verify-all evidence row still says it never ran, but the task is past NOT_STARTED') }
 }
 if ($gateProblems.Count -eq 0) { Add-Pass 'verify-all evidence' 'post-ADR-014 tasks record a verify-all run' }
 else { Add-Fail 'verify-all evidence' ($gateProblems -join '; ') }
