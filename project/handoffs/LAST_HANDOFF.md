@@ -26,7 +26,7 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (90 tests)** | `TASK-021` +13 项（9 项 `StreakRules` + 4 项 presenter）；`TASK-022` +4 项（两个查询计数、每习惯各算各的、3 项 `GetStreakUseCase` 钳位） |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (91 tests)** | `TASK-021` +13 项；`TASK-022` +5 项（两个查询计数、每习惯归属含 `isCompleted`、3 项 `fromLoaded` 行为） |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | `TASK-021` 合入时一次（`f959f02`）、`TASK-022` 实现时一次（`b73e03b`）；治理 22/22、DAO 27、构建 ~21-27s、`diff --check` 干净 |
 | `pwsh -NoProfile -File tools/check-governance.ps1` | **22 / 22 passed，0 警告** | 收尾时先红过一次：`TASK-022` 的 `NOT_STARTED` 与 §9 日期行冲突、README/STATUS 无当前任务 id，已修 |
 | 变异 M1 `due()` 恒真 | **FAILED（2 项）** | `aDayThatWasNeverDue…`、`aScheduleChange…` |

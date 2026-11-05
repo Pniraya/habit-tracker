@@ -1,141 +1,135 @@
-# REVIEW-TASK-022: 独立评审记录
+# REVIEW-TASK-022: 独立评审记录（第 2 轮）
 
 - 审查任务：`TASK-022`（Today 列表查询批量化，N+1 修复）
-- 审查 commit：`b73e03b22d94ad97f5f0155e19ddb1963be01ec0`（`git rev-parse HEAD`，分支 `feat/today-queries`，`main` = `bfb3150`）
-- 审查范围：`git diff bfb3150...b73e03b`——15 文件 +346/−48
+- 审查 commit：`0e0d5dbef5e5773710c5a35017af6c9ec882bf6a`（`git rev-parse HEAD`，分支 `feat/today-queries`，`main` = `bfb3150`）
+- 审查范围：第 1 轮 `b73e03b`（已审）→ 本轮增量 `git diff b73e03b...0e0d5db`（13 文件 +620/−58；源码/测试 5 文件：`HabitRepository`、`GetStreakUseCase`、新增 `GetStreakUseCaseTest`、`TodayPresenterTest`，其余为文档）
 - Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现；全程只读核对 + 变异）
 - 独立性：`INDEPENDENT`
 - 日期：`2026-11-05`
+- 轮次：第 2 轮（第 1 轮结论 `REJECT`，3 条阻断）
 
-工作区：开始时 `git status --short` 并非为空，有**两处不是本次提交、也不是我产生的改动**——`M project/tasks/TASK-021.md`（状态行改成「第 2 轮 APPROVE」）与 `?? project/reports/EXTERNAL_REVIEW_BRIEF.md`（18 KB 外部评审简报）。两者都不在 `b73e03b` 内，我未触碰；所有变异只改 5 个源码文件，逐组用 `git checkout -- <path>` 还原，结束时 `git status --short` 与开始时**逐字节一致**（同样只有上列两项）。合并前必须把这两项从合并集里摘出去，别顺手带进 `main`。
+工作区：本轮开始时 `git status --short` **为空**（第 1 轮遗留的两处未提交改动已随 `0e0d5db` 入库，属文档）。7 组变异逐组用 `git checkout -- <path>` 还原，结束时 `git status --short` 仍为空——本轮没有留下脏工作区。
 
-## 1. Scope
+## 1. Scope 与第 1 轮阻断的复核
 
-**裁决：通过。**
+**裁决：通过；3 条阻断里 2 条真正修好、1 条只修到一半（见 §6）。**
 
-- 与 `TASK-022` §3/§5 一致：仓储 4 个批量读（接口 + Room `IN (:ids)` + DAO）、`GetStreakUseCase.fromLoaded`、`TodayPresenter.snapshot()`/`describe()`、`TodayViewModel` 构造参数、`FakeHabitRepository` 计数器、`TodayPresenterTest` 2 项、`tools/verify-dao.mjs` 6 个批量场景。文档同步属 `AGENTS.md` §6 强制项。
-- 未碰 schema、未加依赖/权限/Gradle module、未改 `StreakRules` 算法、未把 `observeActiveHabits` 换联表流（§4 Out of Scope 守住）。
-- 没有删除或绕过既有测试：`TodayPresenterTest` 只删掉 `streaks =` 构造实参，其余为新增；`verify-dao.mjs` 的 `MIN_CHECKS` 21 → 27，与新增 6 个 `equal(...)` 场景数一致（逐条数过）。
-- 业务规则位置正确：计划/连续天数口径仍在 `domain/`；`describe()` 只做装配；DAO 无规则。
+增量与 `TASK-022` §3/§5 一致：接口 4 个批量方法改抽象、`GetStreakUseCase` 由 `class`（带仓储）改为 `object`（只留 `fromLoaded`）、新增 `GetStreakUseCaseTest`、`TodayPresenterTest` 增 1 项归属用例、文档同步、`TASK-023` 立项。没有顺手重构、没有新依赖/权限/schema 改动、没有删既有测试。
+
+DAO 与 Room 仓储文件相对 `b73e03b` **一字未动**（`git diff b73e03b...HEAD -- app/src/main/java/com/habittracker/data/` 为空），因此第 1 轮 D1/D2/D3 三条 DAO 变异结论继续有效，本轮未重复跑。
+
+| 第 1 轮阻断 | 本轮实际状态 | 我怎么验的 |
+|---|---|---|
+| **F1** 接口默认实现 + Room 零覆盖 → 漏 override 静默 N+1 | **已修**：4 个方法去默认体、改抽象声明 | 变异 U2（删 `RoomHabitRepository.logsInRangeFor` 的 `override`）→ `e: Class 'RoomHabitRepository' is not abstract and does not implement abstract member 'logsInRangeFor'` + `RESULT: COMPILE FAILED (exit 1)`；第 1 轮同一变异是 86/86 全绿。顺带 U1（删 Fake 的 `activeSchedules`）也变成 COMPILE FAILED——§8 那条「fake 是绊线」可以退休了，现在的绊线是编译器 |
+| **F2** 批量读的「按习惯归属」无测试 | **已修**：`everyHabitCountsItsOwnDays`（Steady 3 天 / Fresh 1 天，断言 3 与 1） | 变异 U4（`describe()` 喂 `logsSince.values.flatten()`）→ `Tests run: 90, Failures: 1`，红的正是 `everyHabitCountsItsOwnDays`；第 1 轮同一变异全绿 |
+| **F3** 文档计数不同步（7 行） | **修了 6 行，漏 1 行 + 1 处过度声称** | 见 §5：`TEST_REPORT.md:86` 同一句里「27 项」与「（`verify-dao.mjs`，21 项）」并存 |
 
 ## 2. 实际命令与退出码
 
-本机 Windows / JDK 17 / Gradle 8.9：
+Windows / JDK 17 / Gradle 8.9，本机：
 
 | 命令 | 退出码 | 输出摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **0** | `RESULT: VERIFY ALL PASS`；治理 `22 checks, 22 passed, 0 warnings`（13s）、单测 `OK (86 tests)`（29s）、`verify-dao` `checks: 27, failed: 0`、`assembleDebug` `BUILD SUCCESSFUL in 25s`、`git diff --check` `no whitespace errors` |
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1`（基线） | **0** | `RESULT: UNIT TESTS PASS`（86 项） |
-| `node tools/verify-dao.mjs`（基线） | **0** | `checks: 27, failed: 0` |
-| `git rev-parse HEAD` | 0 | `b73e03b22d94ad97f5f0155e19ddb1963be01ec0` |
-| `git status --short`（开始前） | 0 | **2 项**（`M project/tasks/TASK-021.md`、`?? project/reports/EXTERNAL_REVIEW_BRIEF.md`），均非本次提交 |
-| `git status --short`（结束后） | 0 | 同样 2 项，无源码残留 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **0** | `RESULT: VERIFY ALL PASS`；治理 `22 checks, 22 passed, 0 warnings`（12s）、单测 `OK (90 tests)`（23s）、`verify-dao` `checks: 27, failed: 0`、`assembleDebug` `BUILD SUCCESSFUL in 17s`、`git diff --check` `no whitespace errors`；**无** "uncommitted changes" 行 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1`（基线） | **0** | `OK (90 tests)`（86 → 90，与 §10 一致） |
+| `git rev-parse HEAD` | 0 | `0e0d5dbef5e5773710c5a35017af6c9ec882bf6a` |
+| `git status --short`（开始前 / 结束后） | 0 | 空 / 空 |
 
-声称的三个数字**全部复现**：86 单测、27 DAO 检查、exit 0。
+声称的四个数字全部复现：90 单测、27 DAO、治理 22/22、exit 0；构建 17s，落在他说过的 17-21s 内。
 
 ## 3. 变异表
 
-每组：改一处 → 跑真实 runner → `git checkout -- <path>` → 确认 `git status --short` 回到基线。
+每组：改一处 → 跑真实 runner → `git checkout -- <path>` → 确认 `git status --short` 为空。
 
-| # | 变异 | 结果 | 打红的测试 | 打中的是不是「正确的那条」 |
-|---|---|---|---|---|
-| U1 | `FakeHabitRepository` 去掉 `activeSchedules` 覆盖，退回接口逐习惯默认实现 | **FAILED**（`Tests run: 86, Failures: 2`） | `theWholeListLoadsInAConstantNumberOfQueries`、`aTapRefreshesTheListOnce` | ✅ 正是两条计数断言。与任务记录的变异 MA 同形、同 2 项，声称可复现 |
-| U2 | **`RoomHabitRepository`** 去掉 `logsInRangeFor` 覆盖，退回接口逐习惯默认实现（= 生产代码 N+1 复活） | **PASS（86/86 全绿）** | 无 | ❌ **一条都没红**。生产实现退化成 N+1，测试完全看不见 |
-| U3 | `snapshot()` 多做一次批量读（模拟旧的重复全量重算） | **FAILED**（Failures: 2） | 同上两条 | ✅ 与任务记录的变异 MB 一致，「只刷新一次」确被断言住 |
-| U4 | `describe()` 把**所有**习惯的日志都喂进去（`logsSince.values.flatten()`，id 归属被打散） | **PASS（86/86 全绿）** | 无 | ❌ 跨习惯串数据无效。多习惯列表的连续天数算错也不会有测试红 |
-| U5 | `RoomHabitRepository.logsInRangeFor` 删掉空列表早退守卫 | **PASS（86/86 全绿）** | 无 | ❌ 守卫无覆盖（presenter 在更早就 return，永不触达；`verify-dao` 的 binder 反而**主动对空列表抛错**，这条路径两层都测不到） |
-| U6 | `fromLoaded` 删掉 `!it.date.isBefore(firstDay)` 日期钳位 | **PASS（86/86 全绿）** | 无 | ❌ 钳位是纯防御代码，没有测试钉住 |
-| D1 | `HabitLogDao.findForDate` 去掉 `AND log_date = :date` | **FAILED**（`checks: 27, failed: 1`） | `findForDate spans habits and keeps only that date (expected 2) -> got 4` | ✅ 任务记录里「删日期过滤即红」的声称成立 |
-| D2 | `findAllForHabits` 把 id 列表换成 `IN (SELECT habit_id FROM habits)`（扫全表代替用 id 表） | **FAILED**（1 项） | `findAllForHabits respects the id list (expected [2]) -> got [1,1,2]` | ✅ id 过滤在 SQL 层有守卫 |
-| D3 | `findRangeForHabits` 删掉 `log_date BETWEEN :from AND :to` | **FAILED**（1 项） | `findRangeForHabits keeps both boundaries and filters by id` | ✅ 区间边界有守卫 |
+| # | 变异 | 文件 | 结果 | 打红的测试 | 判断 |
+|---|---|---|---|---|---|
+| U1 | 删 Fake 的 `activeSchedules` override | `FakeHabitRepository.kt:17` | **COMPILE FAILED**（exit 1） | — | ✅ 抽象化生效，接口层已无「循环兜底」 |
+| U2 | 删 Room 的 `logsInRangeFor` override | `RoomHabitRepository.kt:21` | **COMPILE FAILED**（exit 1） | — | ✅ 第 1 轮 F1 关闭（第 1 轮同变异 86/86 全绿） |
+| U3 | `snapshot()` 多做一次批量读 | `TodayPresenter.kt` | **FAILED**（Failures: 2）〔第 1 轮实测，本轮该处未改〕 | 两条计数断言 | ✅ 仍有效 |
+| U4 | `describe()` 喂 `logsSince.values.flatten()` | `TodayPresenter.kt` | **FAILED**：`Tests run: 90, Failures: 1` | `everyHabitCountsItsOwnDays` | ✅ 第 1 轮 F2 关闭，且只红该红的一条 |
+| U5 | 删 Room 空列表早退守卫 | `RoomHabitRepository.kt` | 全绿〔第 1 轮实测，本轮该文件未改〕 | 无 | ⚠️ 仍未覆盖；本轮 §8 已记为「不可达但保留」，接受 |
+| U6 | `fromLoaded` 删掉日期钳位 `.filter { !it.date.isBefore(firstDay) && !it.date.isAfter(today) }` | `GetStreakUseCase.kt` | **PASS（90/90 全绿）** | 无 | ❌ 新增的 `rowsOutsideTheScheduleWindowAreIgnored` 抓不到它（F-新1） |
+| U7 | `fromLoaded` 删掉 `.filter { it.status == LogStatus.COMPLETED }` | `GetStreakUseCase.kt` | **FAILED**：Failures: 2 | `onlyCompletedRowsCount`、`anInProgressDayDoesNotJoinTheStreak` | ✅ 新增的状态过滤测试真能红 |
+| D1 | `findForDate` 去日期过滤 | `HabitLogDao.kt` | **FAILED** 1 项〔第 1 轮实测，本轮未改〕 | `…keeps only that date (expected 2) -> got 4` | ✅ |
+| D2 | `findAllForHabits` 用 `IN (SELECT habit_id FROM habits)` 代替 id 表 | `HabitScheduleDao.kt` | **FAILED** 1 项〔同上〕 | `respects the id list` | ✅ |
+| D3 | `findRangeForHabits` 去 `BETWEEN` | `HabitLogDao.kt` | **FAILED** 1 项〔同上〕 | `keeps both boundaries` | ✅ |
 
-**读法**：DAO 层（D1–D3、D2 的 id 过滤）守得住；repository/presenter 层只守住「次数」和「窗口次数」，**守不住「哪一个习惯的数据」和「Room 到底有没有覆盖」**。U2/U4 是本次评审的核心证据。
+## 4. Findings
 
-## 4. Findings（按严重度）
+### F-新1（阻断）「3 项钳位测试」里钳位那一项不可能变红
 
-### F1（阻断）接口默认实现 + Room 零覆盖 = 本任务的核心不变量无人守
+`GetStreakUseCaseTest.rowsOutsideTheScheduleWindowAreIgnored` 的注释写「A completed day before the first version and one in the future must not inflate the count」，`TASK-022` §8 与 `LAST_HANDOFF.md:29` 也把本轮记为「+3 项 `GetStreakUseCase` 钳位测试」。
 
-`HabitRepository` 给 4 个批量方法写了「逐习惯循环」的默认实现；这正是本任务要消灭的 N+1。任务记录 §8 说这是「故意的绊线」——但绊线只装在 `FakeHabitRepository` 上。全仓 **8 个测试类没有任何一个构造 `RoomHabitRepository`**（`app/src/androidTest` 为空；`grep RoomHabitRepository` 在 `app/src/test` 下 0 命中）。证据就是 U2：把 `RoomHabitRepository.logsInRangeFor` 的 `override` 去掉，生产代码立刻退回每习惯一次查询，而 86 项测试**全绿**。
+我删掉 `fromLoaded` 里那行钳位后：**90/90 全绿**（U6）。
 
-`verify-dao.mjs` 拦不住这个：它用正则从 Kotlin 源码里抠 `@Query` 文本，验的是 **SQL 字符串**，不是「Room 仓储有没有调它」。所以「Room 漏写一个 override」「`activeSchedules` 忘了传 ids」这类错误可以静默上线，而本任务的唯一交付就是「生产环境常数次查询」。
+原因不是断言写错，而是这行钳位**本身就是冗余的**：`StreakRules.compute` 的循环是 `day = firstDay` → `today`，窗口外的完成日 `completedDates.contains(day)` 根本不会被问到；`isAfter(today)` 那一半也没用，因为 presenter 传进来的 `logs` 来自 `logsInRangeFor(ids, …, date)`，SQL 已 `log_date BETWEEN :from AND :to`。删与不删，行为完全相同。
 
-最小修法（二选一）：(a) 4 个方法在接口上改 `abstract`（无默认实现），编译期强制每个实现表态——这才是这类不变量该用的机制；(b) 保留默认值，但加一条断言「`RoomHabitRepository` 的 4 个方法声明类 ≠ `HabitRepository`」（反射或 arch 测试），或直接给 Room 加一条 instrumentation/Robolectric 测试。任务 §8 的理由（「其它实现仍能编译」）代价高于收益：仓库里只有 2 个实现，而默认实现把「忘记覆盖」从编译错误降级成了性能事故。
+所以这不是「多写了一个测试」，而是**一条永远绿的新测试 + 一条把覆盖率说高了的记录**。本仓 Lessons 自己写着「别只写测试，要验证测试会失败」；第 1 轮我给的 F6 正是「钳位无覆盖」，现在只有「`invoke` 死代码」那半真的修好了。
 
-### F2（阻断）批量读的「按习惯归属」没有测试
+修法（二选一，都是一行）：
+- (a) 删掉 `fromLoaded` 里那行钳位，注释改成「`compute` 只遍历 `[firstDay, today]`、查询层已按 `[from, to]` 过滤」，测试名改成它真正证明的东西（断言不必变）；
+- (b) 保留钳位当纵深防御，但把 §8/§10/`LAST_HANDOFF:29` 的「3 项钳位测试」改成「2 项过滤测试 + 1 项窗口外行不计」，并注明该行冗余、删掉不会红。
 
-U4 把所有习惯的日志混在一起喂给 `describe()`，86 项仍全绿。现有 streak 用例全是单习惯，2 项计数用例里根本没有日志。于是 `logsInRangeFor`/`dailyLogs` 的分组键一旦写错（`associate` 键错、`groupBy` 漏字段），多习惯列表的连续天数会串号，而测试与 `verify-dao`（只验 SQL 行内容）都不会红。D2 证明 SQL 层有 id 过滤，但那是**另一个层**。
+（另两项是真的：`onlyCompletedRowsCount` 被 U7 打红；`noScheduleVersionMeansNoStreak` 按代码读会因 `minOf` 在空列表上抛异常而红——这两项未单独跑变异，属代码推断。）
 
-最小修法：加一条 2 习惯用例——A 连续 3 天完成、B 只有 1 天，断言两条 row 的 `currentStreak` 分别为 3 和 1。这条同时能锁住 U4 和「`activeSchedules` 拿错 habit 的计划」两类错误。
+### F-新2（阻断，文档）`TEST_REPORT.md:86` 同一句里 27 与 21 并存
 
-### F3（阻断）文档同步不成立（检查单 §4 与任务书的明确要求）
+原文：
 
-四处过期断言，都不是「历史记录保持原样」能解释的，因为它们描述的是**当前状态**：
+> 已覆盖：schema …；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，**27 项**，含 6 项批量查询场景）——闭区间边界、CAS 更新…、级联删除、唯一索引与 `ON CONFLICT` 更新（`verify-dao.mjs`，**21 项**）。
 
-| 位置 | 现状 | 应为 |
+第 1 轮报的就是这一行（当时全句 21），本轮在句首补了 27、句尾 21 没删。任务书要求 `TEST_REPORT` 与 27 项一致，这行仍自相矛盾。删掉句尾那个括号即可。
+
+### F-新3（非阻断，提醒）本轮说明里「漏一天后即使今天完成 current 也是 0」与代码不符
+
+消息里写「they assert 0 current / 1 longest, because a missed yesterday resets the run even when today is complete」。**0/1 没错，但理由不对**：两条新用例的「今天」都没有完成行（`rowsOutsideTheScheduleWindowAreIgnored` 只喂 10-31/11-01/11-04，今天 11-03 无日志；`onlyCompletedRowsCount` 也无 11-03），current=0 是「今天未完成 + 11-02 漏」的结果，不是「今天完成仍为 0」。
+
+`StreakRules.compute` 的实际语义：`else if (day != today) run = 0`，今天完成会 `run++`。即**「昨天漏、今天补上」应当是 current=1**（与 `REQUIREMENTS` 93「只把过去到期的算失败」一致）。按那句话去「修」代码会把语义改错。建议补 `aCompletedTodayAfterAMissedYesterdayRestartsAtOne`（current=1/longest=1）钉住——全仓目前没有这个用例。
+
+### F-新4（非阻断）`dailyLogs` 的归属仍无覆盖
+
+`everyHabitCountsItsOwnDays` 只断言 `currentStreak`，而两个习惯**今天都完成了**，所以即使 `dailyLogs`/status 取错行，两行都是「已完成」，测试分辨不出。把 Fresh 今天改成未完成并断言 `isCompleted` 一真一假即可（1 行断言）。
+
+### F-新5（非阻断）`GetStreakUseCase` 改成无依赖 `object` 后更像规则而非用例
+
+现在它是「`StreakRules.compute` + 一段钳位」的薄包装，与 `StreakRules` 的边界变模糊。放 `domain/usecase` 不算错（`ARCHITECTURE` 只要求规则不散落到 UI/DAO）；若按 F-新1 选项 (a) 删掉钳位，它就只剩一次委托，届时应考虑并入 `StreakRules`。后续清理，不阻断。
+
+### 第 1 轮非阻断项的处置复核
+
+| 第 1 轮项 | 本轮处置 | 复核 |
 |---|---|---|
-| `project/handoffs/LAST_HANDOFF.md:29` | `OK (84 tests)` | 86 |
-| `project/handoffs/LAST_HANDOFF.md:30` | 同一行写「单测 84、DAO 27」——这个组合从未存在过（84 那次是 DAO 21） | 单测 86、DAO 27 |
-| `project/handoffs/LAST_HANDOFF.md:42` | `**N+1 未修**（TASK-022）…约 160 次` | 已修 |
-| `project/handoffs/LAST_HANDOFF.md:55` | 下一步写 `**TASK-022**（P2，NOT_STARTED）` | `PARTIAL`，待评审 |
-| `project/handoffs/LAST_HANDOFF.md:9` | 分支 `main @ f959f02`，工作区干净 | `feat/today-queries @ b73e03b`，（且实际有 2 项未提交） |
-| `README.md:62` | `node tools/verify-dao.mjs  # 已验证：21/21` | 27/27（同文件第 16 行的表格已写 27/27，自相矛盾） |
-| `project/reports/TEST_REPORT.md:85` | Known Test Gaps 仍写「`verify-dao.mjs`，21 项」 | 27 项 |
+| F4 行读取未减、窗口放宽 | 立 `TASK-023`（`NOT_STARTED`，P1：统计页 + 窗口收敛/ SQL 聚合，验收写「数值与今日页一致」） | ✅ 具体、有验收条件，不是「已备案」式空声称 |
+| F5 空列表守卫不可达 | 保留守卫 + §8 记录不可达 | ✅ 合理（Room 对 `IN ()` 会报错，守卫仍必要）；U5 仍全绿，已如实记为不可达 |
+| F6 `invoke` 死代码 | 整类改 `object`，只留 `fromLoaded` | ✅ 代码侧解决；钳位那半见 F-新1 |
+| F7 主线程逐日推进 | 记入 §8 风险，注明未在真机测量 | ⚠️ 接受（登记为未测量，没伪装成已验证） |
+| F8 精确断言 vs「上界」 | §8 改写为「精确值是 Fake 自身口径，真实路径还有未计数读取（约 8 SELECT + 1 写）」 | ✅ 自述与实现不再矛盾 |
 
-`TASK-022` §10、`PROJECT_STATUS.md`、`README.md` 表格、`TEST_REPORT.md` 的 Latest Run 四处**是一致的**（86 / 27 / PARTIAL）。治理检查 22/22 也过了——因为第 15 项只比对 `Latest Run` 与 `Runs` 表，不读 handoff 的正文断言。这正是评审要人肉兜住的那部分。
+## 5. 文档同步
 
-附带：`TEST_REPORT.md` 的两条 TASK-022 记录插在表中倒数第二的位置，最后一行仍是 TASK-018 的真机记录，因此检查单 §4「Latest Run 与 Runs 表最后一行一致」按字面不成立（治理检查对此宽松）。
+**裁决：差一行。**
 
-### F4（设计）批量读没有减少行读取，只是减少了往返；且这次把窗口放宽了
-
-`snapshot()` 取 `firstDay = versions.values.flatten().minOfOrNull { it.effectiveFrom }`（**全局**最早计划版本），然后 `logsInRangeFor(ids, minOf(firstDay, date), date)` 把这个区间的**所有日志行**装进内存，再由 `fromLoaded` 在 Kotlin 里按习惯钳位、按状态过滤。
-
-- 行量级不变：仍是 O(习惯数 × 历史天数)。20 个习惯 × 3 年 ≈ 2 万行/次快照，每次点按都来一遍。`index_habit_logs_habit_date` 有索引，SQL 代价可控，但内存与 GC 是线性的。
-- 比改动前**略差一点**：旧代码每个习惯查 `[该习惯首个版本, 今天]`；现在统一用全局最早日期，个别习惯会把「自身首个版本之前」的日志也捞回来（`fromLoaded` 再滤掉）。行为等价（U6 的钳位就是干这个的，但没人测），读取面变宽。
-- `StreakRules.compute` 仍是「从首个版本逐日步进到今天」× 每个习惯 × 每次快照。TASK-021 评审已认定纯计算不是瓶颈，这里不改也合理。
-
-**结论：可接受，但不是「修好了」**。它兑现了任务书的目标（DB 往返常数化，160 → 4/5），把行量级与逐日计算留成了明确的后续债。建议单独立项（而不是在本任务里扩 diff）：统计页（F-010/F-011）必然要同一批数据，届时用「近 N 天窗口 + 聚合」一次解决。
-
-### F5（设计）空 id 列表早退：对 Room 是必需的，位置也对，但两层都测不到
-
-Room 把 `IN (:ids)` 展开成占位符，空集合会生成 `IN ()`，SQLite 直接语法错。所以 `if (habitIds.isEmpty()) return emptyMap()` 是**正确且必要**的。三点补充：(1) 守卫只在 `RoomHabitRepository`，DAO 自身没有，未来直接调 DAO 的人会踩；(2) presenter 在更外层就 `if (source.isEmpty()) return` 了，这 4 个守卫在生产路径里不可达（U5 全绿即证）；(3) `verify-dao.mjs` 的新 binder 对空列表**主动抛错**（`empty list bound to :${name} would not match Room`），于是「空列表」这个真实风险在 DAO 校验层被永久排除，谁也不会去测。建议：把守卫下沉到 DAO 调用点或加一条 binder 层用例，至少留一句注释说明「本路径不可由 presenter 触达」。
-
-### F6（设计）去掉 `GetStreakUseCase` 构造参数：规则仍可测，但 `invoke` 成了生产死代码
-
-- 规则可测：`fromLoaded` 是纯函数，presenter 只调它，逻辑与 `invoke` 共用一份，没有第二份实现。✅
-- 但 `GetStreakUseCase.invoke` 现在**没有任何生产调用方**（`grep GetStreakUseCase`：只有类自身与 `TodayPresenter.kt:116` 的静态调用）。它靠自己的测试活着，是一条没人走的门。要么删掉 `invoke`（连带 `HabitRepository.logsInRange` 也可议），要么在注释里写明「留给统计页/详情页」，否则下一个人会以为列表用的是它。
-- 另一处未被测的路径：`invoke` 的 `from = schedules.minOf` 与新路径的「全局 min + Kotlin 钳位」是两种取窗方式，目前只在 U6 那条无覆盖的钳位上等价。若钳位被当成冗余删掉（U6 证明无人拦），二者才会分叉。
-
-### F7（设计）`describe()` 失去 suspend 边界：主线程上多了一段不可打断的循环
-
-`TodayViewModel.factory` 用 `CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)`，所以 `snapshot()` 整个跑在主线程。改动前 `describe()` 是 suspend，每个习惯夹 4 次可让出线程的 DB 调用；改动后 4 次批量读之后是一段**纯同步**的 `source.map { describe(...) }`，中途没有任何挂起点，里面每个习惯都要跑 `StreakRules.compute`（逐日步进）。20 个习惯 × 3 年 ≈ 2 万次迭代 + 2 万个 `LocalDate` 分配，一次性连续占住主线程。
-
-规模不大，但这是本次改动**新增**的阻塞形态（以前被 I/O 挂起切碎），而 JVM 测试用 `Dispatchers.Unconfined`，永远不会暴露它。建议：把 `map` 包进 `withContext(Dispatchers.Default)`，或在任务书里显式记为已接受的风险（真机 20 习惯下跑一次首帧并记录）。
-
-### F8（低）计数断言与 §8 自相矛盾，且「5 次」不是真实 SQL 次数
-
-- `TASK-022` §8 写「计数型断言…只能断言上界，不能断言精确 SQL 条数」，实现却写 `assertEquals(4, readCalls)` / `assertEquals(5, readCalls)`（**精确相等**）。将来任何一次合法预取都会变红，把「防 N+1」变成「防改动」。要么改成 `assertTrue(readCalls <= 4)`，要么把 §8 那句删掉。
-- 「点按一次正好 5 次」只在 fake 的计数口径里成立。真实点按路径是 `getHabit`(1) + `findVersionsOn`(1) + 事务内 `habitDao.findById`(1) + `logDao.findByDate`(1) + `upsert`(写) + 4 次批量读 = **8 次 SELECT + 1 次写**。`FakeHabitRepository` 对 `getHabit`/`recordDailyValue` 内部读不计数，所以注释里「1 次写路径计划检查」少算了 3 次读。结论「与习惯数无关」仍然成立，但数字本身是计数口径的产物，注释应按口径写。
-
-## 5. 文档同步与分支
-
-**裁决：不通过（见 F3）。**
-
-- `main` 稳定分支策略：改动留在 `feat/today-queries`，`TASK-022` 为 `PARTIAL`，无需「在册例外」登记。✅
-- 单一 commit `b73e03b`，信息 `perf(today): load the list in four queries` 与内容相符。✅
-- 受保护基线文件（`AGENTS.md`/`ARCHITECTURE.md`/`DATABASE.md`/`REQUIREMENTS.md`）未被改动，无需 ADR。✅
-- 工作区：审查开始就不干净（2 项非本次提交），已在文首记录；我全程未触碰，结束复核一致。
+| 文件 | 状态 |
+|---|---|
+| `README.md:15` / `:62` | `90 项单测` ✅ / 命令注释 `27/27` ✅（第 1 轮是 21/21） |
+| `PROJECT_STATUS.md:8/12/13` | `TASK-022（PARTIAL…待独立评审）` ✅ / `27/27` ✅ / `90 项` ✅ |
+| `LAST_HANDOFF.md:9` | 分支 `feat/today-queries`、`main @ bfb3150` ✅（第 1 轮写的是 main @ f959f02） |
+| `LAST_HANDOFF.md:29-30` | `OK (90 tests)` ✅；不再引用「84 + DAO 27」这个从未存在的组合 ✅ |
+| `LAST_HANDOFF.md:42` | `N+1 已改为整表 4 次查询` + 行数未减的保留意见 ✅（第 1 轮是「N+1 未修」） |
+| `LAST_HANDOFF.md:54-55` | Next Safe Action = 按第 1 轮三条阻断修复后复评 ✅（第 1 轮写 `NOT_STARTED`） |
+| `TASK-022.md` | §8 记录 F4/F5/F6/F7/F8 ✅；§10 新增「90 tests」「U2 → COMPILE FAILED」「U4 → FAILED 1 项」✅ |
+| `TEST_REPORT.md:9` | Latest Run `90 项 + DAO 27 项` ✅ |
+| **`TEST_REPORT.md:86`** | **❌ 同一句 27 与 21 并存（F-新2）** |
+| `TASK-022.md:74-75` | `Reviewer record：待创建 / 结论：PENDING` —— 第 1 轮记录已入库、本轮记录已覆盖，建议合并前改成「第 1 轮 REJECT / 第 2 轮 结论」。属收尾动作，不单列阻断 |
 
 ## 6. 结论
 
 - 结论：`REJECT`
 
-阻断项（按修复成本排序，前 3 项都必须先修）：
+**先说清楚：第 1 轮两条技术阻断（F1、F2）我逐条复现，确认已真正修好**——U2/U1 现在是编译错误而不是性能事故，U4 现在会红且只红 `everyHabitCountsItsOwnDays`。**代码层面我不再阻塞合并**。剩下两条不是架构问题，各一行字，但都属于「记录说了、实际没做到」，按本仓既定标准（两次按文档/变异纪律 REJECT）不能放行：
 
-1. **接口的 4 个批量方法改为抽象（或补一条「Room 必须覆盖」的测试）。** 证据：变异 U2 把 `RoomHabitRepository.logsInRangeFor` 的 override 去掉——生产代码退回 N+1——86 项测试全绿。当前 `verify-dao` 只验 SQL 文本，仓库里没有任何测试构造 `RoomHabitRepository`，本任务的核心不变量因此在生产侧无人看守。
-2. **补一条 2 习惯的归属用例**（A 连续 3 天、B 只有 1 天，断言两行各算各的）。证据：变异 U4 让 `describe()` 拿到所有习惯的日志，86 项全绿；现有 streak 用例全是单习惯，`logsInRangeFor`/`dailyLogs` 的分组键写错不会有任何测试变红。
-3. **修文档同步（F3 表格 7 行）**：`LAST_HANDOFF.md` 的 84 测试 / `main @ f959f02` / 「N+1 未修」/ 下一步仍写 `NOT_STARTED`；`README.md:62` 的 `21/21`；`TEST_REPORT.md:85` 的「21 项」。合并集里还要摘掉不属于本提交的 `project/tasks/TASK-021.md` 与未跟踪的 `project/reports/EXTERNAL_REVIEW_BRIEF.md`。
-4. （建议，不单独阻断，随 #1/#2 一起处理最省事）F7 主线程连续计算：把 `snapshot` 的逐习惯装配放到 `Dispatchers.Default`，或明确记为已接受并给真机数据；F4 行读取与 F6 的 `invoke` 死代码登记为后续任务。
+1. **删掉 `TEST_REPORT.md:86` 句尾的「（`verify-dao.mjs`，21 项）」**或整句重写为 27 项（F-新2）。这是任务书点名要求一致的文件，同一句里不能有两个数字。
+2. **把「3 项钳位测试」改成真话**（F-新1）：要么删掉 `fromLoaded` 里那行冗余钳位（相应改测试名/注释），要么在 §8/§10/`LAST_HANDOFF.md:29` 注明该行是冗余防御、删掉不会红。现状是「新测试永远绿 + 记录声称覆盖了钳位」，正是本仓 Lessons 点名的假证据形态。
 
-非阻断但值得记录：F4（行量级未变、窗口被放宽）、F5（空列表守卫两层都测不到）、F8（精确相等断言与 §8 自述矛盾、「5 次」是计数口径而非 SQL 次数）。
+建议（不阻断，可与上面两条一起提交）：补 `aCompletedTodayAfterAMissedYesterdayRestartsAtOne`（F-新3，别按「今天完成也是 0」改代码）；给 `everyHabitCountsItsOwnDays` 加一行 `isCompleted` 断言顺带覆盖 `dailyLogs` 归属（F-新4）。
 
-复评时我会重点看：U2、U4 两条变异是否能红，以及 F3 那 7 行是否真的改了（不改文档就再 REJECT 一次，和 `TASK-009` 第 1 轮同样的理由）。
+复评时我只核对这几行字 + U6 是否能变红（或记录已改成「冗余防御」）；代码不必再动。

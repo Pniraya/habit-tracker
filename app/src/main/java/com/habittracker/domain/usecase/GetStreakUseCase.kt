@@ -22,11 +22,12 @@ object GetStreakUseCase {
         today: LocalDate,
     ): StreakRules.Streak {
         if (schedules.isEmpty()) return StreakRules.Streak.EMPTY
-        val firstDay = schedules.minOf { it.effectiveFrom }
-        if (firstDay.isAfter(today)) return StreakRules.Streak.EMPTY
+        if (schedules.minOf { it.effectiveFrom }.isAfter(today)) return StreakRules.Streak.EMPTY
+        // No date clamping here: StreakRules.compute walks only [firstDay, today], so a log outside
+        // that window is never asked about, and the batch query already filters by date. An explicit
+        // filter would be dead code that a test could never turn red (TASK-022 review, F-新1).
         val completed = logs
             .filter { it.status == LogStatus.COMPLETED }
-            .filter { !it.date.isBefore(firstDay) && !it.date.isAfter(today) }
             .map { it.date }
             .toSet()
         return StreakRules.compute(schedules, completed, today)

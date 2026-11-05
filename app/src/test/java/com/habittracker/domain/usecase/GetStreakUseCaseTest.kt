@@ -27,16 +27,30 @@ class GetStreakUseCaseTest {
         DailyLog(1, date, 1.0, 1.0, status, if (status == LogStatus.COMPLETED) 1L else null)
 
     @Test
-    fun rowsOutsideTheScheduleWindowAreIgnored() {
-        // A completed day before the first version and one in the future must not inflate the count.
+    fun rowsOutsideTheComputedWindowDoNotChangeTheCount() {
+        // Not a live risk today: compute() only walks [firstVersion, today], so this asserts the
+        // property survives a future rewrite that iterates the rows themselves.
         val streak = GetStreakUseCase.fromLoaded(
             schedules = listOf(schedule()),
             logs = listOf(log(start.minusDays(1)), log(start), log(today.plusDays(1))),
             today = today,
         )
 
-        // 11-01 counts; 11-02 is a missed scheduled day, so the run is already back to 0 today.
         assertEquals(0, streak.current)
+        assertEquals(1, streak.longest)
+    }
+
+    @Test
+    fun aCompletedTodayAfterAMissedYesterdayRestartsAtOne() {
+        // The mixed path: yesterday was due and missed, today is done. REQUIREMENTS 93 counts only
+        // past due days as failures, so today's completion starts a fresh run of one.
+        val streak = GetStreakUseCase.fromLoaded(
+            schedules = listOf(schedule()),
+            logs = listOf(log(start), log(today)),
+            today = today,
+        )
+
+        assertEquals(1, streak.current)
         assertEquals(1, streak.longest)
     }
 

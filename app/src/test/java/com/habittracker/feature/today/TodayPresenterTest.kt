@@ -71,12 +71,16 @@ class TodayPresenterTest {
         listOf(monday.minusDays(2), monday.minusDays(1), monday).forEach { day ->
             RecordHabitProgressUseCase(repository)(steady, day, 1.0, now)
         }
-        RecordHabitProgressUseCase(repository)(fresh, monday, 1.0, now)
+        // Fresh records only yesterday, so it is scheduled but not completed today: a wrong log
+        // attribution would also show up in isCompleted, not just in the streak.
+        RecordHabitProgressUseCase(repository)(fresh, monday.minusDays(1), 1.0, now)
 
         val rows = presenter().state.value.habits.associateBy { it.id }
 
         assertEquals(3, rows.getValue(steady).currentStreak)
         assertEquals(1, rows.getValue(fresh).currentStreak)
+        assertTrue(rows.getValue(steady).isCompleted)
+        assertFalse(rows.getValue(fresh).isCompleted)
     }
 
     @Test

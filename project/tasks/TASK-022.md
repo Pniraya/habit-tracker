@@ -45,7 +45,8 @@
   1. 接口 4 个批量方法原本带「逐习惯循环」默认实现，导致 Room 漏 override 会静默复活 N+1（评审变异 U2：86 项全绿）。改为 **abstract**，漏写即编译失败——本机没有任何测试能构造 `RoomHabitRepository`，所以只能用编译期约束。
   2. 缺「每个习惯各算各的」用例（U4 全绿）。新增 `everyHabitCountsItsOwnDays`：两个习惯历史不同，断言 3 与 1。
   3. 文档计数不同步：`LAST_HANDOFF`（84 项、`main @ f959f02`、N+1 未修、下一步 NOT_STARTED）、`README` 的 DAO 21/21、`TEST_REPORT` 的 21 项——已全部改为 90 / 27 / 当前事实。
-- **评审非阻断项的处理**：`GetStreakUseCase.invoke` 已无生产调用方（F6），整类改为 `object` 只保留 `fromLoaded`，并补 3 项钳位测试；F4（批量读仍读全行、窗口放宽到全局最早版本）记入 `TASK-023`；F5（空列表早退不可达）保留仓库层守卫作为 Room 的 `IN ()` 防护并在此记录；F7（逐日推进在主线程）见下方风险；F8（断言用精确值）已在 §7/§8 说明计数口径是 fake 自身口径，不代表真实 SQL 条数。
+- **冗余钳位（第 2 轮 F-新1）**：`fromLoaded` 里原本有一行「日志日期必须落在 [firstDay, today] 内」的过滤，删掉后 90 项全绿——因为 `StreakRules.compute` 只遍历 `[firstDay, today]`，窗口外的日期根本不会被问到，而批量查询的 SQL 也已 `BETWEEN` 限定。已删除该行，测试改名为 `rowsOutsideTheComputedWindowDoNotChangeTheCount`，并在注释里写明它防的是「将来有人改成逐行遍历」，不是当前风险。
+- **评审非阻断项的处理**：`GetStreakUseCase.invoke` 已无生产调用方（F6），整类改为 `object` 只保留 `fromLoaded`；F4（批量读仍读全行、窗口放宽到全局最早版本）记入 `TASK-023`；F5（空列表早退不可达）保留仓库层守卫作为 Room 的 `IN ()` 防护并在此记录；F7（逐日推进在主线程）见下方风险；F8（断言用精确值）已在 §7/§8 说明计数口径是 fake 自身口径，不代表真实 SQL 条数。
 
 ## 9. Implementation Log
 - 2026-11-05：由 `TASK-021` 评审第 2 轮的技术债建议创建。
@@ -55,7 +56,7 @@
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (90 tests)** | 新增 4 项：两个查询计数、每习惯归属、3 项钳位（合计 90） |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (91 tests)** | 新增 5 项：两个查询计数、每习惯归属、`fromLoaded` 的 3 项（状态过滤、窗口外行、昨天漏今天补） |
 | 变异 MA：`snapshot()` 退回逐习惯 `activeSchedule` | **FAILED（2 项）** | `theWholeListLoadsInAConstantNumberOfQueries`、`aTapRefreshesTheListOnce` |
 | 变异 MB：`snapshot()` 里多做一次批量读（旧重复刷新） | **FAILED（2 项）** | 同上两条，证明「只刷新一次」被断言住 |
 | 复评变异 U2：Room 去掉 `logsInRangeFor` override | **COMPILE FAILED**（已修后） | 接口改为 abstract 后漏 override 无法编译；修复前 86 项全绿 |
@@ -64,15 +65,17 @@
 
 ## 11. Completion Review
 - [x] 验收标准满足（3/3）
-- [x] 测试实际运行（90 项 + 4 组变异 + DAO 3 组）
+- [x] 测试实际运行（91 项 + 5 组变异 + DAO 3 组）
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
 - 之后：`F-010`/`F-011` 统计页（同一套批量加载可复用）。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-022.md`
+- 第 1 轮：`REJECT`（`b73e03b`，3 条阻断）
+- 第 2 轮：`REJECT`（`0e0d5db`，代码不再阻塞，剩 2 条文档/覆盖声称问题）
+- 第 3 轮：待复审
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
@@ -81,5 +84,5 @@
 - 状态：`PARTIAL`
 - 阶段：Gate 3
 - 验收：通过 3 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **OK (90 tests)**
+- 最近测试记录：2026-11-05 / **OK (91 tests)**
 <!-- close-task:end -->
