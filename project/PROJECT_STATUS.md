@@ -5,11 +5,11 @@
 ## 当前状态
 
 - 项目阶段：`Gate 2` — 数据层进行中；Gate 1 的设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-009`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-010`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳 + Room schema v1 + Domain/Repository/UseCase；构建通过，约束经真实 SQLite 验证，DAO/Repository 运行时与真机未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 23s）
-- 最近验证数据层：`PASS`（`node tools/verify-schema.mjs`，40/40，含 schema parity）
+- 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 21/21 验证 DAO 的 SQL 语义、CAS 更新与级联删除）
 - 最近验证测试：`PASS`（40 项，`tools/run-unit-tests.ps1`，在 `main` @ `7c8b074` 上经 `verify-all` 复跑）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，21 项检查；含独立评审记录与 verify-all 证据检查）
 - 最后核对时间：`2026-11-05`
@@ -24,7 +24,7 @@
 - [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（21 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`
 - [x] 构建环境：`D:\AndroidToolchain`（`sdk` + `gradle` + `env.ps1` + `verify.ps1`），JDK 17 在 `D:\javajdk17`
 - [x] Android 工程骨架：Wrapper、Version Catalog、`:app`、主题 token、三页导航
-- [x] 数据层 schema v1：四表 + 外键 + 索引 + Converter + schema export（`TASK-004`）
+- [x] 数据层 schema v1：四表 + 外键 + 索引 + Converter + schema export（`TASK-004`）；DAO 语句经 `verify-dao.mjs` 在真实 SQLite 上验证（`TASK-010`）
 - [x] 独立评审证据：`ADR-013` + `project/reviews/REVIEW-TASK-006/007`（`TASK-007` 的 `APPROVE` 记录随 `c10f67d` 合入 `main`）
 - [x] Domain 纯规则 + Repository + 计划版本写入器（`TASK-005`）+ UseCase 层（`TASK-008`），40 项单测通过
 - [ ] DAO/Repository 运行时测试（沙箱内无法运行 Gradle 测试 worker）

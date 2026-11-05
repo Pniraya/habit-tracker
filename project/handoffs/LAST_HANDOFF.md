@@ -5,8 +5,8 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 2`（数据层 + Domain/Repository/UseCase；治理系统已加固，新增单一验证入口）
-- 当前任务：`TASK-009`（`DONE`，独立评审 `APPROVE`，已合入 `main` @ `7c8b074`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main` @ `7c8b074`（本地，无远程）；合并后 `verify-all` 复跑通过
+- 当前任务：`TASK-010`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-009` 已 `DONE` 合入 `main`（`7c8b074`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`feat/dao-sql-verification`（本地，无远程）；`main` @ `18360bc`
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
@@ -16,6 +16,9 @@
 - `ADR-014` 记录该决策与用户授权来源；`AGENTS.md` §5 的建议命令改为单入口要求
 - 首轮 `verify-all` 运行即在治理步 FAIL（`ADR-014 not covered by PROJECT_STATUS`），补登记后通过——门禁当场拦住了真实遗漏
 - `TASK-009` 首轮独立评审 `REJECT`：`LAST_HANDOFF`/`TEST_REPORT` 未记录本次运行（正是本任务要防的失败），已补
+- `TASK-010`：新增 `tools/verify-dao.mjs`，从 DAO 源码解析 `@Query` 并在真实 SQLite 上执行，21 项断言覆盖 upsert 冲突形状、`archive`/`closeVersion` 的 CAS、`BETWEEN` 闭区间、版本边界查询（一天最多一个有效版本由写入器与事务保证，schema 无此约束）、级联删除
+- 变异验证：去掉 `archived_on IS NULL` → 1 项失败；`BETWEEN` 改开区间 → 2 项失败；还原后全绿
+- `verify-all` 现为 5 步（治理 / 单测 / DAO SQL / 构建 / 空白）；检查器第 21 项已禁止占位行（`TBD`/`NOT_RUN`）通过
 
 ## Files Changed
 本任务（TASK-009）：
@@ -29,8 +32,9 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s（21/21）、单测 25-31s（40 项）、构建 21-24s、空白检查 0s |
-| `pwsh -NoProfile -File tools/check-governance.ps1` | **21/21 PASS**，0 警告 | 分支与 `main` 均通过 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 5 步：治理 6-7s（21/21）、单测 21-31s（40 项）、DAO SQL 0s（21 项）、构建 19-24s、空白 0s |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | **21/21 PASS**，0 警告 | 分支与 `main` 均通过；曾拦下 TASK-010 的占位证据行 |
+| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言 + 覆盖率兜底；共 7 组变异，分别变红 1-2 项 |
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (40 tests)** | 27 项既有 + 13 项 UseCase |
 | 受控负向验证：删除 `RecordHabitProgressUseCase` 归档校验 | **FAILED（1 项）** | 恢复后 40 项全绿 |
 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）** | 还原后 21/21 PASS |
@@ -39,10 +43,11 @@
 | `gradlew test` | **FAILED（环境）** | Gradle 测试 worker 被沙箱禁止，不能作为通过证据 |
 
 ## Not Verified / Known Gaps
-- Room/DAO/事务运行时行为：无 Robolectric（只能在 Gradle 测试 worker 内跑，而该 worker 被沙箱禁止）、无设备（`HypervisorPresent=False`）
+- Room 的 Cursor 映射、TypeConverter 往返、Flow 失效通知：仍无自动化验证（`verify-dao.mjs` 只覆盖 SQL 语义与约束）
+- 事务运行时行为（`withTransaction` 边界、并发写入）：无验证
 - 迁移 v1→v2 与 `MigrationTestHelper` 未开始
 - 检查器第 18/21 项验证的是"证据存在"，不验证证据新鲜度；由 Reviewer 复核
 
 ## Next Safe Action
-1. 独立复审 `REVIEW-TASK-009.md`（通过则 `DONE`、`verify-all`、合入 `main`）
-2. 新任务：Room/DAO 运行时验证——用 `node:sqlite` 直接执行 DAO 的 SQL（复用 schema 导出与触发器），覆盖 upsert、archive 的 CAS、range 边界、级联删除；结论只能是 `PARTIAL`（不含 Room 的 Cursor 映射与 Flow 通知）
+1. 独立评审 `REVIEW-TASK-010.md`（通过则 `DONE`、`verify-all`、合入 `main`）
+2. 之后的新任务（尚未创建）：ViewModel 层 + Compose 页面接线，复用已验收的 UseCase；提醒调度与 DataStore 在其后
