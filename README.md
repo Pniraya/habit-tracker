@@ -2,18 +2,20 @@
 
 本地优先的 Android 习惯追踪器。Kotlin + Jetpack Compose + Material 3 + Room，单 Gradle module（`:app`），目标 Android 15（API 35），minSdk 26。
 
-> 本仓库当前**没有任何 Android 源码或 Gradle 配置**，处于治理层（Gate 0）。构建与测试状态一律是 `NOT_RUN`，直到真实执行才可改写。
+> 仓库已包含可构建的 Android 工程（`:app`）、Room schema v1 与 Domain/Repository 层。所有状态只反映真实执行结果：没有证据的项一律写 `NOT_RUN`/`PARTIAL`。
 
 ## 1. 当前状态
 
 | 项目 | 状态 |
 |---|---|
-| 阶段 | `Gate 1` — 骨架已构建，真机安装与导航未验证 |
-| 当前任务 | `TASK-003`（`PARTIAL`，待设备验证） |
-| 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳） |
-| 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，2m 38s，APK 9.4 MB |
-| 最近测试 | `SUCCESS` 但全部 `NO-SOURCE`（尚无测试用例） |
-| Git | `main`，本地仓库，无远程；基线检查点 `d0f470a` |
+| 阶段 | `Gate 2` — 数据层与 Domain 规则已建，设备验证未完成 |
+| 当前任务 | `TASK-006`（`DONE`，治理一致性改造） |
+| 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository） |
+| 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，36s，APK 9.4 MB |
+| 最近测试 | `PASS` — 27 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
+| 最近数据层校验 | `PASS` — `node tools/verify-schema.mjs`，40/40 |
+| ADR | `ADR-001`~`ADR-012` 全部 `ACCEPTED` |
+| Git | `main`（稳定分支），本地仓库，无远程；基线检查点 `d0f470a` |
 
 ## 2. 文档地图
 
@@ -32,8 +34,10 @@
 | `project/reports/TEST_REPORT.md` | 实际执行的测试记录 | 每次验证 | 可更新（禁止补写未执行项） |
 | `project/reports/RELEASE_REPORT.md` | 发布证据与已知限制 | 发布时 | 可更新（需证据） |
 | `project/reports/BASELINE_REVIEW.md` | 基线静态审查结论 | 低 | 只读 |
+| `project/REVIEW_CHECKLIST.md` | Reviewer 独立评审清单 | 规则变化时 | 可修改 |
 | `project/decisions/ADR-xxx.md` | 技术决策记录 | 有新决策时 | 只增不改（改状态除外） |
 | `tools/check-governance.ps1` | 治理一致性检查脚本（只读） | 规则变化时 | 可修改（不得降低检查强度） |
+| `tools/close-task.ps1` | 任务收尾：生成状态摘要并同步 README/状态快照 | 每任务结束 | 可修改 |
 | `orgins/**` | 视觉概念稿（HTML 参考） | 只读 | 不得当作生产代码 |
 
 ## 3. 工作流
@@ -50,9 +54,11 @@
 . D:\AndroidToolchain\env.ps1        # 设置 ANDROID_HOME / JAVA_HOME / PATH
 pwsh -NoProfile -File D:\AndroidToolchain\verify.ps1   # 一键构建并校验 APK
 
-gradlew.bat assembleDebug   # 已验证：SUCCESSFUL
-gradlew.bat test            # 已验证：SUCCESSFUL，但当前无测试用例（NO-SOURCE）
-adb devices                 # 当前为空：无真机、未装模拟器
+gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
+pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：27 项通过（绕过 Gradle 测试 worker）
+node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
+adb devices                                      # 当前为空：无真机、未装模拟器
+pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-005 -Apply
 pwsh -NoProfile -File tools/check-governance.ps1
 ```
 
@@ -62,8 +68,17 @@ pwsh -NoProfile -File tools/check-governance.ps1
 pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 ```
 
-脚本只读，检查 13 项：必备文件、状态文件残留 `UNKNOWN`、`TASK/ADR` 引用、功能矩阵状态词表与证据、交接快照是否填写、Markdown 相对链接、冲突标记与行尾空白、本地草稿是否误入库、`.gitignore` 覆盖、发布报告是否在无工程时声称 `PASS`、**改受保护基线是否同时带 ADR**（仅空白改动豁免）。它只判断「文档是否自洽」，不判断「代码是否正确」——后者只能靠构建与测试。
+脚本只读，检查 19 项：必备文件、状态文件残留 `UNKNOWN`、`TASK/ADR` 引用、功能矩阵状态词表与证据、交接快照是否填写、Markdown 相对链接、冲突标记与行尾空白、本地草稿是否误入库、`.gitignore` 覆盖、发布报告是否与工程状态矛盾、**改受保护基线是否同时带 ADR**（仅空白改动豁免），以及四项状态同步检查：
+
+- `README` 的当前任务/阶段必须与 `PROJECT_STATUS` 一致；
+- 每个 ADR 必须在 `PROJECT_STATUS` 中被覆盖，且引用处写的状态词必须与 ADR 文件一致；
+- 有 Gradle 工程时 `RELEASE_REPORT` 不得再写“尚无 Android 工程”，`assembleDebug` 也不得仍为 `NOT_RUN`；
+- `TEST_REPORT` 的 `Latest Run` 必须与 `Runs` 表最后一行（日期与结果）一致；
+- `main` 上的 `PARTIAL` 任务必须在 `PROJECT_STATUS` 的「在册例外」登记；
+- `project/REVIEW_CHECKLIST.md` 必须存在且含六个评审小节。
+
+它只判断「文档是否自洽」，不判断「代码是否正确」——后者只能靠构建与测试。
 
 ## 6. 下一步
 
-`TASK-003` 收尾：补 `emulator` 与 `system-images;android-35;google_apis`（或接真机），完成“Android 15 设备可安装并启动、三页可导航”的验证，然后关闭 Gate 1 进入 Gate 2（Room 数据层）。详见 `project/tasks/TASK-003.md`。
+Gate 2 收尾：补 `UseCase` 层与 `DataStore`，并为 Room 事务补集成测试（Robolectric 或真机）；设备验证仍需 `emulator` + `system-images;android-35;google_apis` 或一台真机。详见 `project/tasks/TASK-005.md` 与 `project/PROJECT_STATUS.md`。

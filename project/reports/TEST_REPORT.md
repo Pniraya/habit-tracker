@@ -3,10 +3,10 @@
 > 只记录实际执行的命令和结果。没有执行就写 `NOT_RUN`。
 
 ## Latest Run
-- 日期时间：`2026-11-04 23:55 (+09:00)`
-- 分支 / commit：`main`（审查执行时尚无仓库，故无 commit）→ 证据入库于基线检查点 `d0f470a`
-- 环境：Windows；JDK 21.0.2（`JAVA_HOME=D:\javajdk21`）；**无 Android SDK / Android Studio / Gradle CLI**
-- 结果：构建与单元测试 `NOT_RUN`（无工程）；治理审查检查见 `Runs` 表
+- 日期时间：`2026-11-05`
+- 分支 / commit：`main`；本轮证据入库前的提交见 `git log --oneline -1`
+- 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
+- 结果：单测 `PASS`（27 项，`tools/run-unit-tests.ps1`）；构建 `PASS`（`assembleDebug` 36s）；schema `PASS`（40/40）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -36,8 +36,10 @@
 | 2026-11-05 | `node tools/verify-schema.mjs`（真实 SQLite，40 项） | **40/40 PASS** | 28 项约束行为 + 12 项 schema parity（列/索引/外键） | TASK-004 |
 | 2026-11-05 | 违反 `status` 不变量的直接 `UPDATE` | 拒绝（`habit_logs: invalid log`） | 触发器兜底，满足 §12 该项 | TASK-004 |
 | 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（JUnit4 直接运行，绕过测试 worker） | **OK (27 tests)** | `LogStatusRulesTest`、`ScheduleRulesTest`、`AppRoutesTest` | TASK-005 |
+| 2026-11-05 | `pwsh -File tools/check-governance.ps1`（扩展至 19 项） | exit 0，19 PASS | 首轮 1 FAIL：`TASK-001`/`TASK-004` 的 ADR 状态与 ADR 文件不一致；修复后通过 | TASK-006 |
 
 ## Known Test Gaps
-- Android 工程创建前无法运行 Gradle 构建；本机连 Android SDK 与 Gradle Wrapper 都不存在。
-- 归档日期、创建日期的时区语义、日志状态不变量、平均用时和数值撤销语义尚待明确（详见 `project/reports/BASELINE_REVIEW.md` 与本会话新增冲突项）。
-- 归档日期、日志状态不变量、平均用时和数值撤销语义尚待明确。
+- `gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
+- Room 事务、DAO 查询、`@Upsert` 行为没有运行时证据，需要 Robolectric 或真机。
+- 无真机、无模拟器：`adb devices` 为空且 `HypervisorPresent=False`，设备验证全部 `NOT_RUN`。
+- 数值型“撤销”语义、恢复默认策略仍未定（见 `project/reports/BASELINE_REVIEW.md`）。

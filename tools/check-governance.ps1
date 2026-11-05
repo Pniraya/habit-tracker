@@ -196,6 +196,130 @@ foreach ($c in @(git rev-list HEAD)) {
 if ($violations.Count -eq 0) { Add-Pass 'baseline changes carry an ADR' 'every commit touching a protected file also touches an ADR' }
 else { Add-Fail 'baseline changes carry an ADR' ((($violations | Select-Object -First 5) -join '; ')) }
 
+
+# 12. README must agree with PROJECT_STATUS on stage and current task
+$tick = [char]96
+$readmeText = Get-Content -Raw -Path 'README.md'
+$syncProblems = @()
+
+$stTask = if ($statusText -match ('当前任务：\s*' + [regex]::Escape($tick) + '(TASK-\d{3})' + [regex]::Escape($tick))) { $Matches[1] } else { $null }
+$rdTask = if ($readmeText -match ('\|\s*当前任务\s*\|\s*' + [regex]::Escape($tick) + '(TASK-\d{3})' + [regex]::Escape($tick))) { $Matches[1] } else { $null }
+$stGate = if ($statusText -match ('项目阶段：\s*' + [regex]::Escape($tick) + '(Gate \d)' + [regex]::Escape($tick))) { $Matches[1] } else { $null }
+$rdGate = if ($readmeText -match ('\|\s*阶段\s*\|\s*' + [regex]::Escape($tick) + '(Gate \d)' + [regex]::Escape($tick))) { $Matches[1] } else { $null }
+
+if (-not $stTask) { $syncProblems += 'PROJECT_STATUS has no 当前任务 id' }
+if (-not $rdTask) { $syncProblems += 'README has no 当前任务 id' }
+if ($stTask -and $rdTask -and $stTask -ne $rdTask) { $syncProblems += ('README ' + $rdTask + ' vs status ' + $stTask) }
+if (-not $stGate) { $syncProblems += 'PROJECT_STATUS has no 阶段 Gate token' }
+if (-not $rdGate) { $syncProblems += 'README has no 阶段 Gate token' }
+if ($stGate -and $rdGate -and $stGate -ne $rdGate) { $syncProblems += ('README ' + $rdGate + ' vs status ' + $stGate) }
+if ($syncProblems.Count -eq 0) { Add-Pass 'readme matches status' ($stTask + ' / ' + $stGate) }
+else { Add-Fail 'readme matches status' ($syncProblems -join '; ') }
+
+# 13. ADR statuses must not contradict the documents that describe them
+$adrStatus = @{}
+foreach ($f in @(Get-ChildItem 'project/decisions' -Filter 'ADR-*.md' | Where-Object { $_.Name -ne 'ADR-TEMPLATE.md' })) {
+    $adrText = Get-Content -Raw -Path $f.FullName
+    $id = $f.BaseName.Substring(0, 7)
+    if ($adrText -match ('- 状态：\s*' + [regex]::Escape($tick) + '([A-Z_]+)' + [regex]::Escape($tick))) { $adrStatus[$id] = $Matches[1] }
+}
+$coveredIds = @()
+foreach ($m in [regex]::Matches($statusText, 'ADR-(\d{3})\D{1,6}ADR-(\d{3})')) {
+    $from = [int]$m.Groups[1].Value
+    $to = [int]$m.Groups[2].Value
+    for ($i = $from; $i -le $to; $i++) { $coveredIds += ('ADR-' + $i.ToString('000')) }
+}
+foreach ($m in [regex]::Matches($statusText, 'ADR-\d{3}')) { $coveredIds += $m.Value }
+
+$adrProblems = @()
+foreach ($id in $adrStatus.Keys) {
+    if ($coveredIds -notcontains $id) { $adrProblems += ($id + ' not covered by PROJECT_STATUS') }
+}
+$claimFiles = @('project/PROJECT_STATUS.md', 'README.md', 'project/handoffs/LAST_HANDOFF.md')
+$claimFiles += @($tracked | Where-Object { $_ -like 'project/tasks/*.md' })
+# Lines marked as historical (当时 / 历史记录) record what was true then; only present-tense claims must match.
+foreach ($f in $claimFiles) {
+    if (-not (Test-Path $f)) { continue }
+    foreach ($line in (Get-Content -Path $f)) {
+        if ($line -match '当时|历史记录') { continue }
+        foreach ($m in [regex]::Matches($line, 'ADR-(\d{3})[^\r\n]{0,30}?(PROPOSED|ACCEPTED)')) {
+            $id = 'ADR-' + $m.Groups[1].Value
+            $claimed = $m.Groups[2].Value
+            if ($adrStatus.ContainsKey($id) -and $adrStatus[$id] -ne $claimed) {
+                $adrProblems += ($f + ': ' + $id + ' claims ' + $claimed + ', ADR file says ' + $adrStatus[$id])
+            }
+        }
+    }
+}
+if ($adrProblems.Count -eq 0) { Add-Pass 'adr status consistent' ("{0} ADR(s) covered and uncontradicted" -f $adrStatus.Count) }
+else { Add-Fail 'adr status consistent' (($adrProblems | Select-Object -Unique) -join '; ') }
+
+# 14. Release report must not contradict an existing buildable project
+$releaseReport = Get-Content -Raw -Path 'project/reports/RELEASE_REPORT.md'
+$testReport = Get-Content -Raw -Path 'project/reports/TEST_REPORT.md'
+$releaseProblems = @()
+if ($hasGradle) {
+    if ($releaseReport -match '尚无 Android 工程') { $releaseProblems += 'says no Android project while gradlew exists' }
+    if ($testReport -match 'assembleDebug') {
+        $hasSuccess = $false
+        foreach ($line in ($testReport -split "\r?\n")) {
+            if ($line -match 'assembleDebug' -and $line -match 'SUCCESSFUL') { $hasSuccess = $true }
+        }
+        if ($hasSuccess) {
+            $debugRow = @($releaseReport -split "\r?\n" | Where-Object { $_ -match 'assembleDebug' }) | Select-Object -First 1
+            if ($debugRow -and $debugRow -match 'NOT_RUN') { $releaseProblems += 'assembleDebug row still NOT_RUN' }
+        }
+    }
+}
+if ($releaseProblems.Count -eq 0) { Add-Pass 'release report not stale' 'build evidence does not contradict the project' }
+else { Add-Fail 'release report not stale' ($releaseProblems -join '; ') }
+
+# 15. TEST_REPORT Latest Run summary must match the last Runs row
+$runRows = @($testReport -split "\r?\n" | Where-Object { $_ -match '^\|\s*20' })
+$testProblems = @()
+if ($runRows.Count -eq 0) { $testProblems += 'Runs table has no dated row' }
+else {
+    $lastRow = $runRows[-1]
+    $cells = @($lastRow.Split('|') | ForEach-Object { $_.Trim() })
+    if ($cells.Count -lt 5) { $testProblems += 'last Runs row is malformed' }
+    else {
+        $runDate = $cells[1]
+        $runResult = $cells[3]
+        $summaryBlock = (($testReport -split '## Runs')[0])
+        if ($summaryBlock -notmatch [regex]::Escape($runDate)) { $testProblems += ('Latest Run does not mention ' + $runDate) }
+        $expected = 'NOT_RUN'
+        if ($runResult -match 'FAIL') { $expected = 'FAILED' }
+        elseif ($runResult -match 'PASS|OK|SUCCESS') { $expected = 'PASS' }
+        if ($summaryBlock -notmatch $expected) { $testProblems += ('Latest Run does not state ' + $expected + ' (last row: ' + $runResult + ')') }
+    }
+}
+if ($testProblems.Count -eq 0) { Add-Pass 'test report summary matches' 'Latest Run agrees with the last Runs row' }
+else { Add-Fail 'test report summary matches' ($testProblems -join '; ') }
+
+# 16. PARTIAL tasks on main must be registered as exceptions
+$partialTasks = @()
+foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
+    $t = Get-Content -Raw -Path $f.FullName
+    if ($t -match ('- 状态：\s*' + [regex]::Escape($tick) + 'PARTIAL' + [regex]::Escape($tick))) { $partialTasks += $f.BaseName }
+}
+if ($partialTasks.Count -eq 0) { Add-Pass 'partial tasks registered' 'no PARTIAL task in the tree' }
+else {
+    $unregistered = @($partialTasks | Where-Object { $statusText -notmatch [regex]::Escape($_) })
+    if ($unregistered.Count -eq 0) { Add-Pass 'partial tasks registered' ('registered: ' + ($partialTasks -join ', ')) }
+    else { Add-Fail 'partial tasks registered' ('missing from PROJECT_STATUS 在册例外: ' + ($unregistered -join ', ')) }
+}
+
+# 17. Reviewer checklist exists and covers the required dimensions
+$checklistPath = 'project/REVIEW_CHECKLIST.md'
+$requiredSections = @('Diff 核对', '架构一致性', '验证证据', '文档同步', '分支与提交', '结论')
+if (-not (Test-Path $checklistPath)) { Add-Fail 'reviewer checklist' 'project/REVIEW_CHECKLIST.md is missing' }
+else {
+    $checklistText = Get-Content -Raw -Path $checklistPath
+    $missingSections = @($requiredSections | Where-Object { $checklistText -notmatch [regex]::Escape($_) })
+    if ($missingSections.Count -eq 0) { Add-Pass 'reviewer checklist' 'all six review dimensions present' }
+    else { Add-Fail 'reviewer checklist' ('missing sections: ' + ($missingSections -join ', ')) }
+}
+
 # Report
 $fail = @($results | Where-Object { $_.Status -eq 'FAIL' })
 $warn = @($results | Where-Object { $_.Status -eq 'WARN' })

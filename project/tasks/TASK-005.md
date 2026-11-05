@@ -52,3 +52,13 @@
 ## 8. Handoff
 - 下一步：`UseCase` 层与 DataStore；补 Room 集成测试（Robolectric 或真机）。
 - `ADR-011` 已 `ACCEPTED`，`DATABASE.md` §4/§12 措辞已同步。
+
+<!-- close-task:begin -->
+## 状态摘要（自动生成，勿手改）
+
+- 任务：TASK-005
+- 状态：`PARTIAL`
+- 阶段：Gate 2` / `Gate 3
+- 验收：通过 4 项 / 未通过 2 项
+- 最近测试记录：2026-11-05 / exit 0，19 PASS
+<!-- close-task:end -->

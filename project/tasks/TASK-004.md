@@ -18,7 +18,7 @@
 - `Converters`：`LocalDate` ↔ ISO `yyyy-MM-dd`、`LocalTime` ↔ `HH:mm:ss`、三个枚举按名字存储（不用 ordinal）。
 - 四个 DAO 只暴露原语：`HabitLogDao` **没有** `setStatus`/`setCompletedAt`（ADR-006），写日志只能整条 upsert。
 - `HabitDatabase`：`version = 1`、`exportSchema = true`、无 `fallbackToDestructiveMigration()`；schema JSON 已纳入版本控制（`app/schemas/.../1.json`，12 187 bytes）。
-- **CHECK 约束的实现方式**：Room 的 `@Entity` 无法生成 CHECK，因此 `DATABASE.md` §4 的约束以 `BEFORE INSERT/UPDATE` 触发器落地（`DatabaseConstraints`，8 个），并在 `onCreate` 与 `onOpen` 幂等安装。这使“直接 UPDATE 违反不变量会被拒绝”（§12 最后几条）仍然成立。见 `ADR-011`（`PROPOSED`）。
+- **CHECK 约束的实现方式**：Room 的 `@Entity` 无法生成 CHECK，因此 `DATABASE.md` §4 的约束以 `BEFORE INSERT/UPDATE` 触发器落地（`DatabaseConstraints`，8 个），并在 `onCreate` 与 `onOpen` 幂等安装。这使“直接 UPDATE 违反不变量会被拒绝”（§12 最后几条）仍然成立。见 `ADR-011`（`ACCEPTED`）。
 - 新增 `tools/verify-schema.mjs`：用 `node:sqlite` 加载 Room 导出的 DDL + 触发器 DDL，在真实 SQLite 上跑 40 项断言。
 
 ## 4. 未完成 / 未验证

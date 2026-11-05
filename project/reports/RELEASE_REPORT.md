@@ -8,16 +8,18 @@
 - 版本类型：Debug / Release（未定）
 - 日期：`TBD`
 - commit / tag：`TBD`
-- 结果：`NOT_RUN`（尚无 Android 工程）
+- 结果：`NOT_RUN`（尚未进入发布流程；Debug 构建已可执行，见构建证据）
 
 ## 构建证据
 
 | 命令 | 结果 | 产物 / 摘要 |
 |---|---|---|
-| `gradlew.bat assembleDebug` | NOT_RUN | — |
-| `gradlew.bat assembleRelease` | NOT_RUN | — |
-| `gradlew.bat test` | NOT_RUN | — |
-| `gradlew.bat lint` | NOT_RUN | — |
+| `gradlew.bat assembleDebug` | SUCCESSFUL（2026-11-05，36s） | `app/build/outputs/apk/debug/app-debug.apk`，9.4 MB，`com.habittracker` / minSdk 26 / targetSdk 35 |
+| `gradlew.bat assembleRelease` | NOT_RUN | 未执行签名与混淆配置 |
+| `gradlew.bat test` | FAILED（沙箱限制） | 测试 worker 的命名管道被禁；等价证据见下两行 |
+| `pwsh tools/run-unit-tests.ps1` | PASS（27 项） | `LogStatusRulesTest`、`ScheduleRulesTest`、`AppRoutesTest` |
+| `node tools/verify-schema.mjs` | PASS（40/40） | schema parity + 约束行为 |
+| `gradlew.bat lint` | NOT_RUN | 未执行 |
 
 ## 真机验证矩阵
 

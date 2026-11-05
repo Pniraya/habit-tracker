@@ -54,7 +54,7 @@
 - 未经批准不得先改文档后补 ADR。
 
 ## 9. Implementation Log
-- 2026-11-05：把 §5 的 8 项决策写成 `ADR-005~010`（状态 `PROPOSED`），每份含决策、替代方案、影响文件、必需测试与批准后要执行的具体改动。基线文档本次未修改，等批准后再动。
+- 2026-11-05：把 §5 的 8 项决策写成 `ADR-005~010`（状态 `PROPOSED`，当时），每份含决策、替代方案、影响文件、必需测试与批准后要执行的具体改动。基线文档本次未修改，等批准后再动。
 - 2026-11-05：用户批准全部 6 份 ADR，状态改为 `ACCEPTED`；按各 ADR 的 Implementation 段完成 `DATABASE.md`、`ARCHITECTURE.md`、`REQUIREMENTS.md` 的修订，并把 `FEATURE_MATRIX` F-016 改为 `OUT_OF_SCOPE`。
 
 ## 10. Verification Evidence
