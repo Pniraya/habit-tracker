@@ -59,10 +59,12 @@
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (58 tests)** | 新增 `CreateHabitPresenterTest` 9 项（含"数值→布尔切换清空单位"回归） |
 | 变异：`isBlank()` → `isEmpty()` | **FAILED（1 项）** | 空名测试变红，证明本地校验被真的执行 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（29s） | 首次失败：`NewSchedule` 参数名错误 |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 57 项、DAO SQL 21 项、`assembleDebug` 22s、空白 0s |
+| 变异：去掉 `onTrackingTypeChange` 的 unit 清空 | **FAILED（1 项）**（预期） | `switchingFromNumericToBooleanClearsTheUnit` 变红，证明修复被回归测试锁住 |
+| 变异：去掉 `draft()` 的 BOOLEAN `unit = null` 兜底 | **未被抓住（58 全绿）** | 先清 unit 后该行不可达，属不可证伪的纵深防御，不计为已验证防线 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 58 项、DAO SQL 21 项、`assembleDebug` 19-22s、空白 0s |
 
 ## 11. Completion Review
-- [x] 验收标准全部满足（6/6）
+- [x] 验收标准全部满足（6/6；其中「数值习惯弹框写入实存值」仅由 Presenter 测试与真机手动走查支撑，无自动化 UI 测试）
 - [x] 相关测试实际运行（58 项 + 2 组变异）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
@@ -70,12 +72,28 @@
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
-- 下一步：评审后合入 `main`；之后补图标/颜色选择与习惯编辑（任务文件尚未创建）。
+- 下一步：评审 `APPROVE` 后合入 `main`；之后的首选任务是**把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase` 并在 `HabitRepository` 接口写明契约**（本任务暴露的分层问题，任务文件尚未创建），其次才是图标/颜色选择与习惯编辑。
 - 遗留：旋转丢失表单；UI 无自动化测试。
+- 已知 UX 缺口（真机走查发现，未修）：Today 页**仅在空态**提供「新建习惯」入口，有至少一个习惯后无法再新建；修复应另开任务。
 
 ## 13. Independent Review
 - Reviewer record：`project/reviews/REVIEW-TASK-012.md`
-- 结论：`PENDING`
+- 第 1 轮（`1f633a8`）：`REJECT` —— 抓到 unit 状态泄漏真缺陷 + 三份文档未同步
+- 第 2 轮（`ba96c55`）：`REJECT` —— 代码达标，仅剩计数不一致（README/TEST_REPORT/TASK 证据行）；M-2 兜底行未被变异抓住
+- 结论：待第 3 轮
+
+## 14. Device Verification（手动走查，非自动化）
+- 设备：`iQOO Neo7 SE`（`V2238A` / `PD2238`），Android 15（API 35），序列号 `10CDAK0B71005KU`，USB 调试
+- APK：`app/build/outputs/apk/debug/app-debug.apk`，`adb install -r` 输出 `Success`
+- 走查 1（修复前遗留路径的修复后行为）：新建「数值 + 单位 ml + 目标 2000」→ 切回「完成/未完成」→ 单位框隐藏且保存成功 → Today 出现该习惯 → 点击卡片变为「今天已完成」
+- 走查 2（落库核对）：`adb exec-out run-as com.habittracker cat databases/habit-tracker.db`（含 `-wal`/`-shm`）后用 `node:sqlite` 读取：
+  - `habits`：`tracking_type=BOOLEAN`、`target_value=1`、`unit=NULL`（证明单位被清空，未被拒）
+  - `habit_schedules`：`frequency_type=DAILY`、`weekday_mask=127`、`effective_from=2026-11-05`
+  - `habit_logs`：`status=COMPLETED`、`actual_value=1`、`target_snapshot=1`
+  - `room_master_table` 身份哈希存在；`android_metadata.locale=zh_CN`
+- 截图：`.gradle/shots/{today,create,numeric,filled,switched,saved,done}.png`（未纳入版本库）
+- **未验证**：数值习惯的输入对话框未在真机走通（`adb shell input` 在中文 IME 下丢字符，无法稳定填表）；统计页、我的页仍为占位；旋转未测
+- 结论：真机验证了「能建习惯、能出现在今日、能打卡、单位不会残留」这条主路径；它不等于 UI 自动化，也不覆盖异常路径
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
