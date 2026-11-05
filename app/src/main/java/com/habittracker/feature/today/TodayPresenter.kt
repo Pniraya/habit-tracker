@@ -1,5 +1,6 @@
 package com.habittracker.feature.today
 
+import com.habittracker.data.local.entity.TrackingType
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.Habit
 import com.habittracker.domain.repository.HabitRepository
@@ -43,9 +44,16 @@ class TodayPresenter(
         }
     }
 
-    /** BOOLEAN rows toggle between done and not done; every other rule stays in the use case. */
+    /**
+     * Only BOOLEAN rows toggle. A numeric habit toggled to 1.0 would silently record a wrong value,
+     * so the presenter refuses instead of guessing; numeric input arrives through [record].
+     */
     fun toggle(habitId: Long) {
         val habit = _state.value.habits.firstOrNull { it.id == habitId } ?: return
+        if (habit.trackingType != TrackingType.BOOLEAN) {
+            _lastError.value = NUMERIC_NEEDS_INPUT
+            return
+        }
         record(habitId, if (habit.isCompleted) 0.0 else 1.0)
     }
 
@@ -89,4 +97,7 @@ class TodayPresenter(
         )
     }
 
+    companion object {
+        const val NUMERIC_NEEDS_INPUT: String = "数值习惯需要输入数值，暂不支持一键完成"
+    }
 }

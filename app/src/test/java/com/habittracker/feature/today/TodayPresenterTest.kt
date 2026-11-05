@@ -117,6 +117,34 @@ class TodayPresenterTest {
     }
 
     @Test
+    fun togglingANumericHabitWritesNothing() {
+        val id = createHabit(TrackingType.NUMERIC, "Water")
+        val presenter = presenter()
+
+        presenter.toggle(id)
+
+        assertNull(runBlocking { repository.dailyLog(id, monday) })
+        assertEquals(TodayPresenter.NUMERIC_NEEDS_INPUT, presenter.lastError.value)
+    }
+
+    /**
+     * Only the use case rejects a write on a rest day; the repository would accept it. So this test
+     * fails if the presenter ever talks to the repository directly instead of going through the
+     * use case. A negative value would not discriminate: both layers reject that.
+     */
+    @Test
+    fun aRestDayWriteIsRefusedByTheUseCasePath() {
+        val id = createHabit(TrackingType.BOOLEAN, "Gym", FrequencyType.CUSTOM, 1)
+        val presenter = presenter(date = monday.plusDays(1))
+
+        presenter.record(id, 1.0)
+
+        assertNull(runBlocking { repository.dailyLog(id, monday.plusDays(1)) })
+        assertNotNull(presenter.lastError.value)
+        assertTrue(presenter.lastError.value!!.contains("not a scheduled day"))
+    }
+
+    @Test
     fun aRejectedWriteSurfacesTheUseCaseMessage() {
         val id = createHabit(TrackingType.NUMERIC, "Water")
         val presenter = presenter()

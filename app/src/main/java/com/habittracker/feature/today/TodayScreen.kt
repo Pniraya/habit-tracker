@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.habittracker.data.local.entity.TrackingType
 import java.time.format.DateTimeFormatter
 
 /**
@@ -69,7 +70,7 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = habit.isScheduledToday) { onToggle() },
+            .clickable(enabled = habit.isScheduledToday && habit.trackingType == TrackingType.BOOLEAN) { onToggle() },
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -95,7 +96,7 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit) {
 
 private fun subtitle(habit: TodayHabit): String = when {
     habit.isRestingToday -> "今天不在计划内"
-    habit.trackingType.name == "NUMERIC" -> {
+    habit.trackingType == TrackingType.NUMERIC -> {
         val target = habit.targetValue.toLong()
         val actual = habit.actualValue.toLong()
         actual.toString() + " / " + target + " " + (habit.unit ?: "")

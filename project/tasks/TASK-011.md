@@ -33,6 +33,7 @@
 - [x] 数值习惯的写入走 `RecordHabitProgressUseCase` 并显示实存值
 - [x] 被领域拒绝的写入显示消息，不抛到 UI
 - [x] 归档习惯不出现在列表
+- [x] 数值习惯不可一键完成（点击不写值，提示需输入数值）
 - [x] `tools/run-unit-tests.ps1` 通过、`assembleDebug` 通过
 
 ## 7. Tests
@@ -47,17 +48,18 @@
 
 ## 9. Implementation Log
 - 2026-11-05：新增 Presenter/ViewModel/UiState 与页面接线；首次编译失败 `foundation.layout.weight` 为 internal import，删除后 47 项单测通过、构建 28s。
+- 2026-11-05：独立评审首轮 `REJECT`：数值习惯 `toggle()` 会写入 1.0（真缺陷）；"负值拒绝"测试无法鉴别是否走了 use case；`TEST_REPORT`/`LAST_HANDOFF`/`Known Test Gaps` 未接上 Today。已修：`toggle` 只对 BOOLEAN 生效并提示，UI 对非 BOOLEAN 行禁用点击；新增"休息日写入被 use case 拒绝"测试（只有 use case 会拒绝该场景）。
 - 2026-11-05：`TodayViewModel` 首次写成 `presenter.cancel()`，但 Presenter 不拥有 scope；改为 ViewModel 持有并取消自己的 scope，避免取消调用方传入的 scope。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (47 tests)** | 新增 `TodayPresenterTest` 7 项（加载/切换/再切换/数值/休息日/拒绝/归档） |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (49 tests)** | 新增 9 项：加载/切换/再切换/数值/休息日/拒绝/归档/数值不可点击/休息日写入被 use case 拒绝 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（28s） | 首次失败：`androidx.compose.foundation.layout.weight` 为 internal，删除该 import |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 47 项、DAO SQL 21 项、构建 18-28s、空白干净 |
 
 ## 11. Completion Review
-- [x] 验收标准全部满足（6/6）
+- [x] 验收标准全部满足（7/7）
 - [x] 相关测试实际运行（47 项）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
@@ -78,6 +80,6 @@
 - 任务：TASK-011
 - 状态：`PARTIAL`
 - 阶段：Gate 3
-- 验收：通过 6 项 / 未通过 0 项
+- 验收：通过 7 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **SUCCESSFUL**（28s）
 <!-- close-task:end -->
