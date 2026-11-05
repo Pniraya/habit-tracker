@@ -64,11 +64,12 @@
 
 ## 11. Completion Review
 - [x] 验收标准满足（10/10）
-- [x] 测试实际运行（14 个探针 + 基线 + 全量门禁）
+- [x] 测试实际运行（15 个探针 + 基线 + 全量门禁）
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
 - 之后回到功能开发：`F-009` 连续天数（矩阵里第一个未实现的产品功能）。
+- 遗留（评审建议）：第 14 项只比对「当前任务」的任务号与阶段、不比对状态词——本轮 `PROJECT_STATUS` 写 `NOT_STARTED` 而其余三处写 `PARTIAL` 没被拦住，两轮才由人工发现。后续可让第 14 项比对状态词。
 
 ## 13. Independent Review
 - Reviewer record：待创建
