@@ -52,6 +52,9 @@ transaction 删除关联提醒、日志、计划，再删除习惯；删除前�
 以下 SQL 表达逻辑 schema。Room Entity
 的列名、默认值、索引和外键必须与之保持一致。
 
+`CHECK` 约束无法由 Room 注解生成，实现层以等价的 `BEFORE INSERT/UPDATE`
+触发器落地（`ADR-011`）：SQL 里的 `CHECK` 表示“必须成立的不变量”，不限定实现机制。
+
 ### 4.1 habits
 
 ``` sql
@@ -401,6 +404,6 @@ ISO `yyyy-MM-dd`，本地时间使用 ISO `HH:mm:ss`；**时间戳（含
     `archived_on` 抑制触发，恢复后按 `enabled = 1` 重排（ADR-008）。
 -   永久删除时关联数据按预期删除。
 -   JSON 导入校验失败不产生部分写入。
--   违反 `status` 不变量的直接 UPDATE 被 CHECK 拒绝（ADR-006）。
+-   违反 `status` 不变量的直接 UPDATE 被 CHECK 或等价触发器拒绝（ADR-006、ADR-011）。
 -   `DAILY` 配非 127 掩码、`WEEKDAYS` 配非 31 掩码被 CHECK 拒绝（ADR-007）。
 -   `created_on` / `archived_on` 在设备时区变化后保持不变（ADR-005）。

@@ -5,12 +5,12 @@
 ## 当前状态
 
 - 项目阶段：`Gate 2` — 数据层进行中；Gate 1 的设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-004`（`PARTIAL`）；`TASK-001`、`TASK-002` 已 `DONE`
+- 当前任务：`TASK-005`（`PARTIAL`）；`TASK-004`、`TASK-003` 同为 `PARTIAL`；`TASK-001`、`TASK-002` 已 `DONE`
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳 + Room schema v1；构建通过，约束经真实 SQLite 验证，DAO/Repository/真机未验证）
-- 最近验证构建：`PASS`（`gradlew assembleDebug` 含 KSP/Room，2026-11-05，2m 32s）
+- 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，重构后 36s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs`，40/40，含 schema parity）
-- 最近验证测试：`FAILED`（环境限制）——Gradle 测试 worker 在沙箱内无法启动，详见 `TASK-003` §4
+- 最近验证测试：`PASS`（27 项，`tools/run-unit-tests.ps1`）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，13 项检查）
 - 最后核对时间：`2026-11-05`
 
@@ -25,6 +25,7 @@
 - [x] 构建环境：`D:\AndroidToolchain`（`sdk` + `gradle` + `env.ps1` + `verify.ps1`），JDK 17 在 `D:\javajdk17`
 - [x] Android 工程骨架：Wrapper、Version Catalog、`:app`、主题 token、三页导航
 - [x] 数据层 schema v1：四表 + 外键 + 索引 + Converter + schema export（`TASK-004`）
+- [x] Domain 纯规则 + Repository + 计划版本写入器（`TASK-005`），27 项单测通过
 - [ ] DAO/Repository 运行时测试（沙箱内无法运行 Gradle 测试 worker）
 - [ ] 真机/模拟器安装与三页导航验证
 
@@ -38,7 +39,7 @@
 ## 阻塞项与风险
 
 - 无真机、无模拟器：`adb devices` 为空，`emulator`/`system-images` 未安装，Gate 1 的“设备可安装启动”无法验证。
-- 单测存在但未跑通：`AppDestinationTest` 已写，`gradlew test` 因沙箱禁止 worker 管道而无法执行。
+- 沙箱内 `gradlew test` 永远失败（测试 worker 管道被禁）；纯 JVM 测试用 `tools/run-unit-tests.ps1` 运行，Room/Compose 相关测试仍无法在本机执行。
 - 依赖经腾讯镜像获取（官方 SHA-1 只用在校验 SDK 包上，Maven 依赖未逐包校验），镜像不可用时回退到 `google()` 会极慢。
 - Android SDK 许可文件由 AI 按标准哈希写入，等同于代表用户接受条款，需用户复核。
 - 仍存在的设计缺口：`habits` 的 BOOLEAN 约束未在 SQL 表达；数值型“撤销”UI 语义未定；恢复默认策略未定。

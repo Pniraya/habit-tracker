@@ -12,7 +12,7 @@ enum class AppDestination(
     val label: String,
     val icon: ImageVector,
 ) {
-    Today("today", "今日", Icons.Filled.Home),
-    Statistics("statistics", "统计", Icons.Filled.DateRange),
-    Profile("profile", "我的", Icons.Filled.Person),
+    Today(AppRoutes.TODAY, "今日", Icons.Filled.Home),
+    Statistics(AppRoutes.STATISTICS, "统计", Icons.Filled.DateRange),
+    Profile(AppRoutes.PROFILE, "我的", Icons.Filled.Person),
 }
