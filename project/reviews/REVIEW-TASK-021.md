@@ -1,79 +1,105 @@
 # REVIEW-TASK-021: 独立评审记录
 
-- 审查任务：`TASK-021`
-- 审查 commit：`5707e435944e38d909f432e97ac0f544ce458e31`
-- 审查范围：`git diff main...HEAD`（`142c5ea`..`5707e43`，1 个提交，16 文件 +316/−19：`StreakRules`、`GetStreakUseCase`、仓储两方法、Today presenter/UI/状态、8 项规则测试 + 2 项 presenter 测试、状态文件）
-- Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现）
+- 审查任务：`TASK-021`（F-009 当前/最长连续天数）
+- 审查 commit：`3104352721424e3b557fe877161a4c53cdd6593b`（`git rev-parse HEAD`，分支 `feat/streak`，`main` = `281667b03884f83215b54e00bb1138835ae41130`）
+- 审查范围：`git diff 281667b...3104352`——18 文件 +453/−42，含 `5707e43`（第 1 轮被拒的实现）与 `3104352`（本轮修复）
+- Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现，本轮全程只读核对 + 变异）
 - 独立性：`INDEPENDENT`
 - 日期：`2026-11-05`
 
-评审时工作区：`git status --short` 为空（开始前）。本轮为只读核对 + 门禁复跑 + 7 组变异（M1–M6 复现开发者的，M8 为设计验证）；所有变异已还原，结束时工作区仅剩本评审文件。
+工作区：开始时 `git status --short` 为空（上一轮遗留的 `from = today` 已不在文件中，`GetStreakUseCase.kt:18` 为 `schedules.minOf { it.effectiveFrom }`）。7 组变异逐组用 `git checkout -- <path>` 还原并当场确认 `git status --short` 为空；结束时工作区只有本评审文件一处改动。
 
 ## 1. Scope
 
 **裁决：通过。**
 
-- 与 `TASK-021` §3 一致：纯规则、仓储读取方法、UseCase、presenter 文案与行内渲染；未改 schema、未加依赖、未碰详情页与热力图。
-- `REQUIREMENTS` 32/33/93 的三条口径都落到了代码注释与测试：按版本、非计划日跳过、按计划执行日。
-- 今天未完成不算断的实现与 `REQUIREMENTS` 93「**过去**已到期的计划日缺失或未完成，视为失败」一致——不是临时 UX 偏好，规格本身只把「过去」判失败。
+- 与 `TASK-021` §3/§5 一致：`StreakRules`（纯规则）、`HabitRepository` 两个只读方法 + `RoomHabitRepository`/`FakeHabitRepository` 实现、`GetStreakUseCase`、`TodayPresenter`/`TodayUiState`/`TodayViewModel`/`TodayScreen`、规则与 presenter 测试；文档同步属 `AGENTS.md` §6 的强制项。未碰 schema、未加依赖/权限、未做详情页与热力图（§4 Out of Scope 守住）。
+- 第 1 轮的三条拒绝理由逐条复核：
+
+| 第 1 轮阻断项 | 本轮实际状态 | 我的验证方式 |
+|---|---|---|
+| (a) `FEATURE_MATRIX`/`PROJECT_STATUS`/`LAST_HANDOFF` 仍写 F-009 未开始 | 已改：矩阵 `F-009` = `DEVICE_VERIFIED / VERIFIED / DEVICE_VERIFIED`（`FEATURE_MATRIX.md:24`），证据索引新增 F-009 两条（`:46`、`:53`），`PROJECT_STATUS.md:8/22`、`LAST_HANDOFF.md:8/49`、`README.md:12` 均为 `TASK-021 PARTIAL` | 读文件 + `check-governance.ps1` 的 `readme matches status`/`feature matrix vocabulary`/`handoff snapshot filled` 全绿 |
+| (b) 删掉 `COMPLETED` 过滤仍全绿 | 已补测试：`TodayPresenterTest.anInProgressDayDoesNotJoinTheStreak`（数值习惯 1/2000 ml = `IN_PROGRESS`；断言 `current=0, longest=0` 且该日确为 `IN_PROGRESS`） | 我的 M1 变异只打红这一条（`Failures: 1`） |
+| (c) 只取最新计划版本仍全绿 | 已补接线测试：`TodayPresenterTest.everyScheduleVersionFeedsTheStreak`（DAILY 到 11/4、11/5 起 CUSTOM 周一三五，日志 11/2–11/4，断言 `current=3`）；`FakeHabitRepository.changeSchedule` 现在会像 `HabitScheduleWriter` 一样关闭旧版本 | 我的 M2 变异只打红这一条（`Failures: 1`） |
 
 ## 2. Diff 核对
 
-**裁决：通过（2 处逻辑未被测试锁定，见 §4）。**
-
-- `git diff --check`：**exit 0**；无冲突标记。
-- `StreakRules.compute`（`StreakRules.kt:35-70`）：`due(day)` 由「版本覆盖 + 位掩码命中」决定；非计划日既不计数也不重置；`today` 未完成在两条循环里都显式跳过。
-- `GetStreakUseCase`（`:20-23`）：只取 `from..today` 的日志并 `filter { status == COMPLETED }`；`RoomHabitRepository` 用既有的 `scheduleDao.findAll` / `logDao.findRange`。
-- presenter（`TodayPresenter.kt:88`）在 `describe` 内调用 `streaks(habit.id, date)`；`TodayHabit` 加两个默认 0 的字段，旧构造点不受影响。
-- UI（`TodayScreen.kt:181-189`）仅在 `streakText` 非 null 时渲染，0/0 不显示。
-
-## 3. 架构与数据
-
 **裁决：通过。**
 
-- 规则在 `domain/calculation`，读模型在 `domain/usecase`，presenter 不碰 SQL；依赖方向正确。
-- 未改 schema；`findRange` 是既有查询，`verify-dao.mjs` 已覆盖其边界与排序（`findRange includes both boundaries and sorts ascending`、`excludes rows outside the window`）。
-- `Dispatchers.Main.immediate` 上执行的是「N 次 Room suspend 调用 + 逐日循环」：Room 自己把查询切到事务执行器，主线程不会被 SQL 阻塞；逐日循环的量级见 §6。
+- `git diff --check`：**exit 0**，无空白错误、无冲突标记（`check-governance` 的 `no conflict markers`、`no trailing whitespace` 亦通过）。
+- 18 个文件全部能对应到 §5 Expected Files 或 `AGENTS.md` §6 的文档同步义务；没有顺手重构、没有新依赖/权限/Gradle module、没有新增产品功能。
+- 业务规则位置正确：日期与计划口径只在 `domain/calculation/StreakRules.kt`；`TodayScreen` 只做渲染（`:181-188` 调 `TodayPresenter.streakText`），DAO 未出现规则。
+- 未删除或绕过既有测试：`TodayPresenterTest` 只把 `createHabit` 的创建日参数化（默认值仍为 `monday`，旧用例行为不变），其余为新增。
+- 第 2 个 commit 相对第 1 个的净变化与提交信息 `fix(streak): merge the loops and cover the wiring` 相符：合并两条循环、补两条接线测试、补文档。
+
+## 3. 架构、数据与设计判断
+
+**裁决：通过（I/O 量记为后续任务，见 §6-3）。**
+
+- 分层：规则在 `domain/calculation`，读模型在 `domain/usecase`，仓储方法 `scheduleVersions`/`logsInRange` 只返回 domain 模型，presenter 不碰 SQL。`GetStreakUseCase` 引用 `data.local.entity.LogStatus` 属仓库既有形态（`domain/model/Habit.kt:34` 的 `DailyLog.status` 本就是该枚举，`TASK-011` §8 已登记为已知技术债），非本任务新增。
+- 数据：未改 schema、未改列/可空性/索引；`scheduleVersions` 走既有的 `HabitScheduleDao.findAll`（`ORDER BY effective_from ASC`，与接口注释「oldest first」一致），`logsInRange` 走既有的 `HabitLogDao.findRange`（闭区间语义已由 `verify-dao.mjs` 21/21 覆盖）。
+- **单次正向遍历 + `current = run` 对所有情况成立**。不变量：只有「应执行日且未完成且**不是今天**」才把 `run` 清零，其余日期不改变 `run`；因此循环结束时 `run` 恰好等于「从今天（今天是应执行日且已完成）或今天之前最后一个应执行日往回数、连续已完成的应执行日数」，与「从今天/昨天反向扫描」的定义相同。
+  - 另做了一次**独立模型穷举**（不在仓库内，防自证）：84 组计划配置（DAILY/WEEKDAYS/CUSTOM、多版本边界、`effectiveUntil` 开闭）× 12 天窗口的全部 4096 种完成子集 = **344,064 例，正向 `run` 与反向扫描不一致 0 例**；另抽样 49,224 例验证 `current ≤ longest` 恒成立。这是对设计命题的佐证，不替代 JVM 测试。
+  - 残余风险（不阻断）：等价性依赖 `day != today` 一个条件。若以后加「宽限日/补签/今天算断」之类规则，`current = run` 会静默失效，因为现有 8 条规则测试里没有「昨天漏、今天补 → 1」这种混合用例（`theLongestRunSurvivesALaterBreak` 覆盖的是「过去漏、今天未完成」）。建议补一条 `aMissedYesterdayWithACompletedTodayRestartsAtOne`。
+- **今天未完成时当前连续允许为 0，也允许不为 0**：`REQUIREMENTS.md:96`「今天尚未结束时，未完成不提前判失败」使 `today` 不清零；若今天之前的应执行日已漏，`current` 就该是 0（第 93 行「过去已到期…视为失败」）。此语义与 `streakText` 的表现一致：`0/0 → null`（新习惯不显示「连续 0 天」）、`0/7 → 「最长 7 天」`，不违反第 71 行「不施压文案」。
+- **UseCase 的工作量：算得对，但读得偏多**。每个习惯每次 `describe` 现在是 4 次 suspend 查询（`activeSchedule`、`dailyLog`、`scheduleVersions`、`logsInRange`），`logsInRange` 的区间是「首个计划版本 → 今天」，即把该习惯全部历史日志读进内存再在 Kotlin 里过滤；`snapshot` 在每次习惯 Flow 发射与每次 `record` 成功后都会对所有习惯重跑。功能正确、区间有界（不会读到未来），当前规模（个位数习惯、月级历史）可接受，但随历史增长是 O(习惯数 × 历史天数) 的行读取。属性能债，不该在本任务里以扩大 diff 的方式修（见 §6-3）。
 
 ## 4. 验证证据
 
-**裁决：通过（测试缺口见 §6 阻断 2）。**
+**裁决：通过。**
 
-| 命令 / 变异 | 实际结果 |
-|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS（exit 0）**：治理 22/22、`OK (81 tests)`、DAO 21 项、BUILD SUCCESSFUL 18s、`no whitespace errors` |
-| 基线 `tools/run-unit-tests.ps1` | `OK (81 tests)` / `RESULT: UNIT TESTS PASS` |
-| M1 `due()` 恒真 | **Failures: 2**：`aDayThatWasNeverDueDoesNotBreakTheStreak`、`aScheduleChangeIsJudgedByTheVersionInForceOnThatDay` ✓ |
-| M2 去掉两条循环里的 `day != today` | **Failures: 2**：`anIncompleteTodayDoesNotBreakTheStreak`、`theLongestRunSurvivesALaterBreak` ✓ |
-| M3 presenter `currentStreak = 0` | **Failures: 1**：`theRowShowsTheStreakComputedFromCompletedDays` ✓ |
-| M4（本轮新增）删掉 `GetStreakUseCase` 的 `filter { status == COMPLETED }` | **81 全绿** |
-| M5（本轮新增）`from = today`（只查今天） | **Failures: 1**：`theRowShowsTheStreakComputedFromCompletedDays` ✓ |
-| M6（本轮新增）`scheduleVersions(habitId).takeLast(1)`（只取最新版本） | **81 全绿** |
-| M8（本轮新增，设计验证）把回溯循环换成 `current = run`（只留正向一遍） | **81 全绿** |
+实际命令与退出码（Windows / JDK 17 / Gradle 8.9，本机）：
 
-说明：M4 全绿意味着「只统计 COMPLETED」这条业务规则目前没有任何测试；`LogStatus` 有 `IN_PROGRESS`（数值习惯 0.5/2000 就落这种行），删掉过滤器后这些天会被算进连续天数。M6 全绿意味着「取全部计划版本」的接线没有测试，把仓储改成只返回最新版也不会红。M8 全绿说明 `StreakRules.kt:58-70` 的回溯循环与正向循环在现有语义下等价，属可删的重复实现（见 §6-1）。
+| 命令 | 退出码 | 输出摘要 |
+|---|---|---|
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **0** | `RESULT: VERIFY ALL PASS`：`check-governance` exit 0（14s）、`run-unit-tests` exit 0（26s，`OK (83 tests)`）、`verify-dao` exit 0（21 checks, 0 failed）、`assembleDebug` exit 0（`BUILD SUCCESSFUL in 22s`）、`git diff --check` exit 0（`no whitespace errors`） |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | **0** | `SUMMARY: 22 checks, 22 passed, 0 warnings, 0 failed` |
+| `git status --short`（开始前） | 0 | 空 |
+| `git rev-parse HEAD` | 0 | `3104352721424e3b557fe877161a4c53cdd6593b` |
+| 基线 `tools/run-unit-tests.ps1` | 0 | `OK (83 tests)`；= 71 + 新增 12（`StreakRulesTest` 8 项 + `TodayPresenterTest` 4 项），与 `TASK-021` §10、`TEST_REPORT.md` 一致 |
 
-未验证项：真机只观察到三个「连续 1 天」的习惯，`current != longest` 的多段历史未在设备上造过；Room entity→domain 映射与 UI 渲染仍无自动化测试（项目既有缺口）。
+变异表（每组：改一处 → `run-unit-tests.ps1` → `git checkout -- <path>` → 确认 `git status --short` 为空）：
+
+| # | 变异 | 文件 | 结果 | 打红的测试 | 是否打中正确的那条 |
+|---|---|---|---|---|---|
+| M1 | 删掉 `.filter { it.status == LogStatus.COMPLETED }` | `GetStreakUseCase.kt:21` | **FAILED（exit 1）**：`Tests run: 83, Failures: 1` | `anInProgressDayDoesNotJoinTheStreak` | ✅ 第 1 轮阻断 (b) 的回归口已锁 |
+| M2 | `scheduleVersions(habitId).takeLast(1)`（只取最新版本） | `GetStreakUseCase.kt:16` | **FAILED**：`Failures: 1` | `everyScheduleVersionFeedsTheStreak` | ✅ 第 1 轮阻断 (c) 的回归口已锁 |
+| M3 | `due()` 恒真（`schedules.isNotEmpty()`） | `StreakRules.kt:35-39` | **FAILED**：`Failures: 2` | `aDayThatWasNeverDueDoesNotBreakTheStreak`、`aScheduleChangeIsJudgedByTheVersionInForceOnThatDay` | ✅ 两条都是「按计划执行日」的正主 |
+| M4 | 删掉「今天不算断」：`else if (day != today)` → `else` | `StreakRules.kt:54` | **FAILED**：`Failures: 2` | `anIncompleteTodayDoesNotBreakTheStreak`、`theLongestRunSurvivesALaterBreak` | ✅ 主目标是第一条，第二条属连带（该用例的今天也未完成） |
+| M5 | presenter 把 `currentStreak`/`longestStreak` 写死 0 | `TodayPresenter.kt:100-101` | **FAILED**：`Failures: 2` | `theRowShowsTheStreakComputedFromCompletedDays`、`everyScheduleVersionFeedsTheStreak` | ✅ 行内渲染那条正是主目标 |
+| M6 | 去掉 `due()` 的 `effectiveUntil` 上界 | `StreakRules.kt:37` | **FAILED**：`Failures: 1` | `aScheduleChangeIsJudgedByTheVersionInForceOnThatDay` | ✅ 版本边界有测试守着 |
+| M7 | `if (run > longest) longest = run` → `longest = run` | `StreakRules.kt:53` | **FAILED**：`Failures: 1` | `theLongestRunSurvivesALaterBreak` | ✅ |
+
+未验证项（如实记录）：
+- 真机仍是**只有 TASK-021 §10 的文字叙述**（三个已完成习惯显示 `连续 1 天`，进行中的数值习惯不显示），`project/reports` 下没有对应截图/dump（F-006/F-007 有 `DEVICE_DUMP-2026-11-05.md`）。沿用本仓库既有惯例可接受，但比那两条弱；`current != longest`、计划变更、跨多段历史这三类从未在设备上造数。
+- Room 的 entity→domain 映射、Compose 渲染仍无自动化测试（全项目既有缺口，非本任务引入）。
+- 我只在 JVM 上验证；本机 `gradlew test` 因沙箱禁用测试 worker 不可用，结论以 `run-unit-tests.ps1` 为准（与 `AGENTS.md` §5 一致）。
 
 ## 5. 文档与分支
 
-**裁决：不通过（功能已落地，矩阵与状态摘要仍写未开始）。**
+**裁决：通过（3 处瑕疵，均不阻断合并）。**
 
-1. 🚫 `project/FEATURE_MATRIX.md:24` 的 F-009 仍是 `NOT_STARTED | NOT_STARTED | NOT_STARTED`；`FEATURE_MATRIX.md:52` 的证据索引仍写「F-008~F-014 … 无 `streak` … 引用」——现在明明有 `StreakRules.kt`、`GetStreakUseCase.kt` 与对应测试。
-2. 🚫 `project/PROJECT_STATUS.md:22` 仍写「F-008~F-014 未开始」，F-009 已实现并有单测/真机证据。
-3. 🚫 `project/handoffs/LAST_HANDOFF.md:49` 的「之后的功能顺序：F-009 连续天数 → …」把 F-009 当未来项，当前任务恰恰是它。
-4. 其余一致：`TASK-021` §10 的 81 项与新增 10 项（8 规则 + 2 presenter）相符；§11 的 6/6 与 §6 六条相符；自动摘要 6 项；`README.md:12`、`PROJECT_STATUS.md:8`、`LAST_HANDOFF.md:8` 都是 `TASK-021` `PARTIAL`；分支 `feat/streak` 领先 `main`（`142c5ea`）1 个提交、未推送。
+- `FEATURE_MATRIX.md:24` 的 F-009 三列与证据相符；`更新规则` 第 62 行允许「真机列记 `DEVICE_VERIFIED` + 脚注限定范围」（F-003 先例）。`FEATURE_MATRIX.md:53` 明确写了**只验证了「今天完成 → 连续 1 天」；多段历史、最长连续、计划变更未在真机造数**——设备只证明了一天这条**是诚实的**，没有把单测当成设备证据。
+- `README.md:12`、`PROJECT_STATUS.md:8`、`LAST_HANDOFF.md:8` 均为 `TASK-021 PARTIAL / Gate 3` 且 `check-governance` 的 `readme matches status` 通过；`TEST_REPORT.md` 的 `Latest Run` 与 `Runs` 末行一致（83 项）。
+- 分支：`feat/streak` 领先 `main`（`281667b`）2 个提交，未推送，工作区干净；`PARTIAL` 任务留在 feature 分支，符合 `AGENTS.md` §7，`partial tasks registered` 检查通过。
+- 瑕疵（见 §6 需修复项 1–3）：`TASK-021` §10 内部数字自相矛盾、`FEATURE_MATRIX` 有两处 F-009 条目、`TASK-021` §13 仍是 `PENDING`（合并前由 Developer 指向本记录并勾 §11，属合并动作的一部分）。
 
 ## 6. 结论
 
-- 结论：`REJECT`
-- 证据：门禁 exit 0（22/22、0 警告、81 项、DAO 21、构建 18s）；M1/M2/M3/M5 各自打红正确测试，核心日期算术与 presenter 接线成立；但业务规则「只算 COMPLETED」与「取全部计划版本」两条没有任何测试锁定（M4/M6 全绿），且矩阵/状态摘要仍把 F-009 写成未开始。
-- 需修复项：
-  1. **F-009 的状态同步**：`FEATURE_MATRIX.md:24` 改为与证据一致（实现 `VERIFIED`、自动化 `VERIFIED`、真机 `DEVICE_VERIFIED` 并加脚注「设备只看到 1 天连续；多段/最长未在真机造数据」）；`:52` 的证据索引拆出 F-009 一行（`StreakRules.kt`、`GetStreakUseCase.kt`、`StreakRulesTest`、`TodayPresenterTest`、真机记录）；`PROJECT_STATUS.md:22` 与 `LAST_HANDOFF.md:49` 同步。`TASK-019` 建立这条规矩才两周，功能落地却仍标未开始，等于把它又欠回去。
-  2. **给 COMPLETED 过滤加一条测试**（M4）：在 `GetStreakUseCase` 层或 presenter 层造一条 `IN_PROGRESS` 日志（数值习惯 0.5/2000 即可），断言它不进连续天数。现在删掉这行过滤，81 项全绿——这正是「数值习惯当天进行中不应算连续」的回归口。
-  3. **给「取全部计划版本」加一条接线测试**（M6）：用两段计划（DAILY 到某日、之后 CUSTOM）跑一次 use case 或 presenter，断言跨版本连续天数；现在把仓储换成只返回最新版也没有测试会红。规则层已有覆盖，缺的是接线。
+- 结论：`APPROVE`
+- 证据：
+  - 门禁：`tools/verify-all.ps1` **exit 0**（治理 **22/22**、0 警告、单测 **83 项**、DAO **21 项**、`BUILD SUCCESSFUL in 22s`、`git diff --check` 干净）；`tools/check-governance.ps1` 单独复跑 **exit 0**、22/22。
+  - 第 1 轮三条阻断全部在**本轮独立复现的变异**下被正确测试捕获（M1 打红 `anInProgressDayDoesNotJoinTheStreak`、M2 打红 `everyScheduleVersionFeedsTheStreak`、F-009 的矩阵/状态/handoff 已如实同步）。
+  - 设计成立：单次正向遍历 `current = run` 与反向扫描等价（本机穷举 344,064 例 0 不符，且 `current ≤ longest` 恒成立）；今天未完成不清零、允许为 0 的口径与 `REQUIREMENTS.md:93/96` 一致。
+  - 额外 4 组自造变异（M3/M4/M6/M7）各自打红正确断言，说明核心日期算术已被测试锁定。
+- 阻断项：**无**。
+- 需修复项（编号，均非阻断；建议在状态更新/合并时顺手处理）：
+  1. `project/tasks/TASK-021.md` §10 的 `verify-all` 行仍写「单测 81 项」，同表首行与 `TEST_REPORT.md` 是 83——同一张证据表里的数字自相矛盾，应改成 83。
+  2. `project/FEATURE_MATRIX.md` 有两处 F-009 证据条目（`:46` 与 `:53`），且「真机只验证一天」的限定写在证据索引里而不是文件自带的「脚注（状态为部分完成的行）」块（F-003/F-005 都在脚注块）。内容诚实，仅排版重复，建议合并为一条并放进脚注块。
+  3. 「N+1/每习惯 4 次查询已备案」在仓库里**没有任何记录**：`project/tasks` 的最大编号就是 `TASK-021`，没有为它新开任务，且 `TASK-021` §8 的「性能」条目只谈逐日循环、未提查询次数。请落一条任务或在 §8 补一句，否则该说法无法核对。
+  4. （测试建议，下个任务）补 `aMissedYesterdayWithACompletedTodayRestartsAtOne`：现有 8 条规则测试没有「昨天漏、今天补」的混合用例，而 `current = run` 的正确性正依赖这条路径。
 - 对四个提问的回答：
-  1. **重复的两条循环可以合并，而且合并是等价的**。M8 证明：把回溯循环换成 `current = run`（正向一遍结束时 `run` 的值），81 项全绿——因为「today 未完成不重置」这条规则让正向 `run` 在循环结束时恰好等于定义上的当前连续。建议合成一遍，`longest` 与 `current` 在同一个循环里产出，today 跳过规则只写一次；否则以后改语义要同时改两处（M2 就是两处一起改才没漏）。
-  2. **730 次迭代不是问题，DB 往返才是**。逐日循环每步只是几次比较，两年 DAILY 也就 ~73 万次比较级别（实际远低），不值得为它加聚合投影；真正的成本在 `describe` 每习惯 4 次查询（见下条）。
-  3. **N+1 应记为技术债，但不该在本任务修**。`describe` 现在每习惯 4 次 suspend 查询（`activeSchedule`、`dailyLog`、`scheduleVersions`、`logsInRange`），而 `snapshot` 在每次 Flow 发射和每次 `record` 成功后都会全量重跑（`record` 里还显式再算一次，实际是两遍）。20 个习惯 = 每次点按约 160 次查询。合理做法是另立任务：一次查全部活跃习惯的计划与日志（或让仓储返回 `Map<habitId, StreakInputs>`）。本任务里塞批量化会扩大 diff，不建议。
-  4. **不需要新增 Room 级测试，缺的测试在别处**。`findRange` 的 SQL 语义（闭区间、区间外排除、升序）已由 `verify-dao.mjs` 在真实 SQLite 上验证；Room 的 entity→domain 映射是全项目都没有的覆盖，且本机 Gradle 测试 worker 不可用，单为它开例不现实。真正该补的是 §6-2/§6-3 那两条 JVM 测试。
+  1. **单次正向遍历 + `current = run` 对所有情况都正确**（不变量见 §3，穷举佐证见 §4）。合并本身是对的：它消掉了第 1 轮指出的两处重复 today 规则，且没有改变语义。
+  2. **今天未完成时当前连续可以为 0，也应该允许**：`REQUIREMENTS.md:93` 只把「过去已到期」判失败，第 96 行明确今天不提前判失败；因此今天不计数也不清零。0 的展示由 `streakText` 处理成「不显示」或「最长 N 天」，不产生施压文案（第 71 行）。
+  3. **UseCase 算得对，读得偏多**：每习惯 4 次查询 + 全历史日志读入 + 每次 `record`/Flow 发射全量重算。当前规模可接受，属性能债，另立任务批量化（一次查全部活跃习惯的计划与日志），不要在本任务扩大 diff。
+  4. **F-009 的矩阵记录是诚实的**：真机列写 `DEVICE_VERIFIED` 但证据索引明确限定「只验证了今天完成 → 连续 1 天，多段/最长/计划变更未在真机造数」，符合 `FEATURE_MATRIX.md` 第 62 行的先例；唯一问题是条目重复与摆放位置（§6-2）。

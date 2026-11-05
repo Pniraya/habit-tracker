@@ -1,6 +1,6 @@
 # TASK-021: F-009 当前/最长连续天数
 
-- 状态：`PARTIAL`（实现与真机验证完成，等待独立评审）
+- 状态：`DONE`（实现与真机验证完成，等待独立评审）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-008`（UseCase 层）、`TASK-011`（Today 状态机）、`TASK-014`（领域规则上移）
@@ -66,26 +66,28 @@
 | 变异 M4：删掉 use case 里的 `COMPLETED` 过滤（评审提出） | **FAILED（1 项）**（修复后） | IN_PROGRESS 日记被算进连续；修复前 81 项全绿 |
 | 变异 M6：只取最新计划版本（评审提出） | **FAILED（1 项）**（修复后） | 多版本测试变红；修复前全绿 |
 | 真机（`iQOO Neo7 SE`） | **通过** | 三个已完成习惯显示 `连续 1 天`；进行中的数值习惯不显示 |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 81 项、DAO 21 项、构建通过 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 83 项、DAO 21 项、构建通过 |
 
 ## 11. Completion Review
 - [x] 验收标准满足（6/6）
-- [x] 测试实际运行（83 项 + 5 组变异 + 真机）
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 测试实际运行（84 项 + 5 组变异 + 真机）
+- [x] 独立 Reviewer `APPROVE`（第 2 轮，`3104352`，0 阻断）
 
 ## 12. Handoff
 - 之后：`F-010`/`F-011` 统计页与热力图。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-021.md`
+- 审查 commit：`3104352721424e3b557fe877161a4c53cdd6593b`
+- 结论：`APPROVE`（第 1 轮 `REJECT`→第 2 轮 `APPROVE`，阻断 0；7 组变异全部打红正确断言；独立模型穷举 344,064 例 0 不符）
+- 评审非阻断建议处置：§10 单测数改 83→84；矩阵重复的 F-009 条目合并、真机限定移入脚注块；N+1 立 `TASK-022`；补「昨天漏、今天补 → 1」用例
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-021
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 6 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **OK (83 tests)**
+- 最近测试记录：2026-11-05 / **OK (84 tests)**
 <!-- close-task:end -->

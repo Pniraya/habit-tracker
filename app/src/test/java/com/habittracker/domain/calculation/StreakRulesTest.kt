@@ -87,6 +87,16 @@ class StreakRulesTest {
     }
 
     @Test
+    fun missingYesterdayAndCompletingTodayGivesOne() {
+        // The mixed path the single forward pass relies on: a missed yesterday resets the run, then
+        // today's completion starts a new one and only that one is current.
+        val streak = StreakRules.compute(listOf(daily()), dates(today), today)
+
+        assertEquals(1, streak.current)
+        assertEquals(1, streak.longest)
+    }
+
+    @Test
     fun noScheduleMeansNoStreak() {
         assertEquals(StreakRules.Streak.EMPTY, StreakRules.compute(emptyList(), dates(today), today))
     }
