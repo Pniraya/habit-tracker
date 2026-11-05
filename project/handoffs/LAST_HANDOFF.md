@@ -6,7 +6,7 @@
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 2`（数据层 + Domain/Repository/UseCase；治理系统已加固，新增单一验证入口）
 - 当前任务：`TASK-010`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-009` 已 `DONE` 合入 `main`（`7c8b074`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`feat/dao-sql-verification`（本地，无远程）；`main` @ `18360bc`
+- 当前 Git 分支：`main` @ `feeee61`（本地，无远程）；合并后 `verify-all` 复跑通过
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
@@ -49,5 +49,5 @@
 - 检查器第 18/21 项验证的是"证据存在"，不验证证据新鲜度；由 Reviewer 复核
 
 ## Next Safe Action
-1. 独立评审 `REVIEW-TASK-010.md`（通过则 `DONE`、`verify-all`、合入 `main`）
-2. 之后的新任务（尚未创建）：ViewModel 层 + Compose 页面接线，复用已验收的 UseCase；提醒调度与 DataStore 在其后
+1. 下一个新任务（尚未创建）：ViewModel 层 + Compose 页面接线，复用已验收的 UseCase；提醒调度与 DataStore 在其后
+2. 若引入新依赖，先跑 `verify-all` 确认不会破坏沙箱内可执行的验证链
