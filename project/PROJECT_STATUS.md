@@ -5,7 +5,7 @@
 ## 当前状态
 
 - 项目阶段：`Gate 2` — 数据层进行中；Gate 1 的设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-007`（`PARTIAL`，位于功能分支，待独立评审）；`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）；`TASK-001`、`TASK-002` 已 `DONE`
+- 当前任务：`TASK-007`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳 + Room schema v1；构建通过，约束经真实 SQLite 验证，DAO/Repository/真机未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，重构后 36s）
@@ -21,10 +21,11 @@
 - [x] `project/decisions/ADR-001`~`ADR-013`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据）
 - [x] `project/FEATURE_MATRIX.md`：F-001 构建验证通过、F-002 未验证、F-016 `OUT_OF_SCOPE`
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
-- [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~005`、`tools/check-governance.ps1`、`tools/close-task.ps1`、`project/REVIEW_CHECKLIST.md`
+- [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~007`、`tools/check-governance.ps1`、`tools/close-task.ps1`、`project/REVIEW_CHECKLIST.md`
 - [x] 构建环境：`D:\AndroidToolchain`（`sdk` + `gradle` + `env.ps1` + `verify.ps1`），JDK 17 在 `D:\javajdk17`
 - [x] Android 工程骨架：Wrapper、Version Catalog、`:app`、主题 token、三页导航
 - [x] 数据层 schema v1：四表 + 外键 + 索引 + Converter + schema export（`TASK-004`）
+- [x] 独立评审证据：`ADR-013` + `project/reviews/REVIEW-TASK-006/007`（`TASK-007` 的 `APPROVE` 记录随 `c10f67d` 合入 `main`）
 - [x] Domain 纯规则 + Repository + 计划版本写入器（`TASK-005`），27 项单测通过
 - [ ] DAO/Repository 运行时测试（沙箱内无法运行 Gradle 测试 worker）
 - [ ] 真机/模拟器安装与三页导航验证
