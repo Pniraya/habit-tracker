@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-016`（`PARTIAL`，界面细节收尾，待独立评审）；`TASK-012`~`TASK-015` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前任务：`TASK-016`（`DONE`，独立评审 `APPROVE`，真机小数输入已补验）；`TASK-012`~`TASK-015` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
 - 当前 Git 分支：`main`（本地，无远程）@ `6c0f30e`；已合并分支保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
@@ -39,6 +39,7 @@
 - `check-governance` 第 15/21 项不比对 `OK (N tests)` 的计数，`TASK-012` 出现过「Latest Run 57 / 末行 58」仍过检的盲区
 
 ## Next Safe Action
-1. 独立评审 `TASK-016`；合入后真机补验小数输入（设备当前休眠锁屏）
+1. 合入 `TASK-016`（已 `APPROVE`，真机补验通过）
+2. **TASK-018（P1，任务文件待建）**：中文界面弹出英文领域错误（`NUMERIC habit needs a unit`）；Today 列表把 `actualValue` 转 `Long` 显示，`0.5` 显示成 `0`；`Decimal` 下逗号小数未归一化；`FabSize` 注释补 Material 规格版本
 2. **TASK-017（P2）**：治理检查加固——`TASK-015` 评审用 P5–P8 打穿四个洞（结果列无判定词也能过、摘要不写「单测」就跳过、计数扫全文被 `Known Gaps` 污染、合法备注致假阳性）
 4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度

@@ -74,5 +74,5 @@
 - **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新（`verify-dao.mjs`，21 项）。
 - **未覆盖（UI）**：Today 状态机 9 项、新建表单状态机 9 项 JVM 覆盖；Compose 渲染与交互未由 Robolectric 或设备自动化验证（手动真机走查记录见 `TASK-012` §14，非自动化）。
 - **未覆盖**：Room 的 Cursor/实体映射；TypeConverter 往返；`Flow` 失效通知；`withTransaction` 边界与并发写入；Room 由 `@Upsert`/`@Insert` **生成的** SQL（harness 验证的是同一冲突列上等价语句的语义与唯一索引存在，不能证明 Room 会选用该冲突列）。
-- 无真机、无模拟器：`adb devices` 为空且 `HypervisorPresent=False`，设备验证全部 `NOT_RUN`。
+- 无模拟器（`HypervisorPresent=False`，无 WHPX/Hyper-V）；真机验证为手动走查，非自动化：`TASK-012`（建习惯/打卡/落库）与 `TASK-016`（小数输入 `0.5` 落库）。设备侧行级证据见 `project/reports/DEVICE_DUMP-2026-11-05.md`。
 - 数值型“撤销”语义、恢复默认策略仍未定（见 `project/reports/BASELINE_REVIEW.md`）。
