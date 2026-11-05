@@ -14,6 +14,14 @@ import java.time.LocalDate
  */
 interface HabitRepository {
 
+    /**
+     * Persists the habit and its first schedule version.
+     *
+     * Contract: [draft] must already be validated and normalised by `CreateHabitUseCase`
+     * (`HabitRules.validateName` + `HabitRules.normalizeTarget`). Implementations persist it as
+     * given and must not add their own validation: a rule duplicated here drifts from the use case
+     * and silently changes behaviour for other implementations.
+     */
     suspend fun createHabit(draft: NewHabit, today: LocalDate, now: Long): Long
 
     fun observeActiveHabits(): Flow<List<Habit>>

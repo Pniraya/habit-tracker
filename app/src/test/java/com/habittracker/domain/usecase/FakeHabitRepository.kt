@@ -1,7 +1,6 @@
 package com.habittracker.domain.usecase
 
 import com.habittracker.data.local.entity.FrequencyType
-import com.habittracker.domain.calculation.HabitRules
 import com.habittracker.domain.calculation.LogStatusRules
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.DailyLog
@@ -35,19 +34,18 @@ class FakeHabitRepository : HabitRepository {
     }
 
     override suspend fun createHabit(draft: NewHabit, today: LocalDate, now: Long): Long {
-        // Mirror RoomHabitRepository: it normalises the target (and rejects an inconsistent
-        // tracking type/unit pair) before inserting, so tests must see the same rules.
-        val target = HabitRules.normalizeTarget(draft.trackingType, draft.targetValue, draft.unit)
+        // Deliberately dumb: validation lives in CreateHabitUseCase now, and a fake that repeats
+        // the rules would hide a use case that forgot them. It stores exactly what it is given.
         createCalls += 1
         val id = nextId++
         habits[id] = Habit(
             id = id,
-            name = draft.name.trim(),
+            name = draft.name,
             icon = draft.icon,
             color = draft.color,
             trackingType = draft.trackingType,
-            targetValue = target.targetValue,
-            unit = target.unit,
+            targetValue = draft.targetValue,
+            unit = draft.unit,
             createdOn = today,
             archivedOn = null,
         )
