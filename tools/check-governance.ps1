@@ -302,7 +302,7 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     $t = Get-Content -Raw -Path $f.FullName
     if ($t -match ('- 状态：\s*' + [regex]::Escape($tick) + 'PARTIAL' + [regex]::Escape($tick))) { $partialTasks += $f.BaseName }
 }
- $currentBranch = (git branch --show-current).Trim()
+$currentBranch = (git branch --show-current).Trim()
 if ($currentBranch -ne 'main') { Add-Pass 'partial tasks registered' ('not on main: ' + $currentBranch) }
 elseif ($partialTasks.Count -eq 0) { Add-Pass 'partial tasks registered' 'no PARTIAL task in the tree' }
 else {

@@ -70,11 +70,11 @@
 ## 12. Handoff
 - 当前剩余工作：独立 Reviewer 按 `project/reviews/REVIEW_TEMPLATE.md` 审查本分支并给出结论。
 - 下一条安全操作：独立会话运行验证命令，写入 `project/reviews/REVIEW-TASK-007.md`；只有 `APPROVE` 后才可标记 `DONE` 并合入 main。
-- Git 分支/提交：`feat/governance-review-evidence`，未提交。
+- Git 分支/提交：`feat/governance-review-evidence` @ `18b5485`（已提交，工作区干净）。
 
 ## 13. Independent Review
 - Reviewer record：`project/reviews/REVIEW-TASK-007.md`
-- 结论：`PENDING`
+- 结论：`REJECT`（首次复审，四项文档漂移；修复后重新提请复审）
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）

@@ -58,7 +58,7 @@
 
 ## Git 状态
 
-- 仓库：已初始化（`main`，无远程、未推送）
+- 仓库：已初始化，无远程、未推送；`main` 为稳定分支，治理任务在 `feat/*` 分支评审后合入（当前分支以 `git branch --show-current` 为准）
 - 工作区：构建产物、`local.properties`、`.gradle/`、`.kotlin/` 均已忽略
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
