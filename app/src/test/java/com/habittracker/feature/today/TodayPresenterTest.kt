@@ -63,6 +63,25 @@ class TodayPresenterTest {
         }
 
     @Test
+    fun crossingMidnightShowsTheNewDay() = runBlocking {
+        // No database row changes at 00:00, so nothing else would rebuild the list.
+        var clock = monday
+        val presenter = TodayPresenter(
+            repository = repository,
+            recordProgress = RecordHabitProgressUseCase(repository),
+            scope = scope,
+            today = { clock },
+            now = { now },
+        )
+        assertEquals(monday, presenter.state.value.date)
+
+        clock = monday.plusDays(1)
+        presenter.refresh()
+
+        assertEquals(monday.plusDays(1), presenter.state.value.date)
+    }
+
+    @Test
     fun everyHabitCountsItsOwnDays() = runBlocking {
         // Two habits with different histories. If a batch read mixed the rows up, both rows would
         // report the same streak; the reviewer showed that no test noticed that (TASK-022 U4).

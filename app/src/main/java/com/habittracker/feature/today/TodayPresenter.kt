@@ -73,6 +73,15 @@ class TodayPresenter(
     }
 
     /**
+     * Rebuilds the list against the current date and clock. The date is read when the snapshot is
+     * taken, so an app left open across midnight would otherwise keep showing yesterday: nothing
+     * changes in the database at 00:00, so no Flow emission arrives to trigger a rebuild.
+     */
+    fun refresh() {
+        scope.launch { _state.value = snapshot(habits) }
+    }
+
+    /**
      * Four batch queries per snapshot, whatever the number of habits. It used to be four *per
      * habit*, plus a second full rebuild after every write (TASK-022).
      */

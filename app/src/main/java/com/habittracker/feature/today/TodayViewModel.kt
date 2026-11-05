@@ -28,6 +28,9 @@ class TodayViewModel(
     fun record(habitId: Long, value: Double) = presenter.record(habitId, value)
     fun dismissError() = presenter.dismissError()
 
+    /** Called when the screen comes back to the foreground, so a date change is picked up. */
+    fun refresh() = presenter.refresh()
+
     override fun onCleared() {
         scope.cancel()
     }

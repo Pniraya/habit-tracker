@@ -9,7 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -65,6 +69,17 @@ fun AppRoot() {
                 val context = LocalContext.current
                 val todayViewModel: TodayViewModel = viewModel(factory = TodayViewModel.factory(context))
                 val state by todayViewModel.state.collectAsState()
+                // A rebuild is only triggered by database changes, and midnight changes nothing in
+                // the database: without this the screen would keep showing yesterday's date and
+                // yesterday's rows (TASK-024).
+                val lifecycleOwner = LocalLifecycleOwner.current
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) todayViewModel.refresh()
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
                 val lastError by todayViewModel.lastError.collectAsState()
                 TodayScreen(
                     state = state,
