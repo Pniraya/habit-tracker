@@ -1,9 +1,10 @@
 # Runs the JVM unit tests without Gradle test workers (named pipes are blocked in this sandbox).
 # Usage:  pwsh -NoProfile -File tools/run-unit-tests.ps1
 param(
-    [string]$Repo = "D:\AndroidStudio"
+    [string]$Repo
 )
 $ErrorActionPreference = "Stop"
+if (-not $Repo) { $Repo = Split-Path -Parent $PSScriptRoot }
 . "D:\AndroidToolchain\env.ps1" | Out-Null
 
 function Find-Jar([string]$Pattern) {
@@ -15,7 +16,9 @@ function Find-Jar([string]$Pattern) {
 
 Push-Location $Repo
 try {
-    $log = Join-Path $env:TEMP "unit-test-compile.log"
+    # Keep the transient compiler log under Gradle's ignored project directory.
+    # The system TEMP directory can be unavailable in constrained environments.
+    $log = Join-Path $Repo ".gradle\unit-test-compile.log"
     & ".\gradlew.bat" compileDebugUnitTestKotlin --console=plain --no-daemon *> $log
     if ($LASTEXITCODE -ne 0) {
         Get-Content $log | Select-String "^e: |error:" | Select-Object -First 15 | ForEach-Object { $_.Line }

@@ -3,9 +3,10 @@
 param(
     [Parameter(Mandatory = $true)][string]$Task,
     [switch]$Apply,
-    [string]$Repo = "D:\AndroidStudio"
+    [string]$Repo
 )
 $ErrorActionPreference = "Stop"
+if (-not $Repo) { $Repo = Split-Path -Parent $PSScriptRoot }
 Set-Location $Repo
 $tick = [char]96
 
@@ -24,8 +25,13 @@ function Get-Field([string]$source, [string]$label, [string]$valuePattern) {
 $status = Get-Field $text '状态：' '[A-Z_]+'
 $gate = Get-Field $text '阶段：' 'Gate [0-9][^\r\n]*'
 $gateToken = if ($gate -match 'Gate [0-9]') { $Matches[0] } else { "" }
-$done = ([regex]::Matches($text, '(?m)^- \[x\] ')).Count
-$open = ([regex]::Matches($text, '(?m)^- \[ \] ')).Count
+# Only the Acceptance Criteria section is counted: other checkboxes (completion review,
+# review template) are not acceptance items and used to inflate the numbers.
+$acceptance = $text
+$acceptanceMatch = [regex]::Match($text, '(?ms)^##+[^\r\n]*Acceptance Criteria[^\r\n]*\r?\n(.*?)(?=^##+ |\z)')
+if ($acceptanceMatch.Success) { $acceptance = $acceptanceMatch.Groups[1].Value }
+$done = ([regex]::Matches($acceptance, '(?m)^\s*- \[x\] ')).Count
+$open = ([regex]::Matches($acceptance, '(?m)^\s*- \[ \] ')).Count
 
 # Only the date and result of the newest run are embedded, so the summary cannot smuggle
 # unrelated claims (for example an old ADR status) into this task file.
@@ -80,7 +86,7 @@ Write-Host '  [ ] project/reports/TEST_REPORT.md  - Latest Run 摘要与实际 R
 Write-Host '  [ ] project/PROJECT_STATUS.md       - 最近验证结果、风险、在册例外'
 Write-Host '  [ ] project/reports/RELEASE_REPORT.md - 构建证据不得与工程状态矛盾'
 Write-Host '  [ ] project/handoffs/LAST_HANDOFF.md  - Snapshot 与下一安全操作'
-Write-Host '  [ ] project/REVIEW_CHECKLIST.md     - Reviewer 独立核对'
+Write-Host '  [ ] project/reviews/REVIEW-TASK-xxx.md - 独立 Reviewer 的 APPROVE / REJECT 结论'
 Write-Host '  [ ] tools/check-governance.ps1      - 必须 RESULT: OK'
 if ($status -eq 'PARTIAL') {
     Write-Host ('  [ ] PARTIAL 任务若留在 main，必须登记到 PROJECT_STATUS 的「在册例外」：' + $taskId) -ForegroundColor Yellow

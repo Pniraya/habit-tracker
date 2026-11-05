@@ -5,20 +5,20 @@
 ## 当前状态
 
 - 项目阶段：`Gate 2` — 数据层进行中；Gate 1 的设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-006`（`DONE`）；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（在册例外）；`TASK-001`、`TASK-002` 已 `DONE`
+- 当前任务：`TASK-007`（`PARTIAL`，位于功能分支，待独立评审）；`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）；`TASK-001`、`TASK-002` 已 `DONE`
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳 + Room schema v1；构建通过，约束经真实 SQLite 验证，DAO/Repository/真机未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，重构后 36s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs`，40/40，含 schema parity）
 - 最近验证测试：`PASS`（27 项，`tools/run-unit-tests.ps1`）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
-- 最近治理一致性检查：`PASS`（2026-11-05，19 项检查）
+- 最近治理一致性检查：`PASS`（2026-11-05，20 项检查；含独立评审记录检查）
 - 最后核对时间：`2026-11-05`
 
 ## 已有设计资产与实现
 
 - [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：已按 `ADR-005~010` 修订
 - [x] `project/REQUIREMENTS.md`：TBD 第 1/5/6 项已关闭
-- [x] `project/decisions/ADR-001`~`ADR-012`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性）
+- [x] `project/decisions/ADR-001`~`ADR-013`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据）
 - [x] `project/FEATURE_MATRIX.md`：F-001 构建验证通过、F-002 未验证、F-016 `OUT_OF_SCOPE`
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
 - [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~005`、`tools/check-governance.ps1`、`tools/close-task.ps1`、`project/REVIEW_CHECKLIST.md`
@@ -34,7 +34,7 @@
 1. 补 `UseCase` 层（`RecordHabitProgressUseCase` 等）与 `DataStore`。
 2. 为 Room 事务/DAO 补集成测试（Robolectric 或真机），补齐 `TASK-004`/`TASK-005` 的验收缺口。
 3. 接真机或装模拟器完成 `TASK-003` 的设备验证，再关闭 Gate 1。
-4. 每任务结束运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，保持六份状态文档同步。
+4. 为 TASK-007 取得独立 Reviewer 的 `APPROVE` 记录后合入 `main`；其后每任务结束运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，保持六份状态文档同步。
 
 ## 阻塞项与风险
 
@@ -58,7 +58,7 @@
 
 ## Git 状态
 
-- 仓库：已初始化（`main`，无远程、未推送）
+- 仓库：已初始化，无远程、未推送；`main` 为稳定分支，治理任务在 `feat/*` 分支评审后合入（当前分支以 `git branch --show-current` 为准）
 - 工作区：构建产物、`local.properties`、`.gradle/`、`.kotlin/` 均已忽略
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 

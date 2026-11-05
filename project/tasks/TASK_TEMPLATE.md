@@ -55,3 +55,7 @@
 - 当前剩余工作：
 - 下一条安全操作：
 - Git 分支/提交：
+
+## 13. Independent Review
+- Reviewer record：`project/reviews/REVIEW-TASK-xxx.md`
+- 结论：`PENDING` / `APPROVE` / `REJECT`

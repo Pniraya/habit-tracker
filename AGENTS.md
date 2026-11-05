@@ -81,7 +81,7 @@
 3. 检查 `git diff --check` 和完整 diff；
 4. 检查是否引入未批准依赖、权限、功能或无关文件；
 5. 将实际命令、退出状态和失败摘要写入任务记录/测试报告；
-6. 运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，确认 `README.md`、`PROJECT_STATUS.md`、`TEST_REPORT.md`、`RELEASE_REPORT.md`、`LAST_HANDOFF.md` 与本任务结论一致（阶段、当前任务、ADR 状态、最近验证结果）。
+6. 运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，确认 `README.md`、`PROJECT_STATUS.md`、`TEST_REPORT.md`、`RELEASE_REPORT.md`、`LAST_HANDOFF.md` 与本任务结论一致（阶段、当前任务、ADR 状态、最近验证结果）；拟合入 `main` 的 `DONE` 任务还必须有独立 Reviewer 的 `APPROVE` 记录。
 
 只有验收标准全部满足，且验证结果有证据时，才能标记 `DONE`。如果环境不支持执行测试，标记 `BLOCKED` 或 `PARTIAL`，明确未验证项，不得写“测试通过”。
 
@@ -104,7 +104,7 @@
 
 ## 7. Git 与提交规则
 
-- `main` 是**稳定分支**：只有构建通过、适用测试通过、任务验收完成并经 Reviewer 核对的改动才能合入。
+- `main` 是**稳定分支**：只有构建通过、适用测试通过、任务验收完成并有 `project/reviews/REVIEW-TASK-xxx.md` 中独立 Reviewer 的 `APPROVE` 记录的改动才能合入。
 - 未完成（`PARTIAL`/`BLOCKED`）的任务默认留在 `feat/<short-name>` 分支；确因环境限制必须留在 `main` 时，必须在 `project/PROJECT_STATUS.md` 的「在册例外」逐条登记，否则治理检查失败。
 - 单个任务优先使用 `feat/<short-name>` 或 `fix/<short-name>` 分支；`main` 始终保持可构建。
 - 开始任务前检查工作区；不擅自 stash、reset、checkout 覆盖用户改动。
@@ -152,7 +152,7 @@
 | 4 | Implement | 只完成当前 TASK 的 Scope | 变更文件清单 |
 | 5 | Verify | 构建、测试、静态检查、完整 diff 审查 | 命令、退出状态、失败摘要 |
 | 6 | Persist | 运行 `tools/close-task.ps1` 生成任务摘要，并同步 TASK 记录、`PROJECT_STATUS.md`、`README.md`、`FEATURE_MATRIX.md`（仅限有证据项）、`TEST_REPORT.md`、`RELEASE_REPORT.md` | 更新后的文件 |
-| 7 | Handoff | 写 `LAST_HANDOFF.md`；提交聚焦 commit，或明确记录未提交原因 | commit 摘要与下一安全操作 |
+| 7 | Handoff | 写 `LAST_HANDOFF.md`；独立 Reviewer 写入评审记录；提交聚焦 commit，或明确记录未提交原因 | commit 摘要、评审结论与下一安全操作 |
 
 规则：
 - 未完成阶段 5 不得进入阶段 6；没有验证结果时只能写 `NOT_RUN`/`PARTIAL`/`BLOCKED`。
@@ -177,7 +177,7 @@ AI 对文件的修改权限按三级划分（依据 ADR-004）：
 
 - `Planner`：理解需求、拆任务、定文件范围与验收条件。
 - `Developer`：实现代码与测试，更新文档。
-- `Reviewer`：独立核对 Diff、架构一致性、测试证据与**文档同步性**，按 `project/REVIEW_CHECKLIST.md` 逐项给出 `APPROVE` / `REJECT`，结论必须附命令输出或文件链接。建议在 Developer 完成后用新会话执行，避免自评过宽。
+- `Reviewer`：独立核对 Diff、架构一致性、测试证据与**文档同步性**，按 `project/REVIEW_CHECKLIST.md` 逐项给出 `APPROVE` / `REJECT`，并写入 `project/reviews/REVIEW-TASK-xxx.md`。记录必须注明所审查的 commit、独立性和命令输出或文件链接。建议在 Developer 完成后用新会话执行，避免自评过宽。
 
 验证顺序不可颠倒：编译器 → 单元/集成测试 → 静态检查 → Diff 审查 → 独立评审。任何 AI 的“看起来没问题”都不能替代测试结果；未经验证的代码不得合并到 `main`。
 

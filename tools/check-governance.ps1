@@ -24,7 +24,7 @@ if ($LASTEXITCODE -ne 0 -or $tracked.Count -eq 0) {
 $required = @(
     'AGENTS.md','README.md','ARCHITECTURE.md','DATABASE.md','DEVELOPMENT.md','.gitignore',
     'project/PROJECT_STATUS.md','project/FEATURE_MATRIX.md','project/ROADMAP.md','project/REQUIREMENTS.md',
-    'project/tasks/TASK_TEMPLATE.md','project/handoffs/LAST_HANDOFF.md',
+    'project/tasks/TASK_TEMPLATE.md','project/handoffs/LAST_HANDOFF.md','project/reviews/REVIEW_TEMPLATE.md',
     'project/reports/TEST_REPORT.md','project/reports/BASELINE_REVIEW.md','project/reports/RELEASE_REPORT.md',
     'project/decisions/ADR-TEMPLATE.md'
 )
@@ -302,23 +302,42 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     $t = Get-Content -Raw -Path $f.FullName
     if ($t -match ('- 状态：\s*' + [regex]::Escape($tick) + 'PARTIAL' + [regex]::Escape($tick))) { $partialTasks += $f.BaseName }
 }
-if ($partialTasks.Count -eq 0) { Add-Pass 'partial tasks registered' 'no PARTIAL task in the tree' }
+$currentBranch = (git branch --show-current).Trim()
+if ($currentBranch -ne 'main') { Add-Pass 'partial tasks registered' ('not on main: ' + $currentBranch) }
+elseif ($partialTasks.Count -eq 0) { Add-Pass 'partial tasks registered' 'no PARTIAL task in the tree' }
 else {
     $unregistered = @($partialTasks | Where-Object { $statusText -notmatch [regex]::Escape($_) })
     if ($unregistered.Count -eq 0) { Add-Pass 'partial tasks registered' ('registered: ' + ($partialTasks -join ', ')) }
     else { Add-Fail 'partial tasks registered' ('missing from PROJECT_STATUS 在册例外: ' + ($unregistered -join ', ')) }
 }
 
-# 17. Reviewer checklist exists and covers the required dimensions
+# 17. Reviewer checklist and record template cover the required dimensions
 $checklistPath = 'project/REVIEW_CHECKLIST.md'
+$reviewTemplatePath = 'project/reviews/REVIEW_TEMPLATE.md'
 $requiredSections = @('Diff 核对', '架构一致性', '验证证据', '文档同步', '分支与提交', '结论')
-if (-not (Test-Path $checklistPath)) { Add-Fail 'reviewer checklist' 'project/REVIEW_CHECKLIST.md is missing' }
+if (-not (Test-Path $checklistPath) -or -not (Test-Path $reviewTemplatePath)) { Add-Fail 'reviewer checklist' 'checklist or review record template is missing' }
 else {
     $checklistText = Get-Content -Raw -Path $checklistPath
     $missingSections = @($requiredSections | Where-Object { $checklistText -notmatch [regex]::Escape($_) })
     if ($missingSections.Count -eq 0) { Add-Pass 'reviewer checklist' 'all six review dimensions present' }
     else { Add-Fail 'reviewer checklist' ('missing sections: ' + ($missingSections -join ', ')) }
 }
+
+# 18. DONE tasks created after ADR-013 must retain an independent APPROVE record before main merge.
+$reviewProblems = @()
+foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
+    if ($f.BaseName -notmatch '^TASK-(\d{3})$') { continue }
+    if ([int]$Matches[1] -lt 7) { continue }
+    $taskText = Get-Content -Raw -Path $f.FullName
+    if ($taskText -notmatch ('- 状态：\s*' + [regex]::Escape($tick) + 'DONE' + [regex]::Escape($tick))) { continue }
+    $reviewPath = Join-Path 'project/reviews' ('REVIEW-' + $f.BaseName + '.md')
+    if (-not (Test-Path $reviewPath)) { $reviewProblems += ($f.BaseName + ' has no review record'); continue }
+    $reviewText = Get-Content -Raw -Path $reviewPath
+    if ($reviewText -notmatch ('- 独立性：\s*' + [regex]::Escape($tick) + 'INDEPENDENT' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not marked INDEPENDENT') }
+    if ($reviewText -notmatch ('- 结论：\s*' + [regex]::Escape($tick) + 'APPROVE' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not APPROVE') }
+}
+if ($reviewProblems.Count -eq 0) { Add-Pass 'done tasks have review evidence' 'all post-ADR-013 DONE tasks have independent APPROVE records' }
+else { Add-Fail 'done tasks have review evidence' ($reviewProblems -join '; ') }
 
 # Report
 $fail = @($results | Where-Object { $_.Status -eq 'FAIL' })
