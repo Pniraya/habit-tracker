@@ -35,25 +35,53 @@
 - [x] `assembleDebug` 通过
 
 ## 7. Tests
-- 单元测试：`CreateHabitUseCaseTest`、`RecordHabitProgressUseCaseTest`、`ArchiveHabitUseCaseTest`
+- 单元测试：`RecordHabitProgressUseCaseTest`、`CreateAndArchiveHabitUseCaseTest`（共用 `FakeHabitRepository`）
 - 构建：`gradlew.bat assembleDebug`
-
-## 7.5 Verification Evidence
-| 命令/测试 | 实际结果 | 证据/失败摘要 |
-|---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (40 tests)** | 新增 `RecordHabitProgressUseCaseTest`、`CreateAndArchiveHabitUseCaseTest`；首次编译因 `HabitRepository` 缺 `HabitSchedule` import 失败，已修 |
-| `gradlew.bat assembleDebug` | **SUCCESSFUL**（38s） | UseCase 层进入主源码集 |
+- 回归：`pwsh -NoProfile -File tools/run-unit-tests.ps1`、`git diff --check`
 
 ## 8. Risks and Decisions
 - 计划日判定复用 `ScheduleRules`，不新增第二套实现。
 - UseCase 只做编排与校验，业务计算仍留在 `domain/calculation`。
+- `FakeHabitRepository` 故意宽松（缺 id 不抛异常），只有 UseCase 自身的校验能让测试变红；首轮评审据此发现两条测试是同义反复。
+- `HabitRepository.dailyLog` 目前只被测试调用；保留是为了让后续 ViewModel 读取单日记录时不必全量查询。
+
+## 9. Implementation Log
+- 2026-11-05：Repository 增加 `activeSchedule`/`dailyLog`；Room 实现用 `versions.size <= 1` 断言一天最多命中一个计划版本。
+- 2026-11-05：首次编译失败——`HabitRepository` 与 `RoomHabitRepository` 缺 `HabitSchedule` import；补齐后 40 项单测通过、`assembleDebug` 38s。
+- 2026-11-05：独立评审首轮 `REJECT`：两条测试靠 fake 抛异常才绿（同义反复）、断言的是 fake 算出的状态、arrange 混进 `@Test(expected)`、四份文档未同步。测试改为"先 arrange、再断言消息、断言仓库实存值"，并做受控负向验证（删掉归档校验后 1 项失败）。
+
+## 10. Verification Evidence
+| 命令/测试 | 实际结果 | 证据/失败摘要 |
+|---|---|---|
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (40 tests)** | 13 项新增，覆盖计划日拒绝、版本外拒绝、半值、负值、归档拒绝写入 |
+| 受控负向验证：删除 `RecordHabitProgressUseCase` 的归档校验 | **FAILED（1 项）**，恢复后 OK | 证明 `archivedHabitsRejectWrites` 可证伪，不是恒真 |
+| `gradlew.bat assembleDebug` | **SUCCESSFUL**（38s） | UseCase 层进入主源码集 |
+| `git diff --check` | exit 0 | 无空白错误 |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | 20/20 PASS | 功能分支上的 PARTIAL 不要求登记为 main 例外 |
+
+## 11. Completion Review
+- [x] 验收标准全部满足（5/5）
+- [x] 相关测试实际运行（40 项）
+- [x] `git diff --check` 通过
+- [x] Diff 已审查，无无关改动（无新依赖、无 UI/schema 改动）
+- [x] 文档/状态已更新
+- [ ] 独立 Reviewer `APPROVE`（首轮 `REJECT`，已修复待复审）
+
+## 12. Handoff
+- 下一步：复审通过后置 `DONE` 并合入 `main`；之后补 Room/DAO 集成测试（需 Robolectric 或真机）。
+- 遗留风险：计划日未在事务内复检（归档有复检）；`+Infinity` 未被显式拒绝。
+
+## 13. Independent Review
+- Reviewer record：`project/reviews/REVIEW-TASK-008.md`
+- 首轮结论：`REJECT`（2026-11-05，commit `af4a167`）：7 项文档/证据问题 + 4 项测试强度问题。
+- 复审：`PENDING`
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-008
 - 状态：`PARTIAL`
-- 阶段：Gate 2` / `Gate 3
+- 阶段：Gate 2
 - 验收：通过 5 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / exit 0，20 PASS
+- 最近测试记录：2026-11-05 / **OK (40 tests)**
 <!-- close-task:end -->

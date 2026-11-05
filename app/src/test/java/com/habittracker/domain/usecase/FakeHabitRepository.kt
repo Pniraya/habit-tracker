@@ -24,6 +24,9 @@ class FakeHabitRepository : HabitRepository {
 
     private fun key(habitId: Long, date: LocalDate): String = habitId.toString() + "@" + date
 
+    var createCalls: Int = 0
+        private set
+
     fun storedSchedule(habitId: Long): HabitSchedule? = schedules[habitId]
 
     fun replaceSchedule(schedule: HabitSchedule) {
@@ -31,6 +34,7 @@ class FakeHabitRepository : HabitRepository {
     }
 
     override suspend fun createHabit(draft: NewHabit, today: LocalDate, now: Long): Long {
+        createCalls += 1
         val id = nextId++
         habits[id] = Habit(
             id = id,
@@ -63,8 +67,11 @@ class FakeHabitRepository : HabitRepository {
 
     override suspend fun getHabit(habitId: Long): Habit? = habits[habitId]
 
+    // Deliberately permissive: a missing id is a no-op here, so a test can only pass when the
+    // use case itself validates existence.
     override suspend fun archiveHabit(habitId: Long, today: LocalDate, now: Long) {
-        habits[habitId] = requireNotNull(habits[habitId]).copy(archivedOn = today)
+        val current = habits[habitId] ?: return
+        habits[habitId] = current.copy(archivedOn = today)
         state.value = habits.values.toList()
     }
 
@@ -100,7 +107,7 @@ class FakeHabitRepository : HabitRepository {
     override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? = logs[key(habitId, date)]
 
     override suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog {
-        val habit = requireNotNull(habits[habitId]) { "habit not found" }
+        val habit = habits[habitId] ?: error("fake repository: habit not found")
         val existing = logs[key(habitId, date)]
         val evaluation = LogStatusRules.evaluate(
             trackingType = habit.trackingType,

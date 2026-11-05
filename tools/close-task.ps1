@@ -23,7 +23,7 @@ function Get-Field([string]$source, [string]$label, [string]$valuePattern) {
 }
 
 $status = Get-Field $text '状态：' '[A-Z_]+'
-$gate = Get-Field $text '阶段：' 'Gate [0-9][^\r\n]*'
+$gate = Get-Field $text '阶段：' ('Gate [0-9][^' + $tick + '\r\n]*')
 $gateToken = if ($gate -match 'Gate [0-9]') { $Matches[0] } else { "" }
 # Only the Acceptance Criteria section is counted: other checkboxes (completion review,
 # review template) are not acceptance items and used to inflate the numbers.
@@ -36,7 +36,8 @@ $open = ([regex]::Matches($acceptance, '(?m)^\s*- \[ \] ')).Count
 # Only the date and result of the newest run are embedded, so the summary cannot smuggle
 # unrelated claims (for example an old ADR status) into this task file.
 $lastRun = ""
-$runs = @(Get-Content -Path 'project/reports/TEST_REPORT.md' | Where-Object { $_ -match '^\|\s*20' })
+# Governance-check rows are not test results, so they never become the "latest test record".
+$runs = @(Get-Content -Path 'project/reports/TEST_REPORT.md' | Where-Object { $_ -match '^\|\s*20' } | Where-Object { $_ -notmatch 'check-governance' } | Where-Object { $_ -match 'run-unit-tests|verify-schema|assembleDebug' })
 if ($runs.Count -gt 0) {
     $cells = @($runs[-1].Split('|') | ForEach-Object { $_.Trim() })
     if ($cells.Count -ge 5) { $lastRun = $cells[1] + ' / ' + $cells[3] }

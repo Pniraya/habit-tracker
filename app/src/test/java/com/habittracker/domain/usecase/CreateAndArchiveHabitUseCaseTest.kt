@@ -7,6 +7,7 @@ import com.habittracker.domain.model.NewSchedule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -28,6 +29,17 @@ class CreateAndArchiveHabitUseCaseTest {
         initialSchedule = NewSchedule(FrequencyType.DAILY, null),
     )
 
+    private fun expectRejection(fragment: String, block: suspend () -> Unit) {
+        val error = try {
+            kotlinx.coroutines.runBlocking { block() }
+            null
+        } catch (e: IllegalArgumentException) {
+            e
+        }
+        assertNotNull("expected IllegalArgumentException but nothing was thrown", error)
+        assertTrue("message was: " + error!!.message, error.message.orEmpty().contains(fragment))
+    }
+
     @Test
     fun creatingAHabitAlsoCreatesItsFirstScheduleVersion() {
         kotlinx.coroutines.runBlocking {
@@ -40,9 +52,10 @@ class CreateAndArchiveHabitUseCaseTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun blankNamesAreRejectedBeforeTouchingTheRepository() {
-        kotlinx.coroutines.runBlocking { createHabit(draft("   "), today, now) }
+    @Test
+    fun blankNamesNeverReachTheRepository() {
+        expectRejection("must not be blank") { createHabit(draft("   "), today, now) }
+        assertEquals(0, repository.createCalls)
     }
 
     @Test
@@ -54,17 +67,18 @@ class CreateAndArchiveHabitUseCaseTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun archivingTwiceIsRejected() {
-        kotlinx.coroutines.runBlocking {
-            val id = createHabit(draft(), today, now)
-            archiveHabit(id, today, now)
-            archiveHabit(id, today, now)
+    @Test
+    fun archivingTwiceIsRejectedByTheUseCase() {
+        val id = kotlinx.coroutines.runBlocking {
+            val created = createHabit(draft(), today, now)
+            archiveHabit(created, today, now)
+            created
         }
+        expectRejection("already archived") { archiveHabit(id, today, now) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun archivingAnUnknownHabitIsRejected() {
-        kotlinx.coroutines.runBlocking { archiveHabit(999L, today, now) }
+    @Test
+    fun archivingAnUnknownHabitIsRejectedByTheUseCase() {
+        expectRejection("habit not found") { archiveHabit(999L, today, now) }
     }
 }

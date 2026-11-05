@@ -9,10 +9,10 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 2` — 数据层与 Domain 规则已建，设备验证未完成 |
-| 当前任务 | `TASK-007`（`PARTIAL`，实现与自动验证完成，待独立评审） |
-| 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository） |
+| 当前任务 | `TASK-008`（`PARTIAL`，UseCase 层与单测完成，首轮评审 `REJECT` 已修复待复审） |
+| 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，36s，APK 9.4 MB |
-| 最近测试 | `PASS` — 27 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
+| 最近测试 | `PASS` — 40 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
 | 最近数据层校验 | `PASS` — `node tools/verify-schema.mjs`，40/40 |
 | ADR | `ADR-001`~`ADR-013` 全部 `ACCEPTED` |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
@@ -56,7 +56,7 @@
 pwsh -NoProfile -File D:\AndroidToolchain\verify.ps1   # 一键构建并校验 APK
 
 gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
-pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：27 项通过（绕过 Gradle 测试 worker）
+pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：40 项通过（绕过 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
 adb devices                                      # 当前为空：无真机、未装模拟器
 pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply

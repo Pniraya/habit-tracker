@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`main` @ `c10f67d`（治理任务 `TASK-007` 合入后的合并提交）
+- 分支 / commit：`feat/usecase-layer`（`TASK-008`，基线 `main` @ `c10f67d`）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：治理检查 `PASS`（20/20）；单测 `PASS`（27 项，`tools/run-unit-tests.ps1`）；构建 `PASS`（`assembleDebug` 36s）；schema `PASS`（40/40）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：治理检查 `PASS`（20/20）；单测 `PASS`（40 项，`tools/run-unit-tests.ps1`）；构建 `PASS`（`assembleDebug` 38s）；schema `PASS`（40/40）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -37,16 +37,17 @@
 | 2026-11-05 | 违反 `status` 不变量的直接 `UPDATE` | 拒绝（`habit_logs: invalid log`） | 触发器兜底，满足 §12 该项 | TASK-004 |
 | 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（JUnit4 直接运行，绕过测试 worker） | **OK (27 tests)** | `LogStatusRulesTest`、`ScheduleRulesTest`、`AppRoutesTest` | TASK-005 |
 | 2026-11-05 | `pwsh -File tools/check-governance.ps1`（扩展至 19 项） | exit 0，19 PASS | 首轮 1 FAIL：`TASK-001`/`TASK-004` 的 ADR 状态与 ADR 文件不一致；修复后通过 | TASK-006 |
-| 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（UseCase 层） | **OK (40 tests)** | 新增 13 项：计划日拒绝、布尔半值拒绝、负值拒绝、归档拒绝写入、建习惯同时建计划版本 | TASK-008 |
-| 2026-11-05 | `gradlew.bat assembleDebug`（UseCase 层） | **SUCCESSFUL**（38s） | runner 增加 `kotlinx-coroutines-core` 到测试 classpath | TASK-008 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | FAILED（环境） | 系统 TEMP `D:\cpp_tmp` 拒绝写入编译日志；随后将日志改至已忽略的 `.gradle` | TASK-007 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | PASS（27 项） | 修复日志路径后直接 JUnit runner 通过 | TASK-007 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/check-governance.ps1` | exit 0，20 PASS | 包含独立评审记录与功能分支 PARTIAL 判断 | TASK-007 |
 | 2026-11-05 | 受控负向验证：TASK-007 暂改为 `DONE` 后运行治理检查 | exit 1（预期） | `done tasks have review evidence` 正确拒绝缺少 `REVIEW-TASK-007.md` 的 DONE 任务 | TASK-007 |
 | 2026-11-05 | 恢复 TASK-007 为 `PARTIAL` 后运行治理检查 | exit 0，20 PASS | 功能分支不会被要求登记为 main 上的 PARTIAL 例外 | TASK-007 |
+| 2026-11-05 | `gradlew.bat assembleDebug`（UseCase 层） | **SUCCESSFUL**（38s） | UseCase 进入主源码集 | TASK-008 |
+| 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（UseCase 层，测试加强后） | **OK (40 tests)** | 13 项新增；断言改为校验仓库实存值，不再依赖 fake 计算的状态 | TASK-008 |
+| 2026-11-05 | 受控负向验证：删除 `RecordHabitProgressUseCase` 的归档校验后运行单测 | **FAILED，1 项失败**（预期） | 证伪 `archivedHabitsRejectWrites`：删除校验才变红，恢复后 40 项全绿 | TASK-008 |
 
 ## Known Test Gaps
-- `gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
+- 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
 - Room 事务、DAO 查询、`@Upsert` 行为没有运行时证据，需要 Robolectric 或真机。
 - 无真机、无模拟器：`adb devices` 为空且 `HypervisorPresent=False`，设备验证全部 `NOT_RUN`。
 - 数值型“撤销”语义、恢复默认策略仍未定（见 `project/reports/BASELINE_REVIEW.md`）。
