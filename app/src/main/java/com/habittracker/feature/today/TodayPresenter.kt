@@ -121,3 +121,13 @@ class TodayPresenter(
             java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
     }
 }
+
+private val THOUSANDS_SEPARATOR = Regex("^\\d{1,3}(,\\d{3})+$")
+
+/**
+ * Some IMEs emit a comma for the decimal key, so a comma has to become a dot before
+ * [toDoubleOrNull] sees it. A value that looks like a thousands group (1,234) is left alone:
+ * rewriting it to 1.234 would silently divide the number by a thousand.
+ */
+internal fun normaliseQuantityInput(raw: String): String =
+    if (THOUSANDS_SEPARATOR.matches(raw)) raw else raw.replace(',', '.')

@@ -20,7 +20,9 @@ import java.time.LocalDate
  * rules; the presenter only produces immediate feedback and never calls the repository itself.
  */
 class CreateHabitPresenter(
-    private val createHabit: CreateHabitUseCase,
+    // A function rather than the use case itself so a test can inject a failing implementation and
+    // cover the onFailure path; production wires CreateHabitUseCase::invoke.
+    private val createHabit: suspend (NewHabit, LocalDate, Long) -> Long,
     private val scope: CoroutineScope,
     private val today: () -> LocalDate = { LocalDate.now() },
     private val now: () -> Long = { System.currentTimeMillis() },

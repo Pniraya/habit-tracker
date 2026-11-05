@@ -2,6 +2,7 @@ package com.habittracker.feature.create
 
 import com.habittracker.data.local.entity.FrequencyType
 import com.habittracker.data.local.entity.TrackingType
+import com.habittracker.domain.model.NewHabit
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.FakeHabitRepository
 import kotlinx.coroutines.CoroutineScope
@@ -22,12 +23,32 @@ class CreateHabitPresenterTest {
     private val today = LocalDate.of(2026, 11, 2)
     private val now = 1_762_300_000_000L
 
-    private fun presenter() = CreateHabitPresenter(
-        createHabit = CreateHabitUseCase(repository),
+    private fun presenter() = presenterWith(CreateHabitUseCase(repository)::invoke)
+
+    private fun presenterWith(create: suspend (NewHabit, LocalDate, Long) -> Long) = CreateHabitPresenter(
+        createHabit = create,
         scope = CoroutineScope(Dispatchers.Unconfined),
         today = { today },
         now = { now },
     )
+
+    @Test
+    fun aDomainRejectionIsTranslatedAtTheCallSite() {
+        // Mutation guard: this is the only test that fails if onFailure stops calling messageFor and
+        // starts writing failure.message into the form again (the TASK-012 English-leak regression).
+        val presenter = presenterWith { _, _, _ ->
+            throw IllegalArgumentException("NUMERIC habit needs a unit")
+        }
+        presenter.onNameChange("Water")
+        presenter.onTrackingTypeChange(TrackingType.NUMERIC)
+        presenter.onTargetValueChange("2000")
+        presenter.onUnitChange("ml")
+
+        presenter.save()
+
+        assertEquals(CreateHabitPresenter.NO_UNIT, presenter.form.value.error)
+        assertNull(presenter.form.value.createdHabitId)
+    }
 
     @Test
     fun blankNameIsRejectedWithoutTouchingTheRepository() {

@@ -173,6 +173,21 @@ class TodayPresenterTest {
     }
 
     @Test
+    fun aCommaDecimalSeparatorBecomesADot() {
+        assertEquals("0.5", normaliseQuantityInput("0,5"))
+        assertEquals("0.5", normaliseQuantityInput("0.5"))
+    }
+
+    @Test
+    fun aThousandsGroupIsNotRewrittenIntoADecimal() {
+        // Rewriting 1,234 to 1.234 would silently divide the value by 1000.
+        assertEquals("1,234", normaliseQuantityInput("1,234"))
+        assertEquals("10,000", normaliseQuantityInput("10,000"))
+        // Not a thousands group, so it is treated as a decimal separator and then fails to parse.
+        assertEquals("1.2.3", normaliseQuantityInput("1,2,3"))
+    }
+
+    @Test
     fun theCreateActionAppearsOnlyOnceTheListHasRows() {
         assertFalse(TodayPresenter.showsCreateAction(TodayUiState(monday, emptyList(), isLoading = false)))
         // Loading with rows still hides the action: the list is not real yet.

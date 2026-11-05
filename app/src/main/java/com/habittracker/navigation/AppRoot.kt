@@ -80,7 +80,7 @@ fun AppRoot() {
                 val scope = rememberCoroutineScope()
                 val presenter = remember {
                     val repository = RoomHabitRepository(HabitDatabase.getInstance(context))
-                    CreateHabitPresenter(CreateHabitUseCase(repository), scope)
+                    CreateHabitPresenter(CreateHabitUseCase(repository)::invoke, scope)
                 }
                 val form by presenter.form.collectAsState()
                 LaunchedEffect(form.createdHabitId) {

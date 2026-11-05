@@ -24,7 +24,7 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (67 tests)** | `TASK-018` 新增 4 项：小数显示、整数去 `.0`、领域消息映射、未知错误回退 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (70 tests)** | `TASK-018` 新增 7 项：小数显示、整数去 `.0`、领域消息映射、未知错误回退、`onFailure` 调用点、逗号小数、千分位不被改写 |
 | 真机（`iQOO Neo7 SE`） | **通过** | 列表 `0.5 / 2000 ml`；缺单位提示 `数值习惯需要填写单位` |
 | 变异：`showsCreateAction` 去掉 `!state.isLoading &&` | **FAILED（1 项）** | 加载态断言变红；还原后全绿 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（43s） | 缺 `PaddingValues`/`KeyboardOptions` 导入，已补 |
@@ -40,7 +40,6 @@
 - `TASK-015` 已让 `check-governance` 比对 `OK (N tests)` 计数与中文占位符；但评审用 P5–P8 探针证明仍有边界缺陷（结果列无判定词也能过、摘要缺计数即跳过、计数扫全文被污染），已立 `TASK-017`
 
 ## Next Safe Action
-1. 独立评审 `TASK-018`（通过则 `DONE`、合入 `main`）
-2. **TASK-018（P1，任务文件待建）**：中文界面弹出英文领域错误（`NUMERIC habit needs a unit`）；Today 列表把 `actualValue` 转 `Long` 显示，`0.5` 显示成 `0`；`Decimal` 下逗号小数未归一化；`FabSize` 注释补 Material 规格版本
+1. 独立评审 `TASK-018` 第 2 轮（第 1 轮 `REJECT`：对话框仍截断小数、`onFailure` 调用点无测试、逗号把千分位变小数；三项已修）
 2. **TASK-017（P2）**：治理检查加固——`TASK-015` 评审用 P5–P8 打穿四个洞（结果列无判定词也能过、摘要不写「单测」就跳过、计数扫全文被 `Known Gaps` 污染、合法备注致假阳性）
 4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度

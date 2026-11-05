@@ -128,7 +128,11 @@ fun TodayScreen(
 
 @Composable
 private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
-    var text by remember(habit.id) { mutableStateOf(if (habit.actualValue > 0.0) habit.actualValue.toLong().toString() else "") }
+    // Prefill with the recorded value, decimals included: casting to Long would show 0.5 as "0"
+    // and a tap on 记录 would then overwrite the stored 0.5 with 0.
+    var text by remember(habit.id) {
+        mutableStateOf(if (habit.actualValue > 0.0) TodayPresenter.formatQuantity(habit.actualValue) else "")
+    }
     // Negative input is refused here so the dialog does not close and discard what was typed.
     val parsed = text.trim().toDoubleOrNull()?.takeIf { it >= 0.0 }
     AlertDialog(
@@ -136,11 +140,10 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
         title = { Text(habit.name) },
         text = {
             Column {
-                Text("今天的目标 " + habit.targetValue.toLong() + " " + (habit.unit ?: ""))
+                Text("今天的目标 " + TodayPresenter.formatQuantity(habit.targetValue) + " " + (habit.unit ?: ""))
                 OutlinedTextField(
                     value = text,
-                    // Some IMEs emit a comma for the decimal key; toDoubleOrNull only reads '.'.
-                    onValueChange = { text = it.replace(',', '.') },
+                    onValueChange = { text = normaliseQuantityInput(it) },
                     label = { Text("实际完成") },
                     singleLine = true,
                     // Decimal, not Number: actualValue is a Double, so 0.5 L must be typeable.
