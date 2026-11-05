@@ -6,9 +6,9 @@
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
 - 当前任务：`TASK-024`（`PARTIAL`，接缝补洞，待独立评审）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
-- 当前 Git 分支：`feat/seam-hardening`（`TASK-024` 第 1 轮 `REJECT` 后修复中，旧 HEAD `3b58062`）；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
+- 当前 Git 分支：`feat/seam-hardening`（`TASK-024` 第 1、2 轮阻断已修，等待第 3 轮复评）；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（交接记录与代码修复同一次提交时，写死哈希必然立刻过期）
-- **会话状态：可继续**——`TASK-022` 已 `DONE` 合入 `main`；`TASK-024` 第 1 轮 `REJECT`，正在修 6 条阻断（接线零覆盖、翻日范围过度声称、差分独立性、文档不同步、引用不存在文件、任务自相矛盾）
+- **会话状态：可继续**——`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-024` 第 1 轮 6 条、第 2 轮 5 条阻断均已修复，等待第 3 轮复评（与本文末 Next Safe Action 一致）
 
 ## Completed This Session
 - `TASK-021`（F-009 当前/最长连续天数）：`StreakRules` 纯函数一次正向遍历同时给出当前与最长；`GetStreakUseCase` 取全部计划版本 + 区间内 `COMPLETED` 日志；`TodayPresenter.streakText` 决定文案（`0/0` 不显示、`0/7` 显示「最长 7 天」、`3/7` 显示「连续 3 天 · 最长 7 天」）

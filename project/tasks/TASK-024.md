@@ -41,13 +41,15 @@
 ## 8. Risks and Decisions
 - 差分测试**只抓单边漂移**（实现改了、oracle 没改）。它与实现仍共享 `HabitSchedule` 的数据含义、掩码位语义、`effectiveUntil` 闭区间约定。评审的 10 组变异里它从未是唯一红线。把 `WEEKDAYS_MASK` 从 31 改成 30 时它确实会红（实测 2 项），但**红的原因是 `ScheduleRules.isScheduledOn` 的 `require(mask == weekdayMask)` 抛异常**，属于实现内部的守卫，不是 oracle 独立判出差异——所以它仍然不是「第二双眼睛」，只是「同一双眼睛的第二条路径」。
 - `refresh()` 会让今日页在回到前台时多一次整表查询（4 次），可接受；失败写入 `lastError` 而不是崩溃。
-- 翻日覆盖：**后台→前台**（`ON_RESUME`）与**前台跨 0 点**（定时器等下一次本地午夜）。**未覆盖**：前台手动改时间/时区。
+- 翻日覆盖：**后台→前台**（`ON_RESUME`）、**进入今日页**（日期不一致时立即刷新）、**停留前台跨 0 点**（定时器等下一次本地午夜）。**未覆盖**：前台手动改系统时间/时区；以及 DST——定时器用的是墙钟差值，在有夏令时的地区可能早/晚一小时触发（Asia/Shanghai 无 DST，属理论情形）。
 
 ## 9. Implementation Log
 - 2026-11-05：由外部评审建议创建（`project/reports/EXTERNAL_REVIEW_BRIEF.md` 与对方答复），本任务先做四项接缝测试。
 - 2026-11-05：实现。新增 `ConvertersTest`（5 项）、`StreakRulesDifferentialTest`（1 项，3000 组随机历史对拍）、`LogStatusRoundTripTest`（3 项）；`TodayPresenter.refresh()` + `TodayViewModel.refresh()` + `AppRoot` 的 `ON_RESUME` 观察者，测试 `crossingMidnightShowsTheNewDay`。单测 91 → 101。
 - 2026-11-05：差分测试首次运行即通过（3000 组历史与朴素 oracle 完全一致），说明现有 `StreakRules` 在随机输入下没有口径偏差；这也是本仓第一次有「与实现不共享代码」的判定源。
 - 2026-11-05：变异测量期间两次并发跑脚本，Gradle 锁互相干扰导致假结果（一次空输出、一次 `COMPILE FAILED`）；改为串行后重测，M4 实测 5 项红。这条记下来：**并发跑变异会制造假证据**。
+- 2026-11-05（第 1 轮评审后）：接线规则抽成 `TodayPresenter.refreshesOn` 并单测；`refresh()` 补 `runCatching`；oracle 改为 epoch 天数 + 区间算术 + 字面量掩码；`verify-dao` 夹具时间改 `08:00:00`；`LAST_HANDOFF`/`TEST_REPORT` 重写；补建 `TASK-025`；把外部答复存入 `project/reports/` 并补来源声明。
+- 2026-11-05（第 2 轮评审后）：抽 `millisUntilNextMidnight` 并单测（含闰日与跨年）；进入今日页时若日期不同立即刷新；M1/ME 在 HEAD 重测（3 红 / 2 红且差分红来自 `require` 异常）；证据表按实测更新。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
@@ -60,7 +62,7 @@
 | 评审 ME：`WEEKDAYS_MASK` 31→30 | **FAILED（2 项）** | `weekdaysMaskIsMondayToFriday` + 差分；差分红是因为 `isScheduledOn` 的 `require(mask == weekdayMask)` 抛异常，**不是 oracle 判别** |
 | 复评 R2-MH2：午夜算术 `plusDays(1)` 改 `plusDays(2)` | **FAILED（1 项）** | `theMidnightTimerAimsAtTheNextLocalMidnight`；本轮新增算术在抽出前的同一变异为 104 项全绿 |
 | 复评变异 M-H：`refreshesOn` 的 `ON_RESUME` 改 `ON_CREATE` | **FAILED（1 项）** | `onlyReturningToTheForegroundRefreshes`；修复前同一变异 101 项全绿 |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、0 警告；单测 104、DAO 27、构建 ~25s |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、0 警告；单测 105、DAO 27、构建 19-20s |
 
 ## 11. Completion Review
 - [x] 验收标准满足（5/5）
