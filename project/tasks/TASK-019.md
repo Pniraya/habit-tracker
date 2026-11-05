@@ -1,6 +1,6 @@
 # TASK-019: 校正功能矩阵与现状
 
-- 状态：`NOT_STARTED`
+- 状态：`PARTIAL`（矩阵已改，等待独立评审）
 - 阶段：`Gate 2`
 - 优先级：`P1`
 - 依赖：无（`TASK-012`~`TASK-018` 已 `DONE` 合入）
@@ -35,9 +35,11 @@
 - 更新：`project/PROJECT_STATUS.md`、`README.md`、`project/reports/TEST_REPORT.md`、`project/handoffs/LAST_HANDOFF.md`
 
 ## 6. Acceptance Criteria
-- [ ] F-002/F-003/F-005/F-006/F-007 状态与实际证据一致
-- [ ] 仍为 `NOT_STARTED` 的行确有「无实现」证据（文件不存在或仅占位）
-- [ ] 表格无 `TBD`、无空证据格
+- [x] F-002/F-003/F-005/F-006/F-007 状态与实际证据一致
+- [x] 仍为 `NOT_STARTED` 的行确有「无实现」证据（文件不存在或仅占位）
+- [x] 表格无 `TBD`、无空证据格
+- [x] 新增「证据索引」，每行可点到代码/测试/真机记录
+- [x] 复合功能用 `IN_PROGRESS` + 脚注，不整体记 `DEVICE_VERIFIED`（F-003 编辑未做、F-004 无界面、F-005 只验过 DAILY）
 
 ## 7. Tests
 - 本次只改文档，无代码改动；跑 `tools/verify-all.ps1` 确认治理检查与构建未受影响
@@ -52,11 +54,14 @@
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | 尚未开始（`NOT_STARTED`） | 任务未开工，开工后补真实结果 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21、单测 71 项、DAO SQL 21 项、构建通过 |
+| 复核 `AndroidManifest.xml` | 仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED` | 无 `INTERNET`，F-015 成立 |
+| 复核 `gradle/libs.versions.toml` | 无 `okhttp/retrofit/ktor/firebase` | 同上 |
+| 复核源码目录 | 无 streak / 统计 / 提醒调度 / 备份实现 | F-008~F-014 保持 `NOT_STARTED` 属实 |
 
 ## 11. Completion Review
-- [ ] 验收标准满足
-- [ ] 测试实际运行
+- [x] 验收标准满足（5/5）
+- [x] 测试实际运行（`verify-all` + 三项人工复核）
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
@@ -66,3 +71,12 @@
 - Reviewer record：待创建
 - 结论：`PENDING`
 
+<!-- close-task:begin -->
+## 状态摘要（自动生成，勿手改）
+
+- 任务：TASK-019
+- 状态：`PARTIAL`
+- 阶段：Gate 2
+- 验收：通过 5 项 / 未通过 0 项
+- 最近测试记录：2026-11-05 / **OK (71 tests)**
+<!-- close-task:end -->

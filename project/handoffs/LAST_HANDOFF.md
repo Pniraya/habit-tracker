@@ -5,10 +5,10 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-019`（`NOT_STARTED`，功能矩阵校正；会话暂停于此项之前）；`TASK-012`~`TASK-018` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前任务：`TASK-019`（`PARTIAL`，功能矩阵校正，待独立评审）；`TASK-012`~`TASK-018` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
 - 当前 Git 分支：`main`（本地，无远程）@ `b64326c`，工作区干净；已合并分支 `fix/error-text` 保留未删
 - 最近 commit：`b64326c merge TASK-018 error text and decimal display`；基线检查点 `d0f470a`
-- **会话状态：已暂停**。恢复时先读本文件与 `TASK-019`，再按「Next Safe Action」继续
+- **会话状态：进行中**（`TASK-019` 已实现，等待独立评审）
 
 ## Completed This Session
 - `TASK-007`~`TASK-018` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase、治理计数检查、界面细节、错误文案中文化与小数显示
