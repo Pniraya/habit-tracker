@@ -1,11 +1,11 @@
 # TASK-012: 新建习惯页与数值输入
 
-- 状态：`PARTIAL`（实现与单测完成，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE` 于 `07b1aab`，第 3 轮）
 - 阶段：`Gate 3`
 - 优先级：`P0`
 - 依赖：`TASK-011`（Today 页接线）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 让用户能真正加一个习惯并在当天使用：新建表单（名称/类型/目标/单位/频率）、保存后回到 Today；数值习惯可以在 Today 页输入实际值。
@@ -37,7 +37,7 @@
 - [x] `tools/run-unit-tests.ps1` 通过、`assembleDebug` 通过
 
 ## 7. Tests
-- `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新增 `CreateHabitPresenterTest` 8 项）
+- `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新增 `CreateHabitPresenterTest` 9 项）
 - 变异：把 `isBlank()` 改成 `isEmpty()`，空名测试必须变红
 - `gradlew.bat assembleDebug`
 
@@ -69,7 +69,7 @@
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（`07b1aab`，第 3 轮）
 
 ## 12. Handoff
 - 下一步：评审 `APPROVE` 后合入 `main`；之后的首选任务是**把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase` 并在 `HabitRepository` 接口写明契约**（本任务暴露的分层问题，任务文件尚未创建），其次才是图标/颜色选择与习惯编辑。
@@ -80,10 +80,10 @@
 - Reviewer record：`project/reviews/REVIEW-TASK-012.md`
 - 第 1 轮（`1f633a8`）：`REJECT` —— 抓到 unit 状态泄漏真缺陷 + 三份文档未同步
 - 第 2 轮（`ba96c55`）：`REJECT` —— 代码达标，仅剩计数不一致（README/TEST_REPORT/TASK 证据行）；M-2 兜底行未被变异抓住
-- 结论：待第 3 轮
+- 第 3 轮（`07b1aab`）：`APPROVE` —— 计数全部一致、M-1 复验有效；补记设备 dump 与数据重置说明后合入
 
 ## 14. Device Verification（手动走查，非自动化）
-- 设备：`iQOO Neo7 SE`（`V2238A` / `PD2238`），Android 15（API 35），序列号 `10CDAK0B71005KU`，USB 调试
+- 设备：`iQOO Neo7 SE`（型号 `V2238A`），Android 15（API 35），USB 调试（序列号不记录）
 - APK：`app/build/outputs/apk/debug/app-debug.apk`，`adb install -r` 输出 `Success`
 - 走查 1（修复前遗留路径的修复后行为）：新建「数值 + 单位 ml + 目标 2000」→ 切回「完成/未完成」→ 单位框隐藏且保存成功 → Today 出现该习惯 → 点击卡片变为「今天已完成」
 - 走查 2（落库核对）：`adb exec-out run-as com.habittracker cat databases/habit-tracker.db`（含 `-wal`/`-shm`）后用 `node:sqlite` 读取：
@@ -91,7 +91,9 @@
   - `habit_schedules`：`frequency_type=DAILY`、`weekday_mask=127`、`effective_from=2026-11-05`
   - `habit_logs`：`status=COMPLETED`、`actual_value=1`、`target_snapshot=1`
   - `room_master_table` 身份哈希存在；`android_metadata.locale=zh_CN`
-- 截图：`.gradle/shots/{today,create,numeric,filled,switched,saved,done}.png`（未纳入版本库）
+- 截图：`.gradle/shots/{today,create,numeric,filled,switched,saved,done,numfilled}.png`（未纳入版本库）
+- **行级证据已入库**：`project/reports/DEVICE_DUMP-2026-11-05.md`（含当次原样查询输出与时间线）
+- **重要限制**：读库之后为验证数值输入对话框执行过 `adb shell pm clear`，设备上的库已重建为空；因此上述行级事实**只能以该 dump 为准，无法从当前设备重新导出**（评审第 3 轮复核时读到的即是空库）
 - **未验证**：数值习惯的输入对话框未在真机走通（`adb shell input` 在中文 IME 下丢字符，无法稳定填表）；统计页、我的页仍为占位；旋转未测
 - 结论：真机验证了「能建习惯、能出现在今日、能打卡、单位不会残留」这条主路径；它不等于 UI 自动化，也不覆盖异常路径
 
@@ -99,7 +101,7 @@
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-012
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 6 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (58 tests)**

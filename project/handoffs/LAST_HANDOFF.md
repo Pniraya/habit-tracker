@@ -5,13 +5,14 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两个页面已接真实数据）
-- 当前任务：`TASK-012`（`PARTIAL`，新建习惯页与数值输入完成；首轮独立评审 `REJECT` 已修复待复审）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前任务：无（`TASK-012` 已 `DONE`，第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
 - 当前 Git 分支：`feat/create-habit`（本地，无远程）；`main` @ `cc4fba5`
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
 - `TASK-007`~`TASK-011` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机
 - `TASK-012`：新建习惯表单（名称/类型/目标/单位/频率/自定义周几）+ Presenter + 路由；Today 页数值输入对话框与空态入口
+- 三轮评审：第 1 轮 `REJECT`（unit 状态泄漏真缺陷 + 三份文档未同步）、第 2 轮 `REJECT`（仅计数不一致）、第 3 轮 `APPROVE`
 - 首轮评审抓到真缺陷：数值习惯填了单位再切回布尔，单位残留且字段隐藏 → 表单永远保存失败。已修（切换时清空 + `draft` 强制 `null`）并补回归测试
 - 首轮评审还发现 `TEST_REPORT` 的 Runs 行序错乱，导致 `close-task` 摘要取到过期的 49 项；已改为时间序并在末端补 58 项行
 - 发现并记录：`target`/`unit` 规则在 `RoomHabitRepository`（`HabitRules.normalizeTarget`）而非 UseCase；`FakeHabitRepository` 已对齐同一规则，规则上移留给后续任务
@@ -39,5 +40,7 @@
 - `target`/`unit` 校验仍在数据层；`HabitRepository.createHabit` 的契约未在接口上声明
 
 ## Next Safe Action
-1. 独立复审 `REVIEW-TASK-012.md`（通过则 `DONE`、`verify-all`、合入 `main`）
-2. 之后的新任务（尚未创建）：把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase`，并在 `HabitRepository` 接口写明契约——这是 `TASK-012` 暴露的分层问题
+1. **TASK-013（P0，任务文件待建）**：Today 页有习惯后没有新建入口（只有空态有按钮），用户无法添加第二个习惯。修法：非空态也给出入口（顶栏 + 或 FAB），并补 Presenter 测试。
+2. **TASK-014（P1，任务文件待建）**：把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase`，并在 `HabitRepository` 接口写明契约——`TASK-012` 暴露的分层问题（仓库层校验，换实现必漏）。
+3. **TASK-015（P2，任务文件待建）**：`check-governance` 第 15 项只比对日期与 `PASS`/`FAILED` 字样、不比对 `OK (N tests)` 的 N，导致「Latest Run 57 / 末行 58」这类不一致能过检；第 21 项只查是否存在 verify-all 行、不查计数。补计数一致性检查。
+4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度（`ReminderScheduler` + DataStore）。

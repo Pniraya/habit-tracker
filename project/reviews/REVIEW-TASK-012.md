@@ -1,83 +1,75 @@
 # REVIEW-TASK-012: 独立评审记录
 
 - 审查任务：`TASK-012`
-- 审查 commit：`ba96c55663249a998fb1cfd6d30f1bc4db4086b2`（第 2 轮）
-- 审查范围：`git diff main...HEAD`（`cc4fba5`..`ba96c55`，2 个提交 `1f633a8` + `ba96c55`，14 文件 +753/−41；本轮重点为 `1f633a8..ba96c55` 的 8 文件）
+- 审查 commit：`07b1aab559e7ac66d530a88850ecf5b616b4307c`（第 3 轮）
+- 审查范围：`git diff main...HEAD`（`cc4fba5`..`07b1aab`，3 个提交 `1f633a8` + `ba96c55` + `07b1aab`，14 文件 +771/−41；本轮重点为 `ba96c55..07b1aab` 的 4 个文档文件）
 - Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现）
 - 独立性：`INDEPENDENT`
 - 日期：`2026-11-05`
-- 轮次：第 2 轮。第 1 轮针对 `1f633a8` 判 `REJECT`（unit 状态泄漏 + 4 处文档/计数失真）；本轮核对 `ba96c55` 的修复与文档同步。
+- 轮次：第 3 轮。第 1 轮（`1f633a8`）`REJECT`（unit 状态泄漏 + 文档失真）；第 2 轮（`ba96c55`）`REJECT`（代码达标，仅计数不一致）。本轮核对计数、`TASK-012` §14 真机证据与收尾同步。
 
-评审时工作区：`git status --short` 为空（开始前）。本轮为只读核对 + 门禁复跑 + 2 组变异 + 1 个探针；所有改动已还原，结束时工作区仅剩本评审文件。
+评审时工作区：`git status --short` 为空（开始前）。本轮为只读核对、门禁复跑、1 组变异复验与设备侧数据库只读取证；所有改动已还原，结束时工作区仅剩本评审文件。
 
 ## 1. Scope
 
 **裁决：通过。**
 
-- 修复提交 `ba96c55` 只动 8 个文件：`CreateHabitPresenter.kt`（清 unit + draft 兜底）、`TodayScreen.kt`（负值本地拒绝）、`CreateHabitPresenterTest.kt`（新增回归测试）、`PROJECT_STATUS.md`、`LAST_HANDOFF.md`、`TEST_REPORT.md`、`TASK-012.md` 与本评审记录；无越界改动。
-- 无 `build.gradle.kts` / `libs.versions.toml` / `AndroidManifest.xml` / schema / 迁移改动：**无新依赖、无权限变更、无 schema 改动**。
-- 任务 Scope 仍与 §3/§5 一致，未夹带图标/颜色/编辑等 Out of Scope 内容。
+- 第 3 轮提交 `07b1aab` 只改 4 个文档文件（`README.md`、`TEST_REPORT.md`、`TASK-012.md` 与本评审记录），**产品代码与第 2 轮完全一致**，因此第 2 轮的变异结论继续有效（本轮已复验 M-1）。
+- 全量 diff 仍无 `build.gradle.kts` / `libs.versions.toml` / `AndroidManifest.xml` / schema / 迁移改动：无新依赖、无权限变更、无 schema 改动。
+- `TASK-012` §14 只增加手动走查记录，未引入超范围功能；发现的 UX 缺口按 Scope 留在任务外并写入 §12。
 
 ## 2. Diff 核对
 
 **裁决：通过。**
 
-- `git diff --check`：**exit 0**；无冲突标记（`git grep -E '^(<<<<<<<|=======|>>>>>>>)'` 无匹配）。
-- 两处修复方向正确且互补：`onTrackingTypeChange` 在非 NUMERIC 时清 `unit`（并保留原有 `targetValue` 清理），`draft()` 对非 NUMERIC 强制 `unit = null` 作为第二道防线。
-- 新增回归测试 `switchingFromNumericToBooleanClearsTheUnit` 断言三层：form.unit 为空、form.targetValue 为空、落库后 `unit == null` 且 `targetValue == 1.0`——覆盖的是用户真实操作序列，而不是内部字段。
-- 对话框改动仅 1 行：`toDoubleOrNull()?.takeIf { it >= 0.0 }`，即解析失败或负数时 `parsed == null`，确认按钮保持禁用，对话框不关闭。
+- `git diff --check`：**exit 0**；冲突标记扫描无匹配。
+- `07b1aab` 的改动与第 2 轮要求逐条对应：README 58 项、`TEST_REPORT` 的 `Latest Run` 58 项与 Known Gaps「9 项」、§10 的 verify-all 行 58 项 + 两行变异证据（含「未被抓住」的 M-2 且明确不计为已验证防线）、§12 与 `LAST_HANDOFF` 的下一任务一致。
+- 文档改动没有顺手改代码，也没有把「未抓住」的变异写成通过——M-2 一行写的是 `未被抓住（58 全绿）`，这是诚实记录，值得保留。
 
 ## 3. 架构与数据
 
 **裁决：通过。**
 
-- 分层未变：Compose → Presenter → UseCase → Repository；`CreateHabitPresenter` 仍为纯 Kotlin，`today`/`now` 可注入。
-- 第 1 轮发现的 unit 泄漏已按要求修在 Presenter（UI 层），未把规则挪进 Composable；领域规则仍在 `HabitRules.normalizeTarget`，本任务不改变分层结论。
-- 数值输入链路仍完整：非 BOOLEAN 行 → `NumericInputDialog` → `onRecord` → `TodayViewModel.record` → `presenter.record` → `RecordHabitProgressUseCase`；负值现在在 UI 就被拦下，不再出现「关框丢输入」。
-- 遗留（已记录、非本任务）：规则执行点仍在数据层，`CreateHabitUseCase` 只校验 name；`LAST_HANDOFF.md` 已将「上移 `validateName`/`normalizeTarget` 并在接口写明契约」列为下一个新任务。
+- 分层与数据约束未变：规则仍在 `HabitRules.normalizeTarget`（`RoomHabitRepository` 调用），Presenter 只做即时反馈；`CreateHabitUseCase` 只校验 name 的分层问题已作为**下一个任务**写入 §12 与 `LAST_HANDOFF`，不在本任务内擅自重构。
+- unit 修复落在 Presenter（`onTrackingTypeChange` 清 `unit` + `draft()` 对 BOOLEAN 兜底），数值对话框在 UI 层拒绝负值，均未把业务规则塞进 Composable 之外的新位置。
+- 已知 UX 缺口（Today 仅在空态提供新建入口）与旋转丢表单都已明确记录为遗留，没有伪装成已满足。
 
 ## 4. 验证证据
 
-**裁决：通过。**
+**裁决：通过（含 1 项仅我能部分复核的手动证据，见下）。**
 
 | 命令 / 变异 | 实际结果 | 退出码 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | 治理 21/21（0 警告）、单测 **OK (58 tests)**、DAO SQL 21 项 0 失败、`assembleDebug` BUILD SUCCESSFUL 19s、空白 0 项 | **0** |
-| `pwsh -NoProfile -File tools/check-governance.ps1`（经 verify-all） | `SUMMARY: 21 checks, 21 passed, 0 warnings, 0 failed` | 0 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | 治理 21/21（0 警告）、单测 **OK (58 tests)**、DAO SQL 21 项 0 失败、`assembleDebug` BUILD SUCCESSFUL 21s、空白 0 项 | **0** |
+| `pwsh -NoProfile -File tools/check-governance.ps1`（单独复跑） | `SUMMARY: 21 checks, 21 passed, 0 warnings, 0 failed` | 0 |
 | `git diff --check` | `no whitespace errors` | 0 |
-| 变异 M-1：`onTrackingTypeChange` 去掉 `unit` 清空（`unit = it.unit`） | `Tests run: 58, Failures: 1`，`switchingFromNumericToBooleanClearsTheUnit` 变红 | **1** |
-| 变异 M-2：`draft()` 去掉 BOOLEAN 的 `unit = null` 兜底 | `OK (58 tests)` —— **未被抓住**（见 §6 非阻塞 1） | 0 |
-| 探针（第 1 轮变红的同一段代码）：NUMERIC 填 `ml` → 切 BOOLEAN → `save()` | `OK (59 tests)`，探针断言「无错误且已创建」全部通过 | 0 |
+| 复验 M-1：去掉 `onTrackingTypeChange` 的 unit 清空 | `Tests run: 58, Failures: 1`，`switchingFromNumericToBooleanClearsTheUnit` 变红 | **1** |
 | 还原后 `tools/run-unit-tests.ps1` | `OK (58 tests)` / `RESULT: UNIT TESTS PASS` | 0 |
 
-说明：M-2 的结果说明 `draft()` 的 `else null` 在当前「先清 unit」的前提下是死代码；它是合理的纵深防御，但没有测试能独立证明它，删掉也不会有测试变红——不应把它算作已验证的防线。
+**设备侧独立核对（只读）**：`adb devices` 显示 `10CDAK0B71005KU device`，与 §14 的序列号一致；`dumpsys package com.habittracker` 为 `versionName=0.1.0`、`lastUpdateTime=2026-11-05 15:02:21`；用 `adb exec-out run-as com.habittracker cat databases/...` 拉取 db/wal/shm（4096 / 86552 / 32768 字节，与设备 `ls -l` 一致），分别用 `node:sqlite` 与 Python `sqlite3` 读取：`habits`、`habit_schedules`、`habit_logs` 均为 **0 行**，`sqlite_sequence` 为空，`PRAGMA integrity_check` 为 `ok`，`page_count=18`，`android_metadata=('zh_CN')`，`room_master_table` 有 identity hash；db/wal 的 mtime 为 `2026-11-05 15:03:57 +0800`，而截图 `saved.png`/`done.png` 分别为 15:03:11、15:03:22（设备时区）。
 
-未验证项（如实声明）：Compose 渲染与交互（`NumericInputDialog` 的负值禁用按钮只经代码核对 + 编译，无 Robolectric/设备测试）；旋转后表单丢失（代码可读，未实机复现）；路由跳转与返回栈。
+结论：§14 的 **schema 级事实可复现**（表、locale、identity hash、user_version=1），但**行级事实无法复现**——当前设备上的库是 15:03:57 重建的空库，说明走查读库之后应用数据被清过（或重装）并已重建；§14 未记录这次重置，也没有保留 dump，所以那几行 `tracking_type=BOOLEAN / unit=NULL / COMPLETED` 我只能视为**当时的、不可复核的手动陈述**。这不影响代码结论（M-1 已由我在 JVM 侧独立证明），但证据链本身应补一句说明。
+
+未验证项（如实声明）：Compose 渲染与交互仍无自动化（手动走查不能替代）；旋转丢表单未实机复现；统计页/我的页仍是占位；数值输入对话框的真机路径因中文 IME 丢字符未走通。
 
 ## 5. 文档与分支
 
-**裁决：不通过（仅剩计数与同步问题，非代码问题）。**
+**裁决：通过（附 4 处非阻塞修订建议）。**
 
-- ✅ `PROJECT_STATUS.md` 第 13 行已改为「58 项 … `feat/create-habit`」；`LAST_HANDOFF.md` 已按 TASK-012 重写（Gate 3、分支、57→58、变异、未验证项、下一任务为规则上移）；TASK-012 自动摘要块为 `OK (58 tests)`；`TEST_REPORT.md` 的 `Runs` 行序已改为时间序，末行为 58 项。
-- 🚫 `README.md` 第 15 行仍为「`PASS` — **57 项**单测」，与本分支实际 58 项不符。
-- 🚫 `TEST_REPORT.md` 第 9 行 `Latest Run` 仍为「单测 **57 项**」，而同文件末行 `Runs` 已是 58 项，同一文件自相矛盾。
-- 🚫 `TEST_REPORT.md` 第 69 行 `Known Test Gaps` 仍写「新建表单状态机 **8 项** JVM 覆盖」，实际 `CreateHabitPresenterTest` 现为 9 项。
-- 🚫 `TASK-012.md` §10 的 `verify-all` 行仍为「单测 **57 项** … `assembleDebug` 22s」（同表首行已是 58 项）；§11 写「58 项 + **2 组变异**」，但 §10 只记录了 `isBlank` 一组，unit 清空那组没有证据行。
-- 分支 `feat/create-habit`、两个聚焦提交、未推送，符合 `AGENTS.md` §7；评审开始与结束时工作区均干净（仅本文件为修改）。
+- 计数现已全部一致：`README.md:15` 58 项、`TEST_REPORT.md:9` 58 项、`TEST_REPORT.md:69` 新建表单 9 项、`TASK-012.md` §10 58 项 + 两行变异、§11「58 项 + 2 组变异」与 §10 对应、自动摘要块 `OK (58 tests)`、`PROJECT_STATUS.md:13` 58 项、`LAST_HANDOFF` 57→58。第 2 轮指出的 5 处全部关闭。
+- `TASK-012` §12 的下一任务已与 `LAST_HANDOFF` 对齐（先规则上移，再图标/颜色与编辑）；§13 如实列出第 1、2 轮 `REJECT` 与当前待第 3 轮。
+- 分支 `feat/create-habit`、三个聚焦提交、未推送，符合 `AGENTS.md` §7；评审开始与结束时工作区均干净（仅本文件为修改）。
+- 非阻塞：`TASK-012.md:40`（§7）仍写「新增 `CreateHabitPresenterTest` 8 项」，实际 9 项；`LAST_HANDOFF.md:8` 仍写「首轮独立评审 `REJECT` 已修复待复审」，而第 2 轮也 `REJECT` 过（标记 `DONE` 时会重写，可顺带修）；§14 的截图清单列了 7 个文件名，`.gradle/shots` 实际有 8 个（漏了 `numfilled.png`）；§14 写了设备序列号，建议只保留型号。
 
 ## 6. 结论
 
-- 结论：`REJECT`
-- 证据：代码修复经变异证明有效（M-1 → 1 红；第 1 轮探针由红转绿），门禁 `verify-all` exit 0（58 项、治理 21/21、DAO 21 项、构建 19s）。阻断原因仅为 5 处计数/证据同步，全部是文档改动，不需要再动产品代码。
-- 需修复项：
-  1. `README.md` 第 15 行：`57 项` → `58 项`。
-  2. `TEST_REPORT.md` 第 9 行 `Latest Run`：`单测 57 项` → `58 项`（与末行 58 一致）。
-  3. `TEST_REPORT.md` 第 69 行：新建表单状态机 `8 项` → `9 项`。
-  4. `TASK-012.md` §10 `verify-all` 行的 `单测 57 项` → `58 项`；补一行 unit 清空变异的证据（或在 §11 去掉「2 组变异」的表述，使 §10/§11 一致）。
-  5. 可选但推荐：`TASK-012.md` §12「下一步」与 `LAST_HANDOFF.md` 的「下一个新任务＝规则上移」对齐，避免两份文档给出不同的后继任务。
-- 非阻塞建议：
-  1. `draft()` 里 BOOLEAN 的 `unit = null` 目前是死代码（M-2 删除后 58 项全绿）。保留作为纵深防御可以，但不要声称它被测试覆盖；若要它可证伪，需要一个绕过 `onTrackingTypeChange`（直接构造非 NUMERIC + 非空 unit 的 form）的测试，而 Presenter 目前没有这样的入口。
-  2. `tools/check-governance.ps1` 的第 15 项检查（`test report summary matches`）只比对日期与 `PASS`/`FAILED` 字样，不比对**计数**，所以本次「Latest Run 57 / 末行 58」能通过检查。这是一个真实的检查盲区，建议单开任务让它比对 `OK (N tests)` 的 N。
-  3. `FakeHabitRepository.createCalls += 1` 位于 `normalizeTarget` 之后，四条本地校验测试的 `assertEquals(0, createCalls)` 在绕过 Presenter 校验时也恒为真；变异 c 的红来自错误文案相等断言。若要让「不触达仓库」真正可证伪，应在 use case 调用前加计数，或断言具体文案。
-  4. `CreateHabitPresenter` 的 `onFailure` 分支（保存失败保持表单打开）仍无测试覆盖。
-  5. `AppRoot.kt` 的 import 未排序（`androidx.*` 在 `com.habittracker.*` 之后），风格问题，不影响构建。
+- 结论：`APPROVE`
+- 证据：`verify-all` exit 0（58 项、治理 21/21、DAO 21 项、构建 21s、空白 0）；M-1 复验 1 红后还原全绿；计数与状态文档一致；`07b1aab` 未改代码，第 2 轮已证明的修复继续有效。
+- 关于「Today 只在空态提供新建入口」：**同意不属于 TASK-012 的阻断项**——§6 验收条件字面只要求「空态可进入新建页」，§1 Objective 也是「加一个习惯」，实现与验收一致且已在 §12 记录。但它是产品级 P0 缺口（有习惯后无法再建第二个），建议立即建任务并在 `LAST_HANDOFF` 的下一任务列表里并列，避免只有任务文件里能找到。
+- 关于 §14 这种证据形式：**合法，且是设备验证应有的写法**（标明手动、给出可复现步骤与命令、列出未验证项、截图不入库），前提是把它当**时间点证据**：读库结果要么保留 dump，要么注明设备数据何时被重置。本次缺了这一步，故我在 §4 按「不可复现」记录，而不是照单全收。
+- 非阻塞建议（合入时一并处理即可）：
+  1. `TASK-012` §14 补一句「读库后清过应用数据，当前设备库为空，dump 未保留」，或在 `project/` 下留一份查询结果文本；序列号可改为只写型号。
+  2. §7 的「8 项」改为「9 项」。
+  3. `LAST_HANDOFF` 的「首轮 `REJECT`」改为「第 1、2 轮 `REJECT`」；标记 `DONE` 时重写该文件。
+  4. §14 截图清单补 `numfilled.png`，或删掉清单只保留目录说明。
+  5. 把「有习惯后无法新建」的 P0 缺口写进 `LAST_HANDOFF` 的下一任务列表（目前只在 `TASK-012` §12）。
