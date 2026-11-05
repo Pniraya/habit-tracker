@@ -179,12 +179,24 @@ class TodayPresenterTest {
     }
 
     @Test
+    fun theNumericDialogPrefillsTheRecordedDecimal() {
+        // Regression guard for the round-1 defect: a prefill of "0" let one tap on 记录 overwrite
+        // the stored 0.5 with 0. Mutation: replacing prefillText's body with toLong() must fail here.
+        assertEquals("0.5", TodayPresenter.prefillText(0.5))
+        assertEquals("0.25", TodayPresenter.prefillText(0.25))
+        assertEquals("2000", TodayPresenter.prefillText(2000.0))
+        assertEquals("", TodayPresenter.prefillText(0.0))
+    }
+
+    @Test
     fun aThousandsGroupIsNotRewrittenIntoADecimal() {
         // Rewriting 1,234 to 1.234 would silently divide the value by 1000.
         assertEquals("1,234", normaliseQuantityInput("1,234"))
         assertEquals("10,000", normaliseQuantityInput("10,000"))
         // Not a thousands group, so it is treated as a decimal separator and then fails to parse.
         assertEquals("1.2.3", normaliseQuantityInput("1,2,3"))
+        // 0,123 is a legitimate 0.123: a leading zero rules out a thousands group.
+        assertEquals("0.123", normaliseQuantityInput("0,123"))
     }
 
     @Test

@@ -128,11 +128,9 @@ fun TodayScreen(
 
 @Composable
 private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
-    // Prefill with the recorded value, decimals included: casting to Long would show 0.5 as "0"
-    // and a tap on 记录 would then overwrite the stored 0.5 with 0.
-    var text by remember(habit.id) {
-        mutableStateOf(if (habit.actualValue > 0.0) TodayPresenter.formatQuantity(habit.actualValue) else "")
-    }
+    // Decimals must survive the prefill: showing 0.5 as "0" made one tap on 记录 overwrite the
+    // stored 0.5 with 0. The rule lives in the presenter so a JVM test can pin it.
+    var text by remember(habit.id) { mutableStateOf(TodayPresenter.prefillText(habit.actualValue)) }
     // Negative input is refused here so the dialog does not close and discard what was typed.
     val parsed = text.trim().toDoubleOrNull()?.takeIf { it >= 0.0 }
     AlertDialog(

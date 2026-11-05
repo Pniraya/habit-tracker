@@ -24,7 +24,7 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (70 tests)** | `TASK-018` 新增 7 项：小数显示、整数去 `.0`、领域消息映射、未知错误回退、`onFailure` 调用点、逗号小数、千分位不被改写 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (71 tests)** | `TASK-018` 新增 8 项：小数显示、整数去 `.0`、领域消息映射、未知错误回退、`onFailure` 调用点、逗号小数、千分位不被改写、对话框预填 |
 | 真机（`iQOO Neo7 SE`） | **通过** | 列表 `0.5 / 2000 ml`；缺单位提示 `数值习惯需要填写单位` |
 | 变异：`showsCreateAction` 去掉 `!state.isLoading &&` | **FAILED（1 项）** | 加载态断言变红；还原后全绿 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（43s） | 缺 `PaddingValues`/`KeyboardOptions` 导入，已补 |

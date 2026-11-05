@@ -40,7 +40,7 @@
 - [x] 真机确认：列表 `0.5 / 2000 ml`、对话框预填 `0.5`、缺单位提示 `数值习惯需要填写单位`
 
 ## 7. Tests
-- `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新增 4 项，共 67 项）
+- `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新增 8 项，共 71 项）
 - 变异 A：`formatQuantity` 改回 `toLong().toString()`，必须变红
 - 变异 B：`errorMessageFor` 未知分支改为返回 `failure.message`，必须变红
 - 真机：输入 `0.5` 后查看列表；缺单位保存查看提示
@@ -59,18 +59,20 @@
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (67 tests)** | 新增 4 项：小数显示、整数去 `.0`、映射 5 条、未知错误回退 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (71 tests)** | 新增 8 项：小数显示、整数去 `.0`、映射 5 条、未知错误回退、`onFailure` 调用点、逗号小数、千分位不被改写、对话框预填 |
 | 变异 A：`formatQuantity` → `toLong().toString()` | **FAILED（2 项）**（预期） | 小数与整数格式断言变红 |
 | 变异 B：`errorMessageFor` 未知分支返回原文 | **FAILED（2 项）**（预期） | 映射与中文回退断言变红 |
 | 变异 C：`onFailure` 改写回 `failure.message`（评审第 1 轮提出） | **FAILED（1 项）**（修复后） | `aDomainRejectionIsTranslatedAtTheCallSite` 变红；修复前全绿 |
+| 变异 D：`prefillText` 改用 `toLong()`（评审第 2 轮提出） | **FAILED（1 项）**（修复后） | `theNumericDialogPrefillsTheRecordedDecimal` 变红；修复前全绿 |
+| 变异 E：去掉千分位保护（评审第 2 轮） | **FAILED（1 项）** | `aThousandsGroupIsNotRewrittenIntoADecimal` 变红 |
 | 真机：已记录 `0.5` 的习惯打开对话框 | **通过** | 预填 `0.5`（修复前为 `0`，点「记录」即覆盖存储值） |
 | 真机：列表显示已记录的小数 | **通过** | `0.5 / 2000 ml`（修复前为 `0 / 2000 ml`） |
 | 真机：数值习惯缺单位保存 | **通过** | 提示 `数值习惯需要填写单位`（修复前为 `NUMERIC habit needs a unit`） |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21、单测 67 项、DAO SQL 21 项、构建通过 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21、单测 71 项、DAO SQL 21 项、构建通过 |
 
 ## 11. Completion Review
-- [x] 验收标准全部满足（5/5）
-- [x] 相关测试实际运行（67 项 + 2 组变异 + 2 项真机）
+- [x] 验收标准全部满足（9/9）
+- [x] 相关测试实际运行（71 项 + 4 组变异 + 3 项真机）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动
 - [x] 文档/状态已更新
@@ -91,5 +93,5 @@
 - 状态：`PARTIAL`
 - 阶段：Gate 3
 - 验收：通过 8 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **OK (70 tests)**
+- 最近测试记录：2026-11-05 / **OK (71 tests)**
 <!-- close-task:end -->

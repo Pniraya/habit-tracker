@@ -119,10 +119,18 @@ class TodayPresenter(
         /** Drops the trailing ".0" for whole numbers and keeps decimals otherwise. */
         fun formatQuantity(value: Double): String =
             java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+
+        /**
+         * What the numeric dialog puts in the field when it opens. Casting to Long here showed 0.5
+         * as "0" and one tap on 记录 then overwrote the stored 0.5 with 0.
+         */
+        fun prefillText(actual: Double): String =
+            if (actual > 0.0) formatQuantity(actual) else ""
     }
 }
 
-private val THOUSANDS_SEPARATOR = Regex("^\\d{1,3}(,\\d{3})+$")
+// Leading group is 1-3 digits and non-zero: "0,123" is a legitimate 0.123, not a thousands group.
+private val THOUSANDS_SEPARATOR = Regex("^[1-9]\\d{0,2}(,\\d{3})+$")
 
 /**
  * Some IMEs emit a comma for the decimal key, so a comma has to become a dot before

@@ -12,7 +12,7 @@
 | 当前任务 | `TASK-018`（`PARTIAL`，错误文案中文化与小数显示，待独立评审） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
-| 最近测试 | `PASS` — 70 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
+| 最近测试 | `PASS` — 71 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
 | 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 21/21（`verify-dao.mjs`） |
 | ADR | `ADR-001`~`ADR-014` 全部 `ACCEPTED` |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
