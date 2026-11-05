@@ -6,9 +6,9 @@
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
 - 当前任务：`TASK-020`（`NOT_STARTED`，离线守卫与检查器余留加固）；`TASK-012`~`TASK-019` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`chore/governance-probes`（本地，无远程）；`main` @ `617482c`；已合并分支 `fix/error-text`、`docs/feature-matrix` 保留未删
+- 当前 Git 分支：`main`（本地，无远程）@ `accad32`，工作区干净；已合并分支 `fix/error-text`、`docs/feature-matrix`、`chore/governance-probes` 保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（本文件提交时即最新）；基线检查点 `d0f470a`
-- **会话状态：进行中**（`TASK-019` 已实现，评审第 1 轮 `REJECT` 的 5 项文档不一致已修，等待第 2 轮）
+- **会话状态：进行中**（`TASK-017`、`TASK-019` 均已 `DONE` 并合入；下一项 `TASK-020`）
 
 ## Completed This Session
 - `TASK-007`~`TASK-018` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase、治理计数检查、界面细节、错误文案中文化与小数显示
@@ -40,10 +40,10 @@
 - Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：无自动化验证
 - 表单由 `remember` 持有，旋转会丢失输入
 - 统计页、我的页仍为占位；`POST_NOTIFICATIONS` 与 `RECEIVE_BOOT_COMPLETED` 已在 manifest 声明但无对应代码，属遗留声明，待清理
-- `TASK-015` 已让 `check-governance` 比对 `OK (N tests)` 计数与中文占位符；但评审用 P5–P8 探针证明仍有边界缺陷（结果列无判定词也能过、摘要缺计数即跳过、计数扫全文被污染），已立 `TASK-017`
+- `TASK-017` 已加固：第 21 项只认结果列判定词、第 15 项只在 `## Runs` 段取计数且缺计数即 FAIL；评审补测 P12–P15 仍露出两个边界（判定词未整格锚定、词表不含中文），已写入 `TASK-020`
 
 ## Next Safe Action
-1. **TASK-019（P1）**：校正 `FEATURE_MATRIX.md`——已完成实现，待第 2 轮评审（第 1 轮 `REJECT` 的 5 项文档打架已修）
-2. **TASK-017（P2）**：治理检查加固——P5–P8 四个洞，加上本轮新发现的 P9（`TBD|NOT_RUN` 占位判断没尊重 `NOT_STARTED`，与代码注释矛盾）
+1. **TASK-020（P3）**：离线守卫（manifest 不得含 `INTERNET`，新增第 22 项检查）+ 探针脚本入库 + 判定词整格锚定 + `NOT_STARTED` 防规避检测
+2. `TASK-017`/`TASK-019` 已 `DONE` 合入
 3. **遗留重构（未立任务）**：`CreateHabitPresenter` 构造参数为函数类型以便注入失败实现；评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」，属独立重构
 4. 之后的功能顺序：F-009 连续天数 → F-010/011 统计页 → F-012/013 提醒 → F-014 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
