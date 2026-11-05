@@ -17,7 +17,7 @@ import java.time.LocalDate
 class FakeHabitRepository : HabitRepository {
 
     private val habits = LinkedHashMap<Long, Habit>()
-    private val schedules = LinkedHashMap<Long, HabitSchedule>()
+    private val schedules = LinkedHashMap<Long, MutableList<HabitSchedule>>()
     private val logs = LinkedHashMap<String, DailyLog>()
     private val state = MutableStateFlow<List<Habit>>(emptyList())
     private var nextId = 1L
@@ -27,10 +27,10 @@ class FakeHabitRepository : HabitRepository {
     var createCalls: Int = 0
         private set
 
-    fun storedSchedule(habitId: Long): HabitSchedule? = schedules[habitId]
+    fun storedSchedule(habitId: Long): HabitSchedule? = schedules[habitId]?.lastOrNull()
 
     fun replaceSchedule(schedule: HabitSchedule) {
-        schedules[schedule.habitId] = schedule
+        schedules[schedule.habitId] = mutableListOf(schedule)
     }
 
     override suspend fun createHabit(draft: NewHabit, today: LocalDate, now: Long): Long {
@@ -49,16 +49,18 @@ class FakeHabitRepository : HabitRepository {
             createdOn = today,
             archivedOn = null,
         )
-        schedules[id] = HabitSchedule(
-            id = nextId++,
-            habitId = id,
-            frequencyType = draft.initialSchedule.frequencyType,
-            weekdayMask = ScheduleRules.maskFor(
-                draft.initialSchedule.frequencyType,
-                draft.initialSchedule.weekdayMask,
+        schedules[id] = mutableListOf(
+            HabitSchedule(
+                id = nextId++,
+                habitId = id,
+                frequencyType = draft.initialSchedule.frequencyType,
+                weekdayMask = ScheduleRules.maskFor(
+                    draft.initialSchedule.frequencyType,
+                    draft.initialSchedule.weekdayMask,
+                ),
+                effectiveFrom = today,
+                effectiveUntil = null,
             ),
-            effectiveFrom = today,
-            effectiveUntil = null,
         )
         state.value = habits.values.toList()
         return id
@@ -89,7 +91,14 @@ class FakeHabitRepository : HabitRepository {
         effectiveFrom: LocalDate,
         now: Long,
     ) {
-        schedules[habitId] = HabitSchedule(
+        val versions = schedules.getOrPut(habitId) { mutableListOf() }
+        // Close the previous version the way the Room writer does, so the fake keeps history.
+        versions.lastOrNull()?.let { open ->
+            if (open.effectiveUntil == null) {
+                versions[versions.lastIndex] = open.copy(effectiveUntil = effectiveFrom.minusDays(1))
+            }
+        }
+        versions += HabitSchedule(
             id = nextId++,
             habitId = habitId,
             frequencyType = frequencyType,
@@ -99,14 +108,21 @@ class FakeHabitRepository : HabitRepository {
         )
     }
 
-    override suspend fun activeSchedule(habitId: Long, date: LocalDate): HabitSchedule? {
-        val schedule = schedules[habitId] ?: return null
-        if (date.isBefore(schedule.effectiveFrom)) return null
-        if (schedule.effectiveUntil != null && date.isAfter(schedule.effectiveUntil)) return null
-        return schedule
-    }
+    override suspend fun activeSchedule(habitId: Long, date: LocalDate): HabitSchedule? =
+        schedules[habitId]?.firstOrNull { schedule ->
+            !date.isBefore(schedule.effectiveFrom) &&
+                (schedule.effectiveUntil == null || !date.isAfter(schedule.effectiveUntil))
+        }
 
     override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? = logs[key(habitId, date)]
+
+    override suspend fun scheduleVersions(habitId: Long): List<HabitSchedule> =
+        schedules[habitId].orEmpty().sortedBy { it.effectiveFrom }
+
+    override suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog> =
+        logs.values
+            .filter { it.habitId == habitId && !it.date.isBefore(from) && !it.date.isAfter(to) }
+            .sortedBy { it.date }
 
     override suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog {
         val habit = habits[habitId] ?: error("fake repository: habit not found")

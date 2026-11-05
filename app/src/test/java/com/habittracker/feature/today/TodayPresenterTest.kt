@@ -8,6 +8,7 @@ import com.habittracker.domain.model.NewSchedule
 import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.FakeHabitRepository
+import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,12 +35,19 @@ class TodayPresenterTest {
     private fun presenter(date: LocalDate = monday): TodayPresenter = TodayPresenter(
         repository = repository,
         recordProgress = RecordHabitProgressUseCase(repository),
+        streaks = GetStreakUseCase(repository),
         scope = scope,
         today = { date },
         now = { now },
     )
 
-    private fun createHabit(trackingType: TrackingType, name: String, frequency: FrequencyType = FrequencyType.DAILY, mask: Int? = null): Long =
+    private fun createHabit(
+        trackingType: TrackingType,
+        name: String,
+        frequency: FrequencyType = FrequencyType.DAILY,
+        mask: Int? = null,
+        createdOn: LocalDate = monday,
+    ): Long =
         runBlocking {
             CreateHabitUseCase(repository)(
                 NewHabit(
@@ -51,7 +59,7 @@ class TodayPresenterTest {
                     unit = if (trackingType == TrackingType.NUMERIC) "ml" else null,
                     initialSchedule = NewSchedule(frequency, mask),
                 ),
-                monday,
+                createdOn,
                 now,
             )
         }
@@ -170,6 +178,62 @@ class TodayPresenterTest {
         assertEquals("2000 / 2000 ml", TodayPresenter.progressText(2000.0, 2000.0, "ml"))
         assertEquals("0.25 / 1.5 h", TodayPresenter.progressText(0.25, 1.5, "h"))
         assertEquals("0 / 8", TodayPresenter.progressText(0.0, 8.0, null))
+    }
+
+    @Test
+    fun theRowShowsTheStreakComputedFromCompletedDays() = runBlocking {
+        val habitId = createHabit(TrackingType.BOOLEAN, "Read", createdOn = monday.minusDays(2))
+        // Three consecutive days ending today, recorded through the real use case.
+        listOf(monday.minusDays(2), monday.minusDays(1), monday).forEach { date ->
+            RecordHabitProgressUseCase(repository)(habitId, date, 1.0, now)
+        }
+
+        val state = presenter(monday).state.value
+        val habit = state.habits.single()
+
+        assertEquals(3, habit.currentStreak)
+        assertEquals(3, habit.longestStreak)
+    }
+
+    @Test
+    fun anInProgressDayDoesNotJoinTheStreak() = runBlocking {
+        // 1 ml of a 2000 ml target is IN_PROGRESS, not COMPLETED; such a day must not count.
+        val habitId = createHabit(TrackingType.NUMERIC, "Water", createdOn = monday.minusDays(1))
+        RecordHabitProgressUseCase(repository)(habitId, monday.minusDays(1), 1.0, now)
+
+        // Yesterday stayed IN_PROGRESS at 1 of 2000 ml; today is not due to be counted yet.
+        val habit = presenter(monday).state.value.habits.single()
+
+        assertEquals(0, habit.currentStreak)
+        assertEquals(0, habit.longestStreak)
+        assertEquals(
+            LogStatus.IN_PROGRESS,
+            repository.dailyLog(habitId, monday.minusDays(1))!!.status,
+        )
+    }
+
+    @Test
+    fun everyScheduleVersionFeedsTheStreak() = runBlocking {
+        // Daily from the 2nd, then Mon/Wed/Fri from the 5th. The completed 2nd-4th were due under the
+        // old version, so reading only the newest version would wrongly report 0.
+        val today = LocalDate.of(2026, 11, 5)
+        val habitId = createHabit(TrackingType.BOOLEAN, "Read", createdOn = LocalDate.of(2026, 11, 2))
+        listOf(LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 3), LocalDate.of(2026, 11, 4)).forEach {
+            RecordHabitProgressUseCase(repository)(habitId, it, 1.0, now)
+        }
+        repository.changeSchedule(habitId, FrequencyType.CUSTOM, 21, today, now)
+
+        val habit = presenter(today).state.value.habits.single()
+
+        assertEquals(3, habit.currentStreak)
+    }
+
+    @Test
+    fun aStreakTextStaysQuietWhenThereIsNothingToSay() {
+        assertNull(TodayPresenter.streakText(0, 0))
+        assertEquals("最长 7 天", TodayPresenter.streakText(0, 7))
+        assertEquals("连续 3 天", TodayPresenter.streakText(3, 3))
+        assertEquals("连续 3 天 · 最长 7 天", TodayPresenter.streakText(3, 7))
     }
 
     @Test

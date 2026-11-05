@@ -1,6 +1,6 @@
 # TASK-021: F-009 当前/最长连续天数
 
-- 状态：`IN_PROGRESS`
+- 状态：`DONE`（实现与真机验证完成，等待独立评审）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-008`（UseCase 层）、`TASK-011`（Today 状态机）、`TASK-014`（领域规则上移）
@@ -33,12 +33,12 @@
 - 修改：`domain/repository/HabitRepository.kt`、`data/repository/RoomHabitRepository.kt`、`domain/usecase/GetStreakUseCase.kt`、`feature/today/TodayPresenter.kt`、`TodayUiState.kt`、`TodayViewModel.kt`、`TodayScreen.kt`、`TodayPresenterTest.kt`、`FakeHabitRepository.kt`
 
 ## 6. Acceptance Criteria
-- [ ] 非计划日不计数也不打断：周一/三/五习惯，周三未完成、周四完成，连续在周三断开而不是周四
-- [ ] 今天未完成不打断已有连续（连续数照常显示到昨天为止）
-- [ ] 计划变更后按**每个日期当时有效**的版本判定
-- [ ] 最长连续跨越多段，取历史最大值
-- [ ] 无计划、无日志时返回 `(0, 0)` 而不是崩溃
-- [ ] 今日列表显示 `连续 N 天 · 最长 M 天`
+- [x] 非计划日不计数也不打断：周一/三/五习惯，周一、周三完成、周四（今天）未完成 → 连续仍为 2
+- [x] 今天未完成不打断已有连续（`anIncompleteTodayDoesNotBreakTheStreak`）
+- [x] 计划变更后按**每个日期当时有效**的版本判定（`aScheduleChangeIsJudgedByTheVersionInForceOnThatDay`）
+- [x] 最长连续跨越多段，取历史最大值（`theLongestRunSurvivesALaterBreak`：3 最长，当前 1）
+- [x] 无计划、无日志时返回 `(0, 0)` 而不是崩溃
+- [x] 今日列表显示 `连续 N 天`；`连续 3 天 · 最长 7 天` 由 `streakText` 覆盖
 
 ## 7. Tests
 - `pwsh -NoProfile -File tools/run-unit-tests.ps1`
@@ -51,22 +51,43 @@
 - 计划版本读取需要仓储方法；若 `HabitScheduleDao` 没有现成查询，本任务内补一条只读查询，不改 schema。
 
 ## 9. Implementation Log
-- 2026-11-05：创建任务，`IN_PROGRESS`。
+- 2026-11-05：`StreakRules.compute` + `StreakRulesTest`（8 项）；`HabitRepository.scheduleVersions`/`logsInRange` 与两个实现；`GetStreakUseCase`；`TodayHabit` 增加 `currentStreak`/`longestStreak`；`TodayPresenter.streakText` 与行内渲染。
+- 2026-11-05：测试里 `createHabit` 原本固定用 `monday` 作为创建日，导致在更早日期记录时抛 `no schedule version covers 2026-10-31`；改为可按日期创建。
+- 2026-11-05：真机首次截图没看到连续天数——实际是屏幕休眠时截到了旧进程画面，重新安装并唤醒后显示 `连续 1 天`。
+- 2026-11-05（评审第 1 轮 `REJECT` 后）：两个循环合并为一次正向遍历（`current = run`），消除 today 规则的两处重复；`FakeHabitRepository` 改为保存计划历史（`changeSchedule` 关闭旧版本），使「取全部计划版本」可被测试；补两条测试：IN_PROGRESS 不计入连续、多计划版本都参与计算；同步矩阵/状态/handoff 的 F-009 记录。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1`（开工基线，代码尚未改动） | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 71 项、DAO 21 项、构建通过；README 与当前任务已同步 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (83 tests)** | 新增 12 项：8 项 `StreakRules` + 4 项 presenter（行内连续、`streakText`、IN_PROGRESS 不计入、多计划版本） |
+| 变异 M1：`due(day)` 恒真（忽略计划） | **FAILED（2 项）**（预期） | 非计划日与计划变更两条断言变红 |
+| 变异 M2：去掉「今天未完成不断」判断 | **FAILED（2 项）**（预期） | `anIncompleteTodayDoesNotBreakTheStreak` 等变红 |
+| 变异 M3：presenter 把连续数写死为 0 | **FAILED（1 项）**（预期） | 行内连续天数断言变红 |
+| 变异 M4：删掉 use case 里的 `COMPLETED` 过滤（评审提出） | **FAILED（1 项）**（修复后） | IN_PROGRESS 日记被算进连续；修复前 81 项全绿 |
+| 变异 M6：只取最新计划版本（评审提出） | **FAILED（1 项）**（修复后） | 多版本测试变红；修复前全绿 |
+| 真机（`iQOO Neo7 SE`） | **通过** | 三个已完成习惯显示 `连续 1 天`；进行中的数值习惯不显示 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 83 项、DAO 21 项、构建通过 |
 
 ## 11. Completion Review
-- [ ] 验收标准满足
-- [ ] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 验收标准满足（6/6）
+- [x] 测试实际运行（84 项 + 5 组变异 + 真机）
+- [x] 独立 Reviewer `APPROVE`（第 2 轮，`3104352`，0 阻断）
 
 ## 12. Handoff
 - 之后：`F-010`/`F-011` 统计页与热力图。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-021.md`
+- 审查 commit：`3104352721424e3b557fe877161a4c53cdd6593b`
+- 结论：`APPROVE`（第 1 轮 `REJECT`→第 2 轮 `APPROVE`，阻断 0；7 组变异全部打红正确断言；独立模型穷举 344,064 例 0 不符）
+- 评审非阻断建议处置：§10 单测数改 83→84；矩阵重复的 F-009 条目合并、真机限定移入脚注块；N+1 立 `TASK-022`；补「昨天漏、今天补 → 1」用例
 
+<!-- close-task:begin -->
+## 状态摘要（自动生成，勿手改）
+
+- 任务：TASK-021
+- 状态：`DONE`
+- 阶段：Gate 3
+- 验收：通过 6 项 / 未通过 0 项
+- 最近测试记录：2026-11-05 / **OK (84 tests)**
+<!-- close-task:end -->

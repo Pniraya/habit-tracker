@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.data.repository.RoomHabitRepository
+import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,7 @@ class TodayViewModel(
                 val presenter = TodayPresenter(
                     repository = repository,
                     recordProgress = RecordHabitProgressUseCase(repository),
+                    streaks = GetStreakUseCase(repository),
                     scope = scope,
                 )
                 @Suppress("UNCHECKED_CAST")

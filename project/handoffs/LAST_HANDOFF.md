@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-021`（`NOT_STARTED`，`F-009` 连续天数）；`TASK-012`~`TASK-020` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前任务：`TASK-022`（`NOT_STARTED`，Today 查询批量化）；`TASK-021` `F-009` 连续天数已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 已 `DONE` 合入 `main`；`TASK-022` 为新建的 `NOT_STARTED` 性能债；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
 - 当前 Git 分支：`main`（本地，无远程）@ `accad32`，工作区干净；已合并分支 `fix/error-text`、`docs/feature-matrix`、`chore/governance-probes` 保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（本文件提交时即最新）；基线检查点 `d0f470a`
 - **会话状态：进行中**（`TASK-017`、`TASK-019` 均已 `DONE` 并合入；下一项 `TASK-020`）
@@ -46,4 +46,4 @@
 1. **TASK-020（P3）**：离线守卫（manifest 不得含 `INTERNET`，新增第 22 项检查）+ 探针脚本入库 + 判定词整格锚定 + `NOT_STARTED` 防规避检测
 2. `TASK-017`/`TASK-019` 已 `DONE` 合入
 3. **遗留重构（未立任务）**：`CreateHabitPresenter` 构造参数为函数类型以便注入失败实现；评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」，属独立重构
-4. 之后的功能顺序：F-009 连续天数 → F-010/011 统计页 → F-012/013 提醒 → F-014 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
+4. 之后的功能顺序：F-010/011 统计页 → F-012/013 提醒 → F-014 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除（F-009 已在 `TASK-021` 完成）

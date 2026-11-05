@@ -9,10 +9,10 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-021`（`IN_PROGRESS`，`F-009` 连续天数） |
+| 当前任务 | `TASK-022`（`NOT_STARTED`，Today 查询批量化）；上一项 `TASK-021` 连续天数已 `DONE` |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
-| 最近测试 | `PASS` — 71 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
+| 最近测试 | `PASS` — 84 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
 | 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 21/21（`verify-dao.mjs`） |
 | ADR | `ADR-001`~`ADR-014` 全部 `ACCEPTED` |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |

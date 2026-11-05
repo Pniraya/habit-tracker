@@ -4,6 +4,7 @@ import com.habittracker.data.local.entity.TrackingType
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.Habit
 import com.habittracker.domain.repository.HabitRepository
+import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ import java.time.LocalDate
 class TodayPresenter(
     private val repository: HabitRepository,
     private val recordProgress: RecordHabitProgressUseCase,
+    private val streaks: GetStreakUseCase,
     private val scope: CoroutineScope,
     private val today: () -> LocalDate = { LocalDate.now() },
     private val now: () -> Long = { System.currentTimeMillis() },
@@ -83,6 +85,7 @@ class TodayPresenter(
         val log = repository.dailyLog(habit.id, date)
         val scheduled = schedule != null &&
             ScheduleRules.isScheduledOn(schedule.frequencyType, schedule.weekdayMask, date)
+        val streak = streaks(habit.id, date)
         return TodayHabit(
             id = habit.id,
             name = habit.name,
@@ -94,6 +97,8 @@ class TodayPresenter(
             isScheduledToday = scheduled,
             status = log?.status,
             actualValue = log?.actualValue ?: 0.0,
+            currentStreak = streak.current,
+            longestStreak = streak.longest,
         )
     }
 
@@ -114,6 +119,17 @@ class TodayPresenter(
         fun progressText(actual: Double, target: Double, unit: String?): String {
             val suffix = if (unit.isNullOrBlank()) "" else " " + unit
             return formatQuantity(actual) + " / " + formatQuantity(target) + suffix
+        }
+
+        /**
+         * "连续 3 天 · 最长 7 天". Wording stays factual: REQUIREMENTS 71 forbids wording that
+         * pressures the user, so a missed streak is simply absent rather than announced.
+         */
+        fun streakText(current: Int, longest: Int): String? = when {
+            current <= 0 && longest <= 0 -> null
+            current <= 0 -> "最长 " + longest + " 天"
+            current >= longest -> "连续 " + current + " 天"
+            else -> "连续 " + current + " 天 · 最长 " + longest + " 天"
         }
 
         /** Drops the trailing ".0" for whole numbers and keeps decimals otherwise. */

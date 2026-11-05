@@ -16,6 +16,8 @@ data class TodayHabit(
     val isScheduledToday: Boolean,
     val status: LogStatus?,
     val actualValue: Double,
+    val currentStreak: Int = 0,
+    val longestStreak: Int = 0,
 ) {
     val isCompleted: Boolean get() = status == LogStatus.COMPLETED
 

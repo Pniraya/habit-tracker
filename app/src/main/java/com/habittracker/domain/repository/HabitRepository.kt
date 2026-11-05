@@ -47,6 +47,12 @@ interface HabitRepository {
 
     suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog?
 
+    /** Every schedule version of the habit, oldest first: streaks must use the version in force then. */
+    suspend fun scheduleVersions(habitId: Long): List<HabitSchedule>
+
+    /** Logs of one habit in a closed date range, for streaks and later for statistics. */
+    suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog>
+
     /** Writes the single daily row with status and completedAt computed by the domain rule. */
     suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog
 }
