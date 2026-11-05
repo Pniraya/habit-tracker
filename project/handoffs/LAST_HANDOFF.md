@@ -6,11 +6,14 @@
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
 - 当前任务：`TASK-019`（`NOT_STARTED`，功能矩阵校正；会话暂停于此项之前）；`TASK-012`~`TASK-018` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main`（本地，无远程）；已合并分支 `fix/error-text` 保留未删
-- 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
+- 当前 Git 分支：`main`（本地，无远程）@ `b64326c`，工作区干净；已合并分支 `fix/error-text` 保留未删
+- 最近 commit：`b64326c merge TASK-018 error text and decimal display`；基线检查点 `d0f470a`
+- **会话状态：已暂停**。恢复时先读本文件与 `TASK-019`，再按「Next Safe Action」继续
 
 ## Completed This Session
-- `TASK-007`~`TASK-016` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase、治理计数检查、界面细节
+- `TASK-007`~`TASK-018` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase、治理计数检查、界面细节、错误文案中文化与小数显示
+- `TASK-018` 三轮评审：第 1 轮 `REJECT`（对话框仍把 `0.5` 预填成 `0`、`onFailure` 调用点无测试、逗号把千分位变小数）、第 2 轮 `REJECT`（任务记录计数自相矛盾、预填无回归测试）、第 3 轮 `APPROVE`（`b5bd10f`）
+- 真实缺陷清单（全部由评审或真机发现，无一是自动化测试自发现）：单位状态泄漏、Today 非空无新建入口、英文领域错误直出、`toLong()` 截断小数、对话框预填覆盖数据、逗号千分位误判
 - `TASK-012` 三轮评审：第 1 轮 `REJECT`（unit 状态泄漏真缺陷 + 三份文档未同步）、第 2 轮 `REJECT`（仅计数不一致）、第 3 轮 `APPROVE`
 - 真机首次接入：`iQOO Neo7 SE`（`V2238A`，Android 15），走通「建习惯 → 今日出现 → 打卡 → 落库」，行级证据在 `project/reports/DEVICE_DUMP-2026-11-05.md`；读库后执行过 `adb shell pm clear`，故该 dump 是唯一行级证据
 - `TASK-013`：Today 页非空时显示 `+` 浮动按钮（空态仍用原按钮），判断规则上移到 `TodayPresenter.showsCreateAction` 并加单测；数值输入框改数字键盘；真机验证可建第 2 个习惯
@@ -25,7 +28,7 @@
 | 命令 | 结果 | 备注 |
 |---|---|---|
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (71 tests)** | `TASK-018` 新增 8 项：小数显示、整数去 `.0`、领域消息映射、未知错误回退、`onFailure` 调用点、逗号小数、千分位不被改写、对话框预填 |
-| 真机（`iQOO Neo7 SE`） | **通过** | 列表 `0.5 / 2000 ml`；缺单位提示 `数值习惯需要填写单位` |
+| 真机（`iQOO Neo7 SE`） | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` |
 | 变异：`showsCreateAction` 去掉 `!state.isLoading &&` | **FAILED（1 项）** | 加载态断言变红；还原后全绿 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（43s） | 缺 `PaddingValues`/`KeyboardOptions` 导入，已补 |
 | 真机走查 | **通过** | 建 1 项 → `+` 出现 → 进新建页 → 建第 2 项 → 列表 2 行 |
@@ -40,6 +43,7 @@
 - `TASK-015` 已让 `check-governance` 比对 `OK (N tests)` 计数与中文占位符；但评审用 P5–P8 探针证明仍有边界缺陷（结果列无判定词也能过、摘要缺计数即跳过、计数扫全文被污染），已立 `TASK-017`
 
 ## Next Safe Action
-1. **TASK-019（P1）**：校正 `FEATURE_MATRIX.md`——F-002/F-003/F-005/F-006/F-007 已有证据却仍标未开始，属低报
-2. **TASK-017（P2）**：治理检查加固——`TASK-015` 评审用 P5–P8 打穿四个洞（结果列无判定词也能过、摘要不写「单测」就跳过、计数扫全文被 `Known Gaps` 污染、合法备注致假阳性）
-4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度
+1. **TASK-019（P1）**：校正 `FEATURE_MATRIX.md`——F-002/F-003/F-005/F-006/F-007 已有证据却仍标未开始，属低报（任务文件已建，`NOT_STARTED`）
+2. **TASK-017（P2）**：治理检查加固——P5–P8 四个洞，加上本轮新发现的 P9（`TBD|NOT_RUN` 占位判断没尊重 `NOT_STARTED`，与代码注释矛盾）
+3. **遗留重构（未立任务）**：`CreateHabitPresenter` 构造参数为函数类型以便注入失败实现；评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」，属独立重构
+4. 之后的功能顺序：F-009 连续天数 → F-010/011 统计页 → F-012/013 提醒 → F-014 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
