@@ -54,20 +54,23 @@
 - 2026-11-05：`StreakRules.compute` + `StreakRulesTest`（8 项）；`HabitRepository.scheduleVersions`/`logsInRange` 与两个实现；`GetStreakUseCase`；`TodayHabit` 增加 `currentStreak`/`longestStreak`；`TodayPresenter.streakText` 与行内渲染。
 - 2026-11-05：测试里 `createHabit` 原本固定用 `monday` 作为创建日，导致在更早日期记录时抛 `no schedule version covers 2026-10-31`；改为可按日期创建。
 - 2026-11-05：真机首次截图没看到连续天数——实际是屏幕休眠时截到了旧进程画面，重新安装并唤醒后显示 `连续 1 天`。
+- 2026-11-05（评审第 1 轮 `REJECT` 后）：两个循环合并为一次正向遍历（`current = run`），消除 today 规则的两处重复；`FakeHabitRepository` 改为保存计划历史（`changeSchedule` 关闭旧版本），使「取全部计划版本」可被测试；补两条测试：IN_PROGRESS 不计入连续、多计划版本都参与计算；同步矩阵/状态/handoff 的 F-009 记录。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (81 tests)** | 新增 10 项：8 项 `StreakRules` + 2 项 presenter（行内连续天数、`streakText`） |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (83 tests)** | 新增 12 项：8 项 `StreakRules` + 4 项 presenter（行内连续、`streakText`、IN_PROGRESS 不计入、多计划版本） |
 | 变异 M1：`due(day)` 恒真（忽略计划） | **FAILED（2 项）**（预期） | 非计划日与计划变更两条断言变红 |
 | 变异 M2：去掉「今天未完成不断」判断 | **FAILED（2 项）**（预期） | `anIncompleteTodayDoesNotBreakTheStreak` 等变红 |
 | 变异 M3：presenter 把连续数写死为 0 | **FAILED（1 项）**（预期） | 行内连续天数断言变红 |
+| 变异 M4：删掉 use case 里的 `COMPLETED` 过滤（评审提出） | **FAILED（1 项）**（修复后） | IN_PROGRESS 日记被算进连续；修复前 81 项全绿 |
+| 变异 M6：只取最新计划版本（评审提出） | **FAILED（1 项）**（修复后） | 多版本测试变红；修复前全绿 |
 | 真机（`iQOO Neo7 SE`） | **通过** | 三个已完成习惯显示 `连续 1 天`；进行中的数值习惯不显示 |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 81 项、DAO 21 项、构建通过 |
 
 ## 11. Completion Review
 - [x] 验收标准满足（6/6）
-- [x] 测试实际运行（81 项 + 3 组变异 + 真机）
+- [x] 测试实际运行（83 项 + 5 组变异 + 真机）
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
@@ -84,5 +87,5 @@
 - 状态：`PARTIAL`
 - 阶段：Gate 3
 - 验收：通过 6 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **OK (81 tests)**
+- 最近测试记录：2026-11-05 / **OK (83 tests)**
 <!-- close-task:end -->

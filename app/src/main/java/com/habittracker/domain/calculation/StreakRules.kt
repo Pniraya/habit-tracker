@@ -38,7 +38,11 @@ object StreakRules {
                 ScheduleRules.isScheduledOn(schedule.frequencyType, schedule.weekdayMask, date)
         }
 
-        // Longest: sweep forward once over every day the habit existed.
+        // One forward pass yields both numbers. The current streak is simply the run that is still
+        // alive when the loop reaches today: an incomplete today does not reset it (REQUIREMENTS 93
+        // counts only *past* due days as failures), so `run` at the end equals the current streak.
+        // A previous version walked backwards a second time; that duplicated the rule in two places
+        // and could drift.
         var longest = 0
         var run = 0
         var day = firstDay
@@ -48,27 +52,12 @@ object StreakRules {
                     run++
                     if (run > longest) longest = run
                 } else if (day != today) {
-                    // Today is not over yet, so an incomplete today does not break the run.
                     run = 0
                 }
             }
             day = day.plusDays(1)
         }
 
-        // Current: walk back from today (or from the last scheduled day) until a due day is missed.
-        var current = 0
-        day = today
-        while (!day.isBefore(firstDay)) {
-            if (due(day)) {
-                if (completedDates.contains(day)) {
-                    current++
-                } else if (day != today) {
-                    break
-                }
-            }
-            day = day.minusDays(1)
-        }
-
-        return Streak(current = current, longest = longest)
+        return Streak(current = run, longest = longest)
     }
 }

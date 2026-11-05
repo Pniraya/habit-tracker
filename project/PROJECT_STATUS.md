@@ -10,7 +10,7 @@
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 21-23s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 21/21 验证 DAO 的 SQL 语义、CAS 更新与级联删除）
-- 最近验证测试：`PASS`（81 项，`tools/run-unit-tests.ps1`，`docs/feature-matrix`）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
+- 最近验证测试：`PASS`（83 项，`tools/run-unit-tests.ps1`，`docs/feature-matrix`）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查 + 15 个探针 0 失败；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
 - 最后核对时间：`2026-11-05`
 
@@ -19,7 +19,7 @@
 - [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：已按 `ADR-005~010` 修订
 - [x] `project/REQUIREMENTS.md`：TBD 第 1/5/6 项已关闭
 - [x] `project/decisions/ADR-001`~`ADR-014`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
-- [x] `project/FEATURE_MATRIX.md`：F-001/F-002/F-006/F-007 已 `DEVICE_VERIFIED`；F-003/F-004 `IN_PROGRESS`（编辑与归档界面未做）；F-005 `VERIFIED`（三种频率有单测，真机只建过 `DAILY`）；F-008~F-014 未开始；F-015 `VERIFIED`（无 `INTERNET` 权限与网络库，无自动化断言）；F-016~F-019 `OUT_OF_SCOPE`（`TASK-019` 校正）
+- [x] `project/FEATURE_MATRIX.md`：F-001/F-002/F-006/F-007 已 `DEVICE_VERIFIED`；F-003/F-004 `IN_PROGRESS`（编辑与归档界面未做）；F-005 `VERIFIED`（三种频率有单测，真机只建过 `DAILY`）；F-009 `DEVICE_VERIFIED`（连续 1 天已真机确认，多段与最长靠单测）；F-008、F-010~F-014 未开始；F-015 `VERIFIED`（无 `INTERNET` 权限与网络库，无自动化断言）；F-016~F-019 `OUT_OF_SCOPE`（`TASK-019` 校正）
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
 - [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（22 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`
 - [x] 构建环境：`D:\AndroidToolchain`（`sdk` + `gradle` + `env.ps1` + `verify.ps1`），JDK 17 在 `D:\javajdk17`
