@@ -7,7 +7,7 @@
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
 - 当前任务：`TASK-019`（`PARTIAL`，功能矩阵校正，待独立评审）；`TASK-012`~`TASK-018` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
 - 当前 Git 分支：`docs/feature-matrix`（本地，无远程）；`main` @ `9ebb646`；已合并分支 `fix/error-text` 保留未删
-- 最近 commit：`1eb9fed docs: reconcile the feature matrix with the shipped features`；基线检查点 `d0f470a`
+- 最近 commit：以 `git log -1 --oneline` 为准（本文件提交时即最新）；基线检查点 `d0f470a`
 - **会话状态：进行中**（`TASK-019` 已实现，评审第 1 轮 `REJECT` 的 5 项文档不一致已修，等待第 2 轮）
 
 ## Completed This Session
