@@ -5,8 +5,8 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：无（`TASK-013` 已 `DONE`，第 1 轮独立评审 `APPROVE` 于 `cf9dad0`，合入 `main` @ `b3810c5`）；`TASK-012` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main`（本地，无远程）@ `b3810c5`；已合并分支 `feat/*` / `fix/*` 保留未删
+- 当前任务：`TASK-014`（`PARTIAL`，领域规则上移到 UseCase，待独立评审）；`TASK-013` 已 `DONE` 合入 `main`；`TASK-012` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`feat/domain-validation`（本地，无远程）；`main` @ `421fb21`；已合并分支保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
@@ -24,7 +24,7 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (59 tests)** | 新增今日页新建入口规则测试 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (63 tests)** | `TASK-014` 新增 4 项：无单位数值被拒、带单位布尔被拒、单位 trim、fake 不再校验 |
 | 变异：`showsCreateAction` 去掉 `!state.isLoading &&` | **FAILED（1 项）** | 加载态断言变红；还原后全绿 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（43s） | 缺 `PaddingValues`/`KeyboardOptions` 导入，已补 |
 | 真机走查 | **通过** | 建 1 项 → `+` 出现 → 进新建页 → 建第 2 项 → 列表 2 行 |
@@ -39,7 +39,7 @@
 - `check-governance` 第 15/21 项不比对 `OK (N tests)` 的计数，`TASK-012` 出现过「Latest Run 57 / 末行 58」仍过检的盲区
 
 ## Next Safe Action
-1. **TASK-014（P1）**：把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase`，并在 `HabitRepository` 接口写明契约
+1. 独立评审 `TASK-014`（通过则 `DONE`、`verify-all`、合入 `main`）
 2. **TASK-015（P2）**：给 `check-governance` 增加「`OK (N tests)` 计数一致」与中文占位符检测
 3. **TASK-016（P2）**：界面细节收尾（FAB 魔数推导、`KeyboardType.Decimal`、加载态注释口径）
 4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度

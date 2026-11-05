@@ -27,18 +27,17 @@ class RoomHabitRepository(private val database: HabitDatabase) : HabitRepository
     private val scheduleWriter = HabitScheduleWriter(scheduleDao)
 
     override suspend fun createHabit(draft: NewHabit, today: LocalDate, now: Long): Long =
+        // The draft is validated and normalised by CreateHabitUseCase (see HabitRepository.createHabit);
+        // this layer only persists. The database triggers still reject an inconsistent row.
         database.withTransaction {
-            HabitRules.validateName(draft.name)
-            val target = HabitRules.normalizeTarget(draft.trackingType, draft.targetValue, draft.unit)
-
             val habitId = habitDao.insert(
                 HabitEntity(
-                    name = draft.name.trim(),
+                    name = draft.name,
                     icon = draft.icon,
                     color = draft.color,
                     trackingType = draft.trackingType,
-                    targetValue = target.targetValue,
-                    unit = target.unit,
+                    targetValue = draft.targetValue,
+                    unit = draft.unit,
                     createdAt = now,
                     updatedAt = now,
                     createdOn = today,

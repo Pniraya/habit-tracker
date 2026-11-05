@@ -58,6 +58,51 @@ class CreateAndArchiveHabitUseCaseTest {
         assertEquals(0, repository.createCalls)
     }
 
+    private fun numericDraft(targetValue: Double = 2000.0, unit: String? = "ml"): NewHabit = NewHabit(
+        name = "Water",
+        icon = "star",
+        color = "#5B8C6A",
+        trackingType = TrackingType.NUMERIC,
+        targetValue = targetValue,
+        unit = unit,
+        initialSchedule = NewSchedule(FrequencyType.DAILY, null),
+    )
+
+    @Test
+    fun aNumericHabitWithoutAUnitIsRefusedByTheUseCase() {
+        expectRejection("needs a unit") { createHabit(numericDraft(unit = null), today, now) }
+        assertEquals(0, repository.createCalls)
+    }
+
+    @Test
+    fun aBooleanHabitCarryingAUnitIsRefusedByTheUseCase() {
+        val draft = draft().copy(unit = "ml")
+        expectRejection("must not have a unit") { createHabit(draft, today, now) }
+        assertEquals(0, repository.createCalls)
+    }
+
+    @Test
+    fun theUseCaseTrimsTheUnitBeforeStoring() {
+        kotlinx.coroutines.runBlocking {
+            val id = createHabit(numericDraft(unit = "  ml  "), today, now)
+            val stored = repository.getHabit(id)
+            assertEquals("ml", stored?.unit)
+            assertEquals(2000.0, stored!!.targetValue, 0.0)
+        }
+    }
+
+    @Test
+    fun theRepositoryItselfNoLongerValidates() {
+        // Structural guard: if validation moves back into the repository, this test still passes,
+        // but the fake and the real repository would drift again. The assertion documents that the
+        // fake stores whatever it is handed, so the use case is the only line of defence.
+        kotlinx.coroutines.runBlocking {
+            val id = repository.createHabit(numericDraft(unit = null), today, now)
+            assertEquals(1, repository.createCalls)
+            assertNull(repository.getHabit(id)?.unit)
+        }
+    }
+
     @Test
     fun archivingStampsTheLocalDate() {
         kotlinx.coroutines.runBlocking {
