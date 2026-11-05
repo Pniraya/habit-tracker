@@ -1,11 +1,11 @@
 # TASK-013: 今日页的新建入口
 
-- 状态：`PARTIAL`（实现与单测完成，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE` 于 `cf9dad0`，第 1 轮）
 - 阶段：`Gate 3`
 - 优先级：`P0`
 - 依赖：`TASK-011`（Today 页）、`TASK-012`（新建页）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 有至少一个习惯之后，用户仍能新建第二个习惯；把这个入口的判断规则放进可测代码，而不是散在 Composable 里。
@@ -64,21 +64,23 @@
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（`cf9dad0`，第 1 轮）
 
 ## 12. Handoff
 - 下一步：评审 `APPROVE` 后合入 `main`；之后的首选任务是 `TASK-014`（领域规则上移到 UseCase）。
 - 遗留：数值输入对话框仍未在真机走通（`adb shell input` 在中文输入法下丢字符）。
 
 ## 13. Independent Review
-- Reviewer record：`project/reviews/REVIEW-TASK-013.md`（待创建）
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-013.md`
+- 结论：`APPROVE`（第 1 轮）
+- 变异复核：去掉 `!state.isLoading &&` 与去掉 `state.habits.isNotEmpty()` 各使同一测试变红，两侧均可证伪
+- 评审指出的非阻塞项，已登记为 `TASK-016`：加载态断言的注释把契约锁写成了用户可见现实、`88/20/56` 三个魔数无推导、`KeyboardType.Number` 不支持小数、`TASK-015` 的正则需覆盖中文「未运行」
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-013
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 5 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (59 tests)**
