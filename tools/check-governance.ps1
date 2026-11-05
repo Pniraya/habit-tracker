@@ -333,8 +333,9 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     $reviewPath = Join-Path 'project/reviews' ('REVIEW-' + $f.BaseName + '.md')
     if (-not (Test-Path $reviewPath)) { $reviewProblems += ($f.BaseName + ' has no review record'); continue }
     $reviewText = Get-Content -Raw -Path $reviewPath
-    if ($reviewText -notmatch ('- 独立性：\s*' + [regex]::Escape($tick) + 'INDEPENDENT' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not marked INDEPENDENT') }
-    if ($reviewText -notmatch ('- 结论：\s*' + [regex]::Escape($tick) + 'APPROVE' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not APPROVE') }
+    # Tolerate markdown emphasis around the value: a bolded APPROVE is still an APPROVE verdict.
+    if ($reviewText -notmatch ('- 独立性：\s*\*{0,2}\s*' + [regex]::Escape($tick) + 'INDEPENDENT' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not marked INDEPENDENT') }
+    if ($reviewText -notmatch ('- 结论：\s*\*{0,2}\s*' + [regex]::Escape($tick) + 'APPROVE' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not APPROVE') }
 }
 if ($reviewProblems.Count -eq 0) { Add-Pass 'done tasks have review evidence' 'all post-ADR-013 DONE tasks have independent APPROVE records' }
 else { Add-Fail 'done tasks have review evidence' ($reviewProblems -join '; ') }
