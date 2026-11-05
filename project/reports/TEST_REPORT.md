@@ -50,9 +50,10 @@
 | 2026-11-05 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）**（预期） | `TASK-009 has no verify-all evidence`；还原后 21/21 PASS | TASK-009 |
 | 2026-11-05 | 补登记 ADR-014 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（7s）、单测 40 项（25s）、`assembleDebug` 21s、空白 0s | TASK-009 |
 | 2026-11-05 | 合入 `main` 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s、单测 25s、构建 23s、空白 0s；`main` 上确认 | TASK-009 |
-| 2026-11-05 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言（20 项语义 + 1 项"预期与已解析 @Query 集合相等"，曾据此发现 `observeRange` 未被覆盖）；真实 SQLite，8 个触发器在场 | TASK-010 |
+| 2026-11-05 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言 + `MIN_CHECKS` 覆盖率兜底（防场景被静默删除）；真实 SQLite，8 个触发器在场 | TASK-010 |
 | 2026-11-05 | 变异：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）**（预期） | `observeActive after archive expected 1, got 2` | TASK-010 |
 | 2026-11-05 | 变异：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）**（预期） | 两条边界断言均 `got []`；还原后全绿 | TASK-010 |
+| 2026-11-05 | 破坏性验证（复审）：`fun` 改名 / 删 `observeRange` 注册 / 只删场景保留注册 | **FAILED（各 1-2 项）**（预期） | 改名仍打印 `checks/failed` 汇总并 exit 1；删注册触发集合守卫；只删场景暴露"覆盖率可静默削减"，已加 `MIN_CHECKS` 兜底 | TASK-010 |
 | 2026-11-05 | 变异：`findVersionsOn` 下界/上界的 `<=` 改 `<`、`fun` 改名、参数改名 | **FAILED（各 1 项）**（预期） | 上下闭区间各有可证伪断言；改名触发 `query is missing`；参数改名触发 `unbound parameters` | TASK-010 |
 
 ## Known Test Gaps

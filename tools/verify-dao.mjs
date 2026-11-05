@@ -243,6 +243,14 @@ ok("deleting a habit cascades to schedules, logs and reminders", () => {
   console.log("FAIL  uncaught: " + error.message);
 }
 
+// Deleting a scenario while keeping its registration would otherwise shrink coverage silently.
+// Bump this number in the same commit that adds a scenario.
+const MIN_CHECKS = 21;
+if (checks < MIN_CHECKS) {
+  failed += 1;
+  console.log("FAIL  coverage shrank: " + checks + " checks executed, at least " + MIN_CHECKS + " expected");
+}
+
 console.log("");
 console.log("triggers installed: " + triggerCount);
 console.log("checks: " + checks + ", failed: " + failed);

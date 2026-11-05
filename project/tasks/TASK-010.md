@@ -1,11 +1,11 @@
 # TASK-010: DAO 层的 SQL 运行时验证
 
-- 状态：`PARTIAL`（harness 完成并自证可证伪，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE`，合入 `main`）
 - 阶段：`Gate 2`
 - 优先级：`P0`
 - 依赖：`TASK-004`（schema v1）、`TASK-005`（Repository/DAO）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 在没有 Robolectric、没有设备的前提下，用真实 SQLite 执行 DAO 声明的 SQL，验证查询语义、CAS 更新与级联删除确实成立；把"DAO 只是写出来了"推进到"DAO 的语句行为被验证过"。
@@ -58,11 +58,11 @@
 
 ## 11. Completion Review
 - [x] 验收标准全部满足（5/5）
-- [x] 相关测试实际运行（21 项 + 5 组变异）
+- [x] 相关测试实际运行（21 项 + 7 组变异，含评审者的破坏性验证）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无产品代码、无依赖、无 schema 改动
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（第 4 轮通过，`REVIEW-TASK-010.md` @ `e01a103`）
 
 ## 12. Handoff
 - 下一步：评审后合入 `main`；随后开始 ViewModel 层（任务文件尚未创建）。
@@ -70,13 +70,16 @@
 
 ## 13. Independent Review
 - Reviewer record：`project/reviews/REVIEW-TASK-010.md`
-- 结论：`PENDING`
+- 第 1 轮：`REJECT`（`16aeb1c`）：`Known Test Gaps` 与本任务结论相反、§8 声称的改动未发生、`Latest Run` 过期、治理计数不实。
+- 第 2 轮：`REJECT`（`44ff0af`）：§10 为解释警告而写回不存在的任务编号，自身成了警告源。
+- 第 3 轮：`REJECT`（同一处文字）。
+- 第 4 轮：`APPROVE`（`e01a103`）：0 警告；破坏性验证确认守卫双向生效且失败仍打印汇总。
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-010
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 2
 - 验收：通过 5 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **VERIFY ALL PASS**（exit 0）

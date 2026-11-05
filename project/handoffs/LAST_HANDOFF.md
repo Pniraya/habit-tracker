@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 2`（数据层 + Domain/Repository/UseCase；治理系统已加固，新增单一验证入口）
-- 当前任务：`TASK-010`（`PARTIAL`，DAO SQL 运行时验证完成，待独立评审）；`TASK-009` 已 `DONE` 合入 `main`（`7c8b074`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前任务：`TASK-010`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-009` 已 `DONE` 合入 `main`（`7c8b074`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
 - 当前 Git 分支：`feat/dao-sql-verification`（本地，无远程）；`main` @ `18360bc`
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
@@ -34,7 +34,7 @@
 |---|---|---|
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 5 步：治理 6-7s（21/21）、单测 21-31s（40 项）、DAO SQL 0s（21 项）、构建 19-24s、空白 0s |
 | `pwsh -NoProfile -File tools/check-governance.ps1` | **21/21 PASS**，0 警告 | 分支与 `main` 均通过；曾拦下 TASK-010 的占位证据行 |
-| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言；变异分别变红 1 项与 2 项 |
+| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言 + 覆盖率兜底；共 7 组变异，分别变红 1-2 项 |
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (40 tests)** | 27 项既有 + 13 项 UseCase |
 | 受控负向验证：删除 `RecordHabitProgressUseCase` 归档校验 | **FAILED（1 项）** | 恢复后 40 项全绿 |
 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）** | 还原后 21/21 PASS |
