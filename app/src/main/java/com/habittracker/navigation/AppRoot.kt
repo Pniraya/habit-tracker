@@ -88,11 +88,14 @@ fun AppRoot() {
                 // next local midnight and rebuild then. A manual clock or timezone change while the
                 // screen stays on is still not covered (registered as a known gap, TASK-024).
                 LaunchedEffect(todayViewModel) {
+                    // Entering the destination can also be a date change (another tab was showing
+                    // while midnight passed), and that produces no lifecycle event.
+                    if (todayViewModel.state.value.date != java.time.LocalDate.now()) {
+                        todayViewModel.refresh()
+                    }
                     while (true) {
-                        val now = java.time.LocalDateTime.now()
-                        val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay()
                         kotlinx.coroutines.delay(
-                            java.time.Duration.between(now, nextMidnight).toMillis() + 1_000L,
+                            TodayPresenter.millisUntilNextMidnight(java.time.LocalDateTime.now()) + 1_000L,
                         )
                         todayViewModel.refresh()
                     }

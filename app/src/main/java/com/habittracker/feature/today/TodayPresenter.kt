@@ -154,6 +154,14 @@ class TodayPresenter(
         fun refreshesOn(event: String): Boolean = event == "ON_RESUME"
 
         /**
+         * Milliseconds until the next local midnight after [now]. Extracted from the composable so
+         * the arithmetic is testable: a timer that fires a day late is otherwise invisible to every
+         * test in this project (TASK-024 review, R2-MH2).
+         */
+        fun millisUntilNextMidnight(now: java.time.LocalDateTime): Long =
+            java.time.Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay()).toMillis()
+
+        /**
          * The create action is always reachable. The empty state renders its own button inside the
          * body, so the floating action only appears once there is a list to sit above; the rule lives
          * here rather than in the composable so it can be tested on the JVM.

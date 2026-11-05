@@ -1,120 +1,110 @@
-# REVIEW-TASK-024: 独立评审记录
+# REVIEW-TASK-024: 独立评审记录（第 2 轮）
 
 - 审查任务：`TASK-024`（接缝补洞：转换器、差分、翻日、往返）
-- 审查 commit：`3b5806290faddbd7962e54a4414f56c716f88802`（分支 `feat/seam-hardening`，基线 `main` @ `427e7cc0345b83425ef39b12f34a9991798eda62`）
+- 审查 commit：`f700d4ba0e2722591b360a90f3409432f934da23`（分支 `feat/seam-hardening`，基线 `main` @ `427e7cc0345b83425ef39b12f34a9991798eda62`；第 1 轮审查的是 `3b5806290faddbd7962e54a4414f56c716f88802`）
 - Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现；只读核对 + 自造变异）
 - 独立性：`INDEPENDENT`
 - 日期：`2026-11-05`
 
-评审开始与结束时 `git status --short` 均为空；10 组变异逐组 `git checkout -- <path>` 还原，每组还原后当场复查工作区为空，结束时 `git status --short` 为空。所有门禁与变异**串行**执行，未与任何 Gradle 任务并发。
+评审开始 `git status --short` 为空。9 组变异串行执行，逐组 `git checkout -- <path>` 还原并当场复查工作区；结束时工作区只剩本评审文件。门禁与变异**串行**，未与任何 Gradle 任务并发。
 
 ## 1. Scope
 
-- [x] 改动与任务 Scope 一致（存储格式测试、差分测试、翻日、数值往返）。
-- [x] 无新依赖、无权限、无 Gradle module、无后台服务、无 schema/迁移改动（`git diff --stat` 12 文件，只有 `app/**` 与 `project/**`）。
-- [ ] **§5 Expected Files 与实际改动不符**：实际改了 `navigation/AppRoot.kt`（`TASK-024.md:5` 的 Expected Files 没列它），而列出的 `TodayScreen.kt` 一个字都没改。功能上 AppRoot 的接线是必要的，但任务记录的文件范围与 diff 不一致（`REVIEW_CHECKLIST` §1 要求「每个改动文件都能对应到 TASK」）。
+- [x] 第 2 轮改动（`3b58062..f700d4b`，14 文件）与第 1 轮 6 条阻断逐条对应：接线规则、午夜定时器、差分重写与降级、文档同步、任务文件矛盾、外部答复文件。
+- [x] `tools/verify-dao.mjs` 的夹具时间改为 `08:00:00` 属于同一接缝（存储格式）的修复，未越界。
+- [x] 新建 `project/tasks/TASK-025.md` 是为了消除 `TASK-024` §12 造成的悬空引用（治理唯一 warning），本身不产生代码改动，可接受。
+- [x] 无新依赖、无权限、无 Gradle module、无 schema/迁移改动；`refresh()` 加 `runCatching` 与 `record()` 对齐。
+- [ ] `TASK-024.md` §10 与本轮新增测试不一致（见 §4）：新增的 `leapDaysSurviveTheRoundTrip` 改变了 M1 的红数，但证据表没重测。
 
 ## 2. Diff 核对
 
-- [x] `git diff --check` 无空白错误；无冲突标记（`verify-all` 第 5 步 `no whitespace errors`）。
-- [x] 没有删除或绕过既有测试（101 = 90 + 11，无删除）。
-- [x] 没有把业务规则写进 DAO / Receiver。
-- [x] 生产代码改动只有 3 处：`TodayPresenter.refresh()`（4 行）、`TodayViewModel.refresh()`（1 行）、`AppRoot` 的 `ON_RESUME` 观察者（12 行）；没有顺手重构。
-- [ ] `AppRoot.kt:75` 用了 `androidx.compose.ui.platform.LocalLifecycleOwner`。实测编译告警：`w: ...AppRoot.kt:75:38 'val LocalLifecycleOwner ...' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.`（`gradlew compileDebugKotlin --rerun-tasks`，exit 0）。BOM 2024.10.01 下这是废弃 API；替换品需要新增 `lifecycle-runtime-compose` 依赖（本仓未声明，加依赖需批准）。**功能等价**（单 Activity，值相同），不阻断，但属于「新增一处废弃调用且未记录」。
+- [x] `git diff --check` 干净；无冲突标记；无删除测试（104 = 101 + 3）。
+- [x] `@Suppress("DEPRECATION")` 生效：`gradlew compileDebugKotlin --rerun-tasks` 实测 **0 warning**（第 1 轮的 `w: :75:38 …deprecated` 已消失），并有注释说明替换品需要未声明的依赖。第 1 轮该非阻断项**已关闭**。
+- [x] `TodayPresenter.refreshesOn(event: String)` 把「哪个事件触发刷新」搬出 Composable，符合 `AGENTS.md` §4 与 `TASK-013` 先例；用 `String` 而不是 `Lifecycle.Event` 保持了 presenter 无 Android 依赖，可接受。
+- [ ] 午夜定时器被**内联写在 Composable 里**（`AppRoot.kt` 的 `LaunchedEffect`：`LocalDateTime.now()` → `plusDays(1).atStartOfDay()` → `Duration…toMillis() + 1000`）。这是本轮新增的生产算术，且不可被 JVM 测试触及（见 §4 的 R2-MH2）。
 
 ## 3. 架构与数据
 
-- [x] `TodayPresenter` 仍然是纯 Kotlin：时钟是注入的 `() -> LocalDate`，没有引入 Android API；生命周期观察只存在于 `AppRoot`。
-- [x] `Converters`、schema、DAO 一行未改；DATABASE.md 4.2 的 `effective_from`/`effective_until` 双闭区间与 `StreakRules` 一致（`DATABASE.md:106-107`）。
-- [ ] **「oracle 与实现不共享判定代码」不成立**：`StreakRulesDifferentialTest.kt:36-40` 的版本覆盖谓词与 `StreakRules.kt:36-38` 逐字相同（`!day.isBefore(effectiveFrom) && (until == null || !day.isAfter(until))`），只有掩码位那一行换成了内联位移；且 oracle 的掩码数据直接取自 `ScheduleRules.ALL_DAYS_MASK`/`WEEKDAYS_MASK`（`:80,82`）。任务 §8（`TASK-024.md:42`）的「不共享判定代码」是夸大。
-- [ ] `verify-dao.mjs:197` 手写 `reminder_time = "08:00"`，而 `Converters.localTimeToString` 产出 `"08:05:00"`（`Converters.kt:48`，DATABASE.md 2 要求 ISO `HH:mm:ss`）。新增的 `ConvertersTest` 断言后者，却与工具链的 fixture 形状相反——日期那一半（`"2026-01-05"`）确实对得上，时间这一半对不上，且没人对齐。
+- [x] 无 schema 变更；`DATABASE.md` 2 的「`LocalTime` → TEXT ISO `HH:mm:ss`」现在与 `Converters`、与 `verify-dao.mjs` 夹具、与 `ConvertersTest` 四处一致——第 1 轮指出的「夹具写 `08:00`」是真实接缝缺陷，已修。
+- [x] 差分 oracle 已改为 epoch-day 区间算术 + 字面量掩码（`127`/`31`），不再复用 `ScheduleRules` 的常量，也不再逐字复制 `isAfter/isBefore` 谓词。它在**形状**上独立了。
+- [ ] 但它的**语义**仍与实现共享：`epoch >= start && epoch <= end` 与实现的闭区间是同一约定，掩码位仍是 Monday=bit0。这一点 `TASK-024` §8 已如实承认（「只抓单边漂移」「不是第二双眼睛」），本轮不再作为阻断。
+- [ ] §8 的降级句里有一处**实测已不成立**的说法：「把 `WEEKDAYS_MASK` 从 31 改成 30 时它全绿」。在 HEAD 上实测是 2 红，且差分也红——原因是字面量 `31` 与常量 `30` 触发 `ScheduleRules.isScheduledOn` 的 `require(mask == weekdayMask)`，属于一致性守卫抛异常，**不是** oracle 的判别力（见 §4 R2-ME）。
 
 ## 4. 验证证据
 
-### 4.1 门禁（`pwsh -NoProfile -File tools/verify-all.ps1`，串行执行）
+### 4.1 门禁（`pwsh -NoProfile -File tools/verify-all.ps1`，串行）
 
 | 步骤 | 实测 | 退出码 |
 |---|---|---|
-| `check-governance.ps1` | `SUMMARY: 22 checks, 21 passed, 1 warnings, 0 failed`；`RESULT: OK` | 0 |
-| `run-unit-tests.ps1` | `OK (101 tests)` | 0 |
+| `check-governance.ps1` | `SUMMARY: 22 checks, 22 passed, 0 warnings, 0 failed` | 0 |
+| `run-unit-tests.ps1` | `OK (104 tests)` | 0 |
 | `verify-dao.mjs` | `checks: 27, failed: 0` | 0 |
-| `assembleDebug` | `BUILD SUCCESSFUL in 19s` | 0 |
+| `assembleDebug` | `BUILD SUCCESSFUL in 18s` | 0 |
 | `git diff --check` | `no whitespace errors` | 0 |
 | 合计 | `RESULT: VERIFY ALL PASS` | **0** |
 
-计数结论：**101 单测 ✔、DAO 27 ✔、门禁 exit 0 ✔**；**「治理 22/22、0 警告」✘**——实测 21 passed + 1 warning：
+作者声明的三个数字全部复现：**104 单测、27 DAO、治理 22/22 · 0 警告、exit 0**。第 1 轮的治理 warning（悬空 `TASK-025`）已随 `TASK-025.md` 的创建消失。
 
-```
-[WARN] task/adr references  unwritten or misspelled: project/tasks/TASK-024.md -> TASK-025
-```
+### 4.2 第 1 轮变异在 HEAD 复跑
 
-该 warning 正是本任务 §12（`TASK-024.md:67`）提前引用尚不存在的 `TASK-025` 造成的；`TEST_REPORT.md:9` 却写「0 警告」。
+| # | 变异 | 位置 | 红 | 结论 |
+|---|---|---|---|---|
+| R2-M2 | `refresh()` 空实现 | TodayPresenter | 1 | `crossingMidnightShowsTheNewDay`，与作者声明一致 |
+| R2-M3 | `>=` → `>` | LogStatusRules:31 | 11 | 与声明一致 |
+| R2-M4 | `else if (day != today)` → `else` | StreakRules:54 | 5 | 含差分，与声明一致 |
 
-### 4.2 作者声称的 4 组变异：复现结果
+### 4.3 本轮新造变异（全部在 HEAD 实测）
 
-| 声明 | 实测 | 判定 |
-|---|---|---|
-| M1 日期格式 `yyyy-M-d` → 2 红 | 2 红：`ConvertersTest.localDateIsStoredAsIsoText`、`ConvertersTest.aStoredDateParsesBackToTheSameDay` | 数字对，**归因错**：`TASK-024.md:55` 写「转换器与往返用例变红」，但 `LogStatusRoundTripTest` 根本不经过转换器，两条红都在同一个文件里 |
-| M2 `refresh()` 空实现 → 1 红 | 1 红：`TodayPresenterTest.crossingMidnightShowsTheNewDay` | ✔ |
-| M3 `>=` → `>` → 11 红 | 11 红（`LogStatusRulesTest` 3、`LogStatusRoundTripTest` 2、`TodayPresenterTest` 5、其他 1） | ✔ |
-| M4 `else if (day != today)` → `else` → 5 红（含差分） | 5 红，含 `randomisedHistoriesAgreeWithTheNaiveImplementation` | ✔ |
+| # | 变异 | 位置 | 红 | 打红的测试 | 判断 |
+|---|---|---|---|---|---|
+| R2-M1 | 日期格式改 `yyyy-M-d` | Converters:18 | **3**（作者仍写 2） | `localDateIsStoredAsIsoText`、`aStoredDateParsesBackToTheSameDay`、**`leapDaysSurviveTheRoundTrip`** | 证据表过期：新增闰日测试也抓到这个变异 |
+| R2-ME | `WEEKDAYS_MASK` 31→30 | ScheduleRules:16 | **2**（作者写「差分全绿」） | `weekdaysMaskIsMondayToFriday`、**差分**（因 `require(mask == weekdayMask)` 抛异常） | 结论方向对（oracle 无语义判别力），但引用的是第 1 轮旧测量；HEAD 行为已变 |
+| R2-MH | `refreshesOn` 的 `ON_RESUME` → `ON_CREATE` | TodayPresenter | 1 | `onlyReturningToTheForegroundRefreshes` | **第 1 轮阻断 1 已关闭**：规则现在有测试，call site 仍靠真机（作者已声明） |
+| **R2-MH2** | 午夜定时器 `plusDays(1)` → `plusDays(2)`（少睡一天也不刷） | AppRoot `LaunchedEffect` | **0** | 无，`OK (104 tests)` | **新增生产代码零覆盖**：定时器算错一天没有任何测试会红 |
+| R2-MA | `effectiveUntil` 改开区间 | StreakRules:37 | 3 | 差分 + 2 条旧测试 | 差分仍能抓单边漂移，仍非唯一 |
+| R2-MB | `bitFor` 位移旋转 | ScheduleRules:31 | 7 | 差分 + 6 | 同上 |
 
-### 4.3 自造变异（本轮，逐组还原）
-
-| # | 变异 | 文件 | 红 | 打红的测试 | 差分是否红 | 差分是否唯一防线 |
-|---|---|---|---|---|---|---|
-| M-A | `effectiveUntil` 改开区间（`!isAfter` → `isBefore`） | `StreakRules.kt:37` | 3 | 差分 + `StreakRulesTest.aScheduleChange…` + `TodayPresenterTest.everyScheduleVersionFeeds…` | 是 | 否 |
-| M-B | `bitFor` 位移旋转（`value % 7`） | `ScheduleRules.kt:31` | 7 | 差分 + `ScheduleRulesTest` 2 + `StreakRulesTest` 3 + `CreateHabitPresenterTest` | 是 | 否 |
-| M-C | today 规则去掉 | `StreakRules.kt:54` | 5 | 差分 + `StreakRulesTest` 2 + `LogStatusRoundTrip` + `TodayPresenterTest` | 是 | 否 |
-| M-D | `firstDay` `minOf` → `maxOf` | `StreakRules.kt:32` | 3 | 差分 + 上述两条旧测试 | 是 | 否 |
-| **M-E** | `WEEKDAYS_MASK` 31 → 30 | `ScheduleRules.kt:16` | **1** | 只有 `ScheduleRulesTest.weekdaysMaskIsMondayToFriday` | **否（全绿）** | — |
-| M-G | 时间格式 `HH:mm:ss` → `HH:mm` | `Converters.kt:48` | 1 | 只有 `ConvertersTest.localTimeIsStoredWithSeconds` | — | 新增测试是唯一防线（这一条有价值） |
-| **M-H** | `ON_RESUME` → `ON_CREATE`（即接线失效） | `AppRoot.kt:78` | **0** | 无：`OK (101 tests)` 全绿 | — | **接线零覆盖** |
-
-结论：
-1. 差分测试**能失败**（M-A/M-B/M-C/M-D 都红），但**在这 10 组变异里没有一次是唯一红的那条**——每条它抓到的缺陷，旧测试也抓到了。它目前的边际判别力是 0，代价是 3000 组随机历史。
-2. 差分测试**看不见掩码常量**：M-E 改坏 `WEEKDAYS_MASK` 后它全绿。因为 oracle 直接拿 `ScheduleRules.WEEKDAYS_MASK` 当输入数据，实现和 oracle 一起错。这与 DATABASE.md 的 CHECK（`WEEKDAYS` 必须 31，`DATABASE.md:124`）是同一事实的三处副本，而唯一能抓的是那条老的单点测试。
-3. **M-H 是最严重的一条**：把 `ON_RESUME` 换成 `ON_CREATE`（等于`回到前台不再刷新`），101 项全绿。本任务要补的「UI↔presenter 接缝」恰恰是唯一没有测试的地方，`crossingMidnightShowsTheNewDay` 只测了 presenter 的一个方法。
+小结：第 1 轮 6 条阻断中 5 条实质关闭，但**新增了一条同类问题**（午夜定时器零覆盖），且**证据表没有在改完之后重测**（M1 与 ME 两处数字已过期）。
 
 ## 5. 文档与分支
 
-- [x] 分支策略：`PARTIAL` 任务留在 `feat/seam-hardening`，没有进 `main`；
-- [x] `README.md:12/15` 与 `PROJECT_STATUS.md:8/13` 的 `TASK-024 PARTIAL` / 101 项一致；`TASK-024` 自动摘要 `OK (101 tests)` 与实测一致。
-- [ ] **`LAST_HANDOFF.md` 只改了一行，其余全是旧事实**（直接阻碍下一会话恢复）：
-  - `:9` 当前分支写 `feat/today-queries（TASK-022 修复中）`、`main @ bfb3150` —— 实际是 `feat/seam-hardening`、`main @ 427e7cc`；
-  - `:10` 最近 commit 写 `b73e03b` —— 实际 HEAD `3b58062`；
-  - `:11` 会话状态写「下一条从 `TASK-022` 开始」—— `TASK-022` 早已 `APPROVE` 并入 `main`，与同一文件 `:8` 自相矛盾；
-  - `:29` 验证表仍写 `OK (91 tests)` —— 本任务产出 101 项，交接里查不到；
-  - `:56` Next Safe Action 仍要求「`TASK-022` 按第 1 轮阻断修复后复评」。
-  治理检查的 `handoff snapshot filled` 只校验字段非空，抓不到这种「字段在、值是旧的」。
-- [ ] **`TEST_REPORT.md` 头部未同步**：`:7` 仍是 `分支 / commit：feat/today-queries（TASK-022，基线 main @ bfb3150）`，而 `:83` 新增的却是 `TASK-024` 在 `feat/seam-hardening` 上的运行；`:9` 的「0 警告」与实测 1 warning 冲突。
-- [ ] **`TASK-024.md` 内部自相矛盾**：§6 五条验收（`:31-35`）全部 `[ ]` 未勾，§11（`:62`）却写 `[x] 验收标准满足（5/5）`，自动摘要（`:79`）写「通过 0 项 / 未通过 5 项」。机器可读的结论与人写的结论相反。
-- [ ] **`TASK-024.md:14`/`:46` 引用的 `project/reports/EXTERNAL_REVIEW_ANSWERS.md` 在仓库里不存在**（`project/reports/` 只有 `BASELINE_REVIEW`、`RELEASE_REPORT`、`DEVICE_DUMP-2026-11-05`、`EXTERNAL_REVIEW_BRIEF`、`TEST_REPORT`）。整个任务的外部依据不可核对——这正是 `LAST_HANDOFF.md:52` 自己总结过的「声称必须可核对」。
-- [ ] `TASK-024.md:48` 的「差分测试首次运行即通过」是不可核对的自我报告（无日志、无历史提交），只能记为 `UNKNOWN`。
+- [x] `README.md:15`、`PROJECT_STATUS.md:13`、`TEST_REPORT.md:9`（Latest Run）与 `TEST_REPORT` 最后一行、`TASK-024` 自动摘要：**104 项**一致；DAO 27/27 一致；治理 22 项一致。
+- [x] `TEST_REPORT.md:7` 头部已改为 `feat/seam-hardening`（`TASK-024`，基线 `main` @ `427e7cc`）。
+- [x] `TASK-024` §5 已列 `AppRoot.kt`、去掉未改动的 `TodayScreen.kt`；§6 五条全部 `[x]`，与 §11「5/5」、自动摘要「通过 5 项 / 未通过 0 项」一致；§10 M1 归因已改为「两条都在 `ConvertersTest`」（现应为三条）。
+- [x] `project/reports/EXTERNAL_REVIEW_ANSWERS.md` 现在存在（209 行），`TASK-024` §2/§9 的引用可解析。
+- [ ] **`LAST_HANDOFF.md` 描述的是提交前的状态**：`:10` 最近 commit 写 `3b58062` 且「`TASK-024` 的修复尚未提交」——在被审的 `f700d4b` 上修复**已经提交**；`:31` 指向「下方『已知警告』」——该小节不存在，且写的「21 passed / 1 warning」是 `TASK-025` 创建之前的旧值（HEAD 实测 22/0）；`:56` Next Safe Action 仍是「按 6 条阻断修复」，实际应等第 2 轮评审。按它恢复会去找未提交改动和一个不存在的小节。
+- [ ] **`project/reports/EXTERNAL_REVIEW_ANSWERS.md` 无出处**：没有作者/模型/日期/会话标识，只有页首「依据：仅 `EXTERNAL_REVIEW_BRIEF.md`」。它在「被指为悬空引用」的同一轮由实现者加入，而实现者与代码是同一个模型。内容本身具体、且对本项目不客气（不是自我辩护），但作为证据它只能证明「仓库里有这样一份文档」，不能证明「一个独立外部模型说过这些」。
+- [ ] `TASK-024` §10 M4 行的措辞「差分测试能独立判错，不是摆设」与 §8 的新结论（「从未是唯一红线」「不是第二双眼睛」）自相矛盾，应统一。
 
 ## 6. 结论
 
 - 结论：`REJECT`
-- 证据：门禁 `VERIFY ALL PASS` 且 `OK (101 tests)` / `checks: 27`（exit 0）；4 组声明变异中 M2/M3/M4 复现一致、M1 数字对但归因错；7 组自造变异中 M-E（掩码常量）与 M-H（ON_RESUME 接线）暴露真实盲区；文档三处未同步、一处悬空引用、一处自相矛盾。
+- 证据：门禁 `RESULT: VERIFY ALL PASS`（exit 0，`22/22 · 0 warnings`、`OK (104 tests)`、`checks: 27`）；第 1 轮 6 条阻断中 5 条已实质关闭；但 HEAD 上仍有 2 处验证证据是旧测量、1 处新增生产代码零覆盖、1 处新增覆盖声明超出实际、交接文件停留在提交前状态、外部答复文件无出处。
 - 需修复项（按严重度编号）：
 
-1. **新增的 `ON_RESUME` 接线零测试覆盖（M-H：改成 `ON_CREATE` 后 101 项全绿）**。`TASK-024` §6 第 3 条「有测试」只对 `TodayPresenter.refresh()` 成立，对真正让翻日生效的那一段（`AppRoot.kt:76-82`）不成立；本任务要补的正是这种接缝。最小修法（与 `TASK-013` 的先例一致）：把「哪个 lifecycle 事件该触发刷新」抽成纯函数（如 `TodayRefresh.shouldRebuild(event)`）并在 JVM 单测里断言 `ON_RESUME→true`、`ON_CREATE/ON_START→false`、以及 `AppRoot` 确实调用它；做不到就在 §11 与 `TEST_REPORT` 的 Known Gaps 里明确写「UI 接线未覆盖」，不要把「有测试」写成已满足。
+1. **新增的午夜定时器零测试覆盖**：把 `AppRoot` 的 `LaunchedEffect` 里 `plusDays(1)` 改成 `plusDays(2)`（定时器晚一天）后 **104 项全绿**（R2-MH2）。这是本轮新加的生产算术，与第 1 轮阻断 1 同类。最小修法：把 `millisUntilNextMidnight(now: LocalDateTime): Long`（或等价纯函数）抽到 `TodayPresenter`/独立 object，断言 23:59:59 → 约 1_001ms、00:00:00 → 约 86_401_000ms、闰日与年末仍指向次日 00:00；Composable 只保留 `delay` + `refresh()`。若判定无法抽，就在 §8 与 `TEST_REPORT` 的 Known Gaps 明确写「定时器算术未覆盖」，不要把 §6 第 3 条写成已由测试覆盖。
 
-2. **翻日只覆盖「后台→前台」，前台跨午夜仍然显示昨天**。`AppRoot.kt:72-74` 的注释与 `TodayPresenter.refresh()` 的 KDoc（`TodayPresenter.kt:75-79`）都声称修好了「app left open across midnight」，但代码只在 `ON_RESUME` 触发：用户在前台看着今日页跨 00:00、或停在别的 tab 跨 00:00 再切回来、或手动改时间/时区（`ACTION_TIMEZONE_CHANGED`/`TIME_SET` 都不会产生 `ON_RESUME`），都仍是旧日期。最小修法：在今日页加一个「睡到下一个本地午夜再 `refresh()`」的 `LaunchedEffect`（`delay` 到次日 00:00:01），保留 `ON_RESUME` 作为兜底；或者把注释/KDoc 改成「后台返回时刷新」，并在 Known Gaps 登记前台跨午夜与时区变更未覆盖。
+2. **验证证据没有在 HEAD 重测**：①M1 现在是 3 红（`leapDaysSurviveTheRoundTrip` 也抓到 `yyyy-M-d`），`TASK-024` §10 仍写「FAILED（2 项）」、`TEST_REPORT` 行仍写「4 组变异各 2/1/11/5 红」；②§8 写「`WEEKDAYS_MASK` 31→30 时差分全绿」，HEAD 实测是 2 红且差分因 `require(mask == weekdayMask)` 抛异常而红。要求：按 `f700d4b` 重跑并更新 §8/§10 与 `TEST_REPORT`，并把「差分被一致性守卫带红」与「差分独立判错」分开表述，否则 §8 的诚实降级本身变成了不准确的证据。
 
-3. **`LAST_HANDOFF.md` 未同步**（`:9` 分支/main、`:10` 最近 commit、`:11` 会话状态、`:29` `OK (91 tests)`、`:56` Next Safe Action 全部停留在 `TASK-022`）。按 `AGENTS.md` §6/§10 重写 Snapshot、Verification、Next Safe Action，使 101 项、`feat/seam-hardening` @ `3b58062`、`TASK-024` 待评审成为可直接恢复的状态。
+3. **前台跨 0 点仍有一个洞，§8 的覆盖声明比代码宽**：`LaunchedEffect` 只在今日页处于组合中时运行，且进入时**不先刷新**。用户在「统计/我的」占位页跨过 0 点再切回今日页（同一 Activity，不触发任何 lifecycle 事件），看到的仍是昨天，直到下一次午夜或下一次 `ON_RESUME`。§8 写「前台跨 0 点」已覆盖，实际只覆盖「一直停在今日页」。最小修法：effect 开头先 `refresh()`（或 `if (state.date != LocalDate.now()) refresh()`），一行；并在 §8 把「从别的页面切回今日页」写清已覆盖/未覆盖。
 
-4. **`TEST_REPORT.md` 头部与警告数不实**：`:7` 的分支/commit 仍是 `feat/today-queries / TASK-022 / bfb3150`（本轮运行在 `feat/seam-hardening` @ `3b58062`）；`:9` 的「0 警告」应改为实测的「22 项检查、21 passed、1 warning」，并说明该 warning 是 `TASK-024` 引用尚未创建的 `TASK-025`（要么创建 `TASK-025`，要么把 §12 改成不产生悬空引用的写法）。
+4. **`LAST_HANDOFF.md` 仍是提交前快照**：`:10` 的 `3b58062` 与「修复尚未提交」、`:31` 指向不存在的「已知警告」小节且写 21 passed / 1 warning、`:56` 的 Next Safe Action 仍要求修 6 条阻断。按 `f700d4b` 重写这三处（commit、治理 22/0、下一步=等第 2 轮评审结果）。
 
-5. **`TASK-024.md` 记录自相矛盾且含错误归因**：①§6 五条验收 `[ ]` 与 §11 `[x] 5/5`、自动摘要「通过 0 项 / 未通过 5 项」三者取一，按真实状态同步；②§5 Expected Files 漏 `navigation/AppRoot.kt`、多列未改动的 `TodayScreen.kt`；③`:55` 的 M1 归因改为「两条都在 `ConvertersTest`（`localDateIsStoredAsIsoText`、`aStoredDateParsesBackToTheSameDay`），`LogStatusRoundTripTest` 不经过转换器」；④`:14`/`:46` 引用的 `EXTERNAL_REVIEW_ANSWERS.md` 不存在，改为真实存在的 `EXTERNAL_REVIEW_BRIEF.md` 或注明「答复仅在会话中、不入库」；⑤`:48` 的「首次运行即通过」无法核对，要么附日志，要么写「无独立记录」。
+5. **`EXTERNAL_REVIEW_ANSWERS.md` 缺出处**：加一行来源（谁/哪个模型、何时、原样粘贴还是事后整理、是否经第三方核实），或明确标注「由开发者整理/自答，非独立外部意见」。否则第 1 轮「引用不存在的文件」只是换成了「引用不可核对的文件」，而这份文档正是 `TASK-024` 的立项依据。
 
-6. **差分测试的独立性被夸大，且已实测出盲区**：oracle 的版本覆盖谓词与 `StreakRules` 逐字相同（`StreakRulesDifferentialTest.kt:36-40` vs `StreakRules.kt:36-38`），掩码直接复用 `ScheduleRules` 的常量（`:80,82`）；因此它只对「实现单边漂移」有判别力，对「实现与 oracle 共同误读规格」无判别力——而后者正是引入 oracle 的理由。实测 `WEEKDAYS_MASK` 31→30 时差分全绿（M-E），且 10 组变异中它从未是唯一红的那条。最小修法：①掩码用字面量（`127`/`31`/`random 1..127`）而非常量，让「常量被改」这一侧至少有一处独立副本；②把版本覆盖谓词按 DATABASE.md 4.2 的文字重写成不同形状（例如先算 `[from, until]` 的闭区间再 `contains`，或把 `until == null` 展开成两个显式分支），避免逐字复制；③在 §8 把「不共享判定代码」降级为「遍历与读数逻辑独立，版本覆盖谓词与掩码常量仍共享」，并把「M-E / M-H 打不中」写进 Risks。若不做 ①②，则本任务不能声称拿到了「第一个独立 oracle」。
+### 6.1 第 1 轮阻断的关闭情况（供下一轮核对）
 
-### 6.1 非阻断建议（本轮已实测或已定位）
+| 第 1 轮阻断 | 状态 | 证据 |
+|---|---|---|
+| 1. `ON_RESUME` 接线零覆盖 | **关闭**（call site 仍靠真机，已声明） | R2-MH 1 红；`onlyReturningToTheForegroundRefreshes` |
+| 2. 翻日只覆盖后台→前台 | **部分关闭**：加了定时器，但见本轮阻断 1/3 | `AppRoot` `LaunchedEffect`；R2-MH2 0 红 |
+| 3. `LAST_HANDOFF` 未同步 | 未关闭（换了新的过期点） | 见本轮阻断 4 |
+| 4. `TEST_REPORT` 头部/警告数 | **关闭** | `:7` 已改；治理实测 22/0 |
+| 5. `TASK-024` 自相矛盾/归因/悬空引用 | **关闭** | §5/§6/§11/自动摘要一致；`EXTERNAL_REVIEW_ANSWERS.md` 已存在（出处待补） |
+| 6. 差分独立性被夸大 | **关闭**（已降级；但降级句需按本轮阻断 2 修正） | §8 新表述 |
 
-- `TodayPresenter.refresh()`（`TodayPresenter.kt:80-82`）没有 `record()` 那样的 `runCatching`：查询抛异常时协程异常会冒到 ViewModel scope，等于新增了一条「回到前台就崩」的路径；同时它与 Flow collector 并发写 `_state`（`habits` 是无同步的普通 `var`），后完成的旧快照可以覆盖新快照。建议 `runCatching` + 失败走 `_lastError`，并考虑用 `conflate`/序号避免旧覆盖新。另外每次 `ON_RESUME` 都会做 4 次批量查询 + 全量重算，与 `LAST_HANDOFF.md:42-43` 已记的「2 万行/次」叠加。
-- `ConvertersTest.kt:24-28` 三条断言逐字相同（`"2026-01-05"` × 3），注释说「Zero padding matters」但第三条与前两条是同一个用例；真正的边界（`2024-02-29`、`9999-12-31`、`stringToLocalDate("2026-1-5")` 应拒绝、`stringToLocalTime(null)`）一个都没测。`stringToLocalTime` 的 null 分支缺断言。
-- `ConvertersTest` 只能证明「转换器与自己一致」：它没有、也无法证明 Room 真的把该列绑到这个转换器（`Converters` 是 `@TypeConverter` 且 schema 已导出，契约成立，但没有运行时证据）。它唯一钉住的外部事实是日期文本形状；时间格式反而与 `verify-dao.mjs:197` 的 `"08:00"` 相反。
-- `LogStatusRoundTripTest` 名不副实：三次 `LogStatusRules.evaluate` 全在内存里，没有经过 `RecordHabitProgressUseCase`/`RoomHabitRepository`/`Converters`，所以它抓不到「状态变了但 `completed_at` 没清」「写库后读回不一致」这类真正的往返缺陷；第三条断言（`current = 2`）成立的原因是「今天未完成不算断」，与往返无关。建议至少让序列走 `RecordHabitProgressUseCase`，或改名为 `LogStatusSequenceTest`。
-- 差分测试的输入分布比实现契约窄：版本永远连续相邻（`randomSchedules` 里 `cursor = until + 1`），因此「两个版本重叠」「版本之间有空档」永远不出现；`effectiveFrom > today` 的版本分支（`StreakRules.kt:33`）与 `versions.filter { !from.isAfter(today) }`（`StreakRulesDifferentialTest.kt:96`）都不可达；`completed` 里没有晚于 `today` 的日期。`assertEquals(true, checked > 2000)`（`:126`）弱于 `assertEquals(3000, checked)`，无法分辨 3000 与 2001。
-- `AppRoot.kt:75` 的 `androidx.compose.ui.platform.LocalLifecycleOwner` 已废弃（编译实测 `w: …:75:38 … is deprecated`）。替换需要 `lifecycle-runtime-compose` 依赖（未声明、需批准），因此本轮不阻断，但应在任务里记一句「沿用废弃 API 的理由」，否则下一轮还会被当成新发现。
+### 6.2 非阻断（已接受/仅记录）
+
+- `refresh()` 仍与 Flow collector 竞争（last-writer-wins）；`LogStatusRoundTripTest` 仍是内存内序列；差分生成器仍不产生重叠版本或未来版本。三者都已在任务文件声明，本轮**不**作为阻断，但「重叠版本」是 `schedules.any` 语义唯一可能与他人理解不同的地方，建议在 `DATABASE.md` 或 `TASK-023` 里显式写「版本区间不得重叠」，让它从「未测」变成「不变量」。
+- `refresh()` 的 `runCatching` 会吞掉 `CancellationException`（`record()` 早就是这样），属既有风格，不新增问题。
+- `refreshesOn(event: String)` 字符串化牺牲了编译期校验；换来 presenter 无 Android 依赖，可接受。真正未覆盖的是 `AppRoot` 里 `event.name` 的传参，作者已声明。

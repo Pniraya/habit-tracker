@@ -71,6 +71,19 @@ class TodayPresenterTest {
     }
 
     @Test
+    fun theMidnightTimerAimsAtTheNextLocalMidnight() {
+        fun at(text: String) = java.time.LocalDateTime.parse(text)
+
+        // One second before midnight: one second, not a day.
+        assertEquals(1_000L, TodayPresenter.millisUntilNextMidnight(at("2026-11-05T23:59:59")))
+        // Exactly at midnight: the whole following day.
+        assertEquals(86_400_000L, TodayPresenter.millisUntilNextMidnight(at("2026-11-06T00:00:00")))
+        // Leap day and year end must not be special-cased into a wrong answer.
+        assertEquals(12L * 3_600_000L, TodayPresenter.millisUntilNextMidnight(at("2028-02-28T12:00:00")))
+        assertEquals(3_600_000L, TodayPresenter.millisUntilNextMidnight(at("2026-12-31T23:00:00")))
+    }
+
+    @Test
     fun crossingMidnightShowsTheNewDay() = runBlocking {
         // No database row changes at 00:00, so nothing else would rebuild the list.
         var clock = monday
