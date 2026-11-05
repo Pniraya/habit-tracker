@@ -5,6 +5,7 @@ import com.habittracker.data.local.entity.LogStatus
 import com.habittracker.data.local.entity.TrackingType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalTime
@@ -22,13 +23,25 @@ class ConvertersTest {
 
     @Test
     fun localDateIsStoredAsIsoText() {
-        assertEquals("2026-01-05", converters.localDateToString(date("2026-01-05")))
-        assertEquals("2026-01-05", converters.localDateToString(date("2026-01-05")))
         // Zero padding matters: BETWEEN compares text, so "2026-1-5" would sort wrongly.
         assertEquals("2026-01-05", converters.localDateToString(date("2026-01-05")))
+        assertEquals("2026-10-05", converters.localDateToString(date("2026-10-05")))
         assertEquals(date("2026-12-31"), converters.stringToLocalDate("2026-12-31"))
         assertNull(converters.localDateToString(null))
         assertNull(converters.stringToLocalDate(null))
+    }
+
+    @Test
+    fun leapDaysSurviveTheRoundTrip() {
+        val leapDay = date("2028-02-29")
+        assertEquals("2028-02-29", converters.localDateToString(leapDay))
+        assertEquals(leapDay, converters.stringToLocalDate("2028-02-29"))
+    }
+
+    @Test
+    fun anUnparseableDateIsRejectedInsteadOfStored() {
+        val failure = runCatching { converters.stringToLocalDate("2026-1-5") }.exceptionOrNull()
+        assertTrue(failure is java.time.format.DateTimeParseException)
     }
 
     @Test

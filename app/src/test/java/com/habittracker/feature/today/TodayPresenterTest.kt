@@ -63,6 +63,14 @@ class TodayPresenterTest {
         }
 
     @Test
+    fun onlyReturningToTheForegroundRefreshes() {
+        assertTrue(TodayPresenter.refreshesOn("ON_RESUME"))
+        assertFalse(TodayPresenter.refreshesOn("ON_CREATE"))
+        assertFalse(TodayPresenter.refreshesOn("ON_START"))
+        assertFalse(TodayPresenter.refreshesOn("ON_PAUSE"))
+    }
+
+    @Test
     fun crossingMidnightShowsTheNewDay() = runBlocking {
         // No database row changes at 00:00, so nothing else would rebuild the list.
         var clock = monday

@@ -31,6 +31,7 @@ import com.habittracker.data.repository.RoomHabitRepository
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.feature.create.CreateHabitPresenter
 import com.habittracker.feature.create.CreateHabitScreen
+import com.habittracker.feature.today.TodayPresenter
 import com.habittracker.feature.today.TodayScreen
 import com.habittracker.feature.today.TodayViewModel
 
@@ -72,13 +73,29 @@ fun AppRoot() {
                 // A rebuild is only triggered by database changes, and midnight changes nothing in
                 // the database: without this the screen would keep showing yesterday's date and
                 // yesterday's rows (TASK-024).
+                // Deprecated in this Compose BOM, but the replacement (androidx.lifecycle.compose)
+                // is not a dependency and adding one for this is not worth it (TASK-024 review).
+                @Suppress("DEPRECATION")
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
-                        if (event == Lifecycle.Event.ON_RESUME) todayViewModel.refresh()
+                        if (TodayPresenter.refreshesOn(event.name)) todayViewModel.refresh()
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
+                // Staying in the foreground across 00:00 fires no lifecycle event, so wait for the
+                // next local midnight and rebuild then. A manual clock or timezone change while the
+                // screen stays on is still not covered (registered as a known gap, TASK-024).
+                LaunchedEffect(todayViewModel) {
+                    while (true) {
+                        val now = java.time.LocalDateTime.now()
+                        val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay()
+                        kotlinx.coroutines.delay(
+                            java.time.Duration.between(now, nextMidnight).toMillis() + 1_000L,
+                        )
+                        todayViewModel.refresh()
+                    }
                 }
                 val lastError by todayViewModel.lastError.collectAsState()
                 TodayScreen(

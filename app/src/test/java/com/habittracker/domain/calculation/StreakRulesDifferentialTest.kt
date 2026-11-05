@@ -30,16 +30,24 @@ class StreakRulesDifferentialTest {
         val first = schedules.minOf { it.effectiveFrom }
         if (first.isAfter(today)) return 0 to 0
 
+        // Deliberately NOT written the way StreakRules does it: no isScheduledOn, no weekdayMask
+        // expression copied from the implementation. Days are addressed as epoch-day numbers and the
+        // schedule is consulted through interval arithmetic on plain longs.
         val due = ArrayList<LocalDate>()
-        var day = first
-        while (!day.isAfter(today)) {
-            val covering = schedules.filter { schedule ->
-                !day.isBefore(schedule.effectiveFrom) &&
-                    (schedule.effectiveUntil == null || !day.isAfter(schedule.effectiveUntil))
+        var epoch = first.toEpochDay()
+        val lastEpoch = today.toEpochDay()
+        while (epoch <= lastEpoch) {
+            val date = LocalDate.ofEpochDay(epoch)
+            val weekdayIndex = date.dayOfWeek.value - 1
+            // Literal masks rather than ScheduleRules.ALL_DAYS_MASK / WEEKDAYS_MASK: reusing those
+            // constants is exactly how a wrong constant can slip past both sides (review ME).
+            val matches = schedules.any { schedule ->
+                val start = schedule.effectiveFrom.toEpochDay()
+                val end = schedule.effectiveUntil?.toEpochDay() ?: Long.MAX_VALUE
+                epoch >= start && epoch <= end && (schedule.weekdayMask.toLong() shr weekdayIndex) % 2L == 1L
             }
-            val bit = 1 shl (day.dayOfWeek.value - 1)
-            if (covering.any { (it.weekdayMask and bit) != 0 }) due.add(day)
-            day = day.plusDays(1)
+            if (matches) due.add(date)
+            epoch += 1
         }
 
         var longest = 0
@@ -71,12 +79,16 @@ class StreakRulesDifferentialTest {
         repeat(versionCount) { index ->
             val frequency = FrequencyType.values()[random.nextInt(FrequencyType.values().size)]
             val mask = when (frequency) {
-                FrequencyType.DAILY -> ScheduleRules.ALL_DAYS_MASK
-                FrequencyType.WEEKDAYS -> ScheduleRules.WEEKDAYS_MASK
+                // Literal values on purpose: if a constant changes, this side must notice.
+                FrequencyType.DAILY -> 127
+                FrequencyType.WEEKDAYS -> 31
                 FrequencyType.CUSTOM -> random.nextInt(1, 128)
             }
             val last = index == versionCount - 1
             val until = if (last && random.nextBoolean()) null else cursor.plusDays(random.nextLong(0, 40))
+            // A gap before the next version (the store must keep working across a gap) is half the
+            // time; a future start date is not allowed, because a habit's version history starts
+            // when the habit exists.
             versions.add(
                 HabitSchedule(
                     id = index.toLong() + 1,
@@ -87,7 +99,8 @@ class StreakRulesDifferentialTest {
                     effectiveUntil = until,
                 ),
             )
-            cursor = until?.plusDays(1) ?: today.plusDays(1)
+            val gap = if (random.nextBoolean()) random.nextLong(1, 20) else 1
+            cursor = (until ?: today).plusDays(gap)
         }
         return versions.filter { !it.effectiveFrom.isAfter(today) }
     }
@@ -126,6 +139,6 @@ class StreakRulesDifferentialTest {
             )
             checked += 1
         }
-        assertEquals(true, checked > 2000)
+        assertEquals(3000, checked)
     }
 }

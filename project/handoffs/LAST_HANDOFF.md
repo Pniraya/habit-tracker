@@ -6,9 +6,9 @@
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
 - 当前任务：`TASK-024`（`PARTIAL`，接缝补洞，待独立评审）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
-- 当前 Git 分支：`feat/today-queries`（`TASK-022` 修复中）；`main`（本地，无远程）@ `bfb3150`；`feat/streak` 已合并、保留未删（另有 14 个历史分支同样保留）
-- 最近 commit：`b73e03b perf(today): load the list in four queries`（`TASK-022` 实现，评审后修复尚未提交）
-- **会话状态：可继续**——`TASK-021` 已闭环（独立评审第 2 轮 `APPROVE`），下一条从 `TASK-022` 开始
+- 当前 Git 分支：`feat/seam-hardening`（`TASK-024` 第 1 轮 `REJECT` 后修复中，旧 HEAD `3b58062`）；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
+- 最近 commit：`3b58062 test(seams): converters, differential oracle and midnight rollover`；`TASK-024` 的修复尚未提交
+- **会话状态：可继续**——`TASK-022` 已 `DONE` 合入 `main`；`TASK-024` 第 1 轮 `REJECT`，正在修 6 条阻断（接线零覆盖、翻日范围过度声称、差分独立性、文档不同步、引用不存在文件、任务自相矛盾）
 
 ## Completed This Session
 - `TASK-021`（F-009 当前/最长连续天数）：`StreakRules` 纯函数一次正向遍历同时给出当前与最长；`GetStreakUseCase` 取全部计划版本 + 区间内 `COMPLETED` 日志；`TodayPresenter.streakText` 决定文案（`0/0` 不显示、`0/7` 显示「最长 7 天」、`3/7` 显示「连续 3 天 · 最长 7 天」）
@@ -26,9 +26,9 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (91 tests)** | `TASK-021` +13 项；`TASK-022` +5 项（两个查询计数、每习惯归属含 `isCompleted`、3 项 `fromLoaded` 行为） |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (104 tests)** | `TASK-021` +13；`TASK-022` +5；`TASK-024` +13（转换器 7、差分 1、往返 3、翻日 1、接线规则 1） |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | `TASK-021` 合入时一次（`f959f02`）、`TASK-022` 实现时一次（`b73e03b`）；治理 22/22、DAO 27、构建 ~21-27s、`diff --check` 干净 |
-| `pwsh -NoProfile -File tools/check-governance.ps1` | **22 / 22 passed，0 警告** | 收尾时先红过一次：`TASK-022` 的 `NOT_STARTED` 与 §9 日期行冲突、README/STATUS 无当前任务 id，已修 |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | 见下方「已知警告」 | `TASK-024` 评审实测 **21 passed / 1 warning**：`TASK-024` §12 引用未创建的 `TASK-025`。已补建 `TASK-025` |
 | 变异 M1 `due()` 恒真 | **FAILED（2 项）** | `aDayThatWasNeverDue…`、`aScheduleChange…` |
 | 变异 M2 去「今天不算断」 | **FAILED（2 项）** | 首次跑未生效（正则未匹配），已重跑并如实记录 |
 | 变异 M3 presenter 写 0 | **FAILED（1 项）** | 行内连续断言 |
@@ -53,7 +53,7 @@
 - **子进程变异可能留下脏工作区**：评审死亡时留下 `from = today`，直接提交会合入缺陷。恢复后必须复跑测试确认。
 
 ## Next Safe Action
-1. **`TASK-022`**：按第 1 轮评审的三条阻断修复后复评（阻断：接口默认实现使 Room 漏 override 可静默上线、缺每习惯归属用例、文档计数不同步）
+1. **`TASK-024`**：按第 1 轮评审的 6 条阻断修复后复评（接线零覆盖、翻日范围过度声称、差分独立性不足、`LAST_HANDOFF`/`TEST_REPORT` 未同步、引用不存在的 `EXTERNAL_REVIEW_ANSWERS.md`、任务文件自相矛盾）
 2. 之后功能顺序：`F-010`/`F-011` 统计页与热力图 → `F-012`/`F-013` 提醒 → `F-014` 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
 3. 遗留重构（未立任务）：`CreateHabitPresenter` 构造参数为函数类型，评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」
-4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿，再读 `TASK-022`。
+4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿，再读 `TASK-024`；其后的候选是 `TASK-025`（真机 instrumented 测试 spike）与 `TASK-023`（统计页）。

@@ -78,7 +78,11 @@ class TodayPresenter(
      * changes in the database at 00:00, so no Flow emission arrives to trigger a rebuild.
      */
     fun refresh() {
-        scope.launch { _state.value = snapshot(habits) }
+        scope.launch {
+            runCatching { snapshot(habits) }
+                .onSuccess { _state.value = it }
+                .onFailure { _lastError.value = it.message ?: "无法刷新" }
+        }
     }
 
     /**
@@ -141,6 +145,13 @@ class TodayPresenter(
 
     companion object {
         const val NUMERIC_NEEDS_INPUT: String = "数值习惯需要输入数值，暂不支持一键完成"
+
+        /**
+         * Which lifecycle event rebuilds the list. The decision lives here, not in the composable,
+         * so it can be tested on the JVM: the wiring in AppRoot can otherwise be broken without a
+         * single test noticing (TASK-024 review, M-H).
+         */
+        fun refreshesOn(event: String): Boolean = event == "ON_RESUME"
 
         /**
          * The create action is always reachable. The empty state renders its own button inside the
