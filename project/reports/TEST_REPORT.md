@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`main` @ `f5d4dad`（`TASK-011` 合并提交；分支 `feat/today-presenter` 已合入）
+- 分支 / commit：`feat/create-habit`（`TASK-012`，基线 `main` @ `cc4fba5`）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 21 项检查、0 警告 + 单测 49 项 + DAO SQL 21 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 21 项检查、0 警告 + 单测 57 项 + DAO SQL 21 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -54,6 +54,8 @@
 | 2026-11-05 | 变异：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）**（预期） | `observeActive after archive expected 1, got 2` | TASK-010 |
 | 2026-11-05 | 变异：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）**（预期） | 两条边界断言均 `got []`；还原后全绿 | TASK-010 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（Today presenter） | **OK (47 tests)** | 新增 `TodayPresenterTest` 7 项 | TASK-011 |
+| 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新建习惯） | **OK (57 tests)** | 新增 `CreateHabitPresenterTest` 8 项 | TASK-012 |
+| 2026-11-05 | 变异：`isBlank()` → `isEmpty()` | **FAILED（1 项）**（预期） | 空名测试变红；还原后 57 项全绿 | TASK-012 |
 | 2026-11-05 | 变异（复审）：`toggle` 永远写 1.0 / `describe` 忽略 schedule / 绕过 use case 直写 | **FAILED（前两项）/ 未被抓住（第三项）** | 第三项证明"负值拒绝"测试无法鉴别是否走了 use case | TASK-011 |
 | 2026-11-05 | 复审修复后 `tools/run-unit-tests.ps1` | **OK (49 tests)** | 新增"数值习惯点击不写入"与"休息日写入被 use case 拒绝"；后者只在走 use case 时成立 | TASK-011 |
 | 2026-11-05 | `gradlew.bat assembleDebug`（Today 接线） | **SUCCESSFUL**（28s） | 首次失败：`foundation.layout.weight` 为 internal import | TASK-011 |
@@ -63,7 +65,7 @@
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
 - **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新（`verify-dao.mjs`，21 项）。
-- **未覆盖（UI）**：Today 页的状态机有 9 项 JVM 覆盖；Compose 渲染与交互仅编译进 APK，未经 Robolectric/设备验证。
+- **未覆盖（UI）**：Today 状态机 9 项、新建表单状态机 8 项 JVM 覆盖；Compose 渲染与交互仅编译进 APK，未经 Robolectric/设备验证。
 - **未覆盖**：Room 的 Cursor/实体映射；TypeConverter 往返；`Flow` 失效通知；`withTransaction` 边界与并发写入；Room 由 `@Upsert`/`@Insert` **生成的** SQL（harness 验证的是同一冲突列上等价语句的语义与唯一索引存在，不能证明 Room 会选用该冲突列）。
 - 无真机、无模拟器：`adb devices` 为空且 `HypervisorPresent=False`，设备验证全部 `NOT_RUN`。
 - 数值型“撤销”语义、恢复默认策略仍未定（见 `project/reports/BASELINE_REVIEW.md`）。

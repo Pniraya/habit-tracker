@@ -19,6 +19,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.habittracker.feature.profile.ProfileScreen
 import com.habittracker.feature.statistics.StatisticsScreen
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import com.habittracker.data.local.HabitDatabase
+import com.habittracker.data.repository.RoomHabitRepository
+import com.habittracker.domain.usecase.CreateHabitUseCase
+import com.habittracker.feature.create.CreateHabitPresenter
+import com.habittracker.feature.create.CreateHabitScreen
 import com.habittracker.feature.today.TodayScreen
 import com.habittracker.feature.today.TodayViewModel
 
@@ -62,7 +70,32 @@ fun AppRoot() {
                     state = state,
                     lastError = lastError,
                     onToggle = todayViewModel::toggle,
+                    onRecord = todayViewModel::record,
+                    onCreate = { navController.navigate(AppRoutes.CREATE_HABIT) },
                     onDismissError = todayViewModel::dismissError,
+                )
+            }
+            composable(AppRoutes.CREATE_HABIT) {
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+                val presenter = remember {
+                    val repository = RoomHabitRepository(HabitDatabase.getInstance(context))
+                    CreateHabitPresenter(CreateHabitUseCase(repository), scope)
+                }
+                val form by presenter.form.collectAsState()
+                LaunchedEffect(form.createdHabitId) {
+                    if (form.createdHabitId != null) navController.popBackStack()
+                }
+                CreateHabitScreen(
+                    form = form,
+                    onNameChange = presenter::onNameChange,
+                    onTrackingTypeChange = presenter::onTrackingTypeChange,
+                    onTargetValueChange = presenter::onTargetValueChange,
+                    onUnitChange = presenter::onUnitChange,
+                    onFrequencyChange = presenter::onFrequencyChange,
+                    onWeekdayToggle = presenter::onWeekdayToggle,
+                    onSave = presenter::save,
+                    onCancel = { navController.popBackStack() },
                 )
             }
             composable(AppDestination.Statistics.route) { StatisticsScreen() }
