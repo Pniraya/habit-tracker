@@ -8,7 +8,6 @@ import com.habittracker.domain.model.NewSchedule
 import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.FakeHabitRepository
-import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +34,6 @@ class TodayPresenterTest {
     private fun presenter(date: LocalDate = monday): TodayPresenter = TodayPresenter(
         repository = repository,
         recordProgress = RecordHabitProgressUseCase(repository),
-        streaks = GetStreakUseCase(repository),
         scope = scope,
         today = { date },
         now = { now },
@@ -63,6 +61,54 @@ class TodayPresenterTest {
                 now,
             )
         }
+
+    @Test
+    fun everyHabitCountsItsOwnDays() = runBlocking {
+        // Two habits with different histories. If a batch read mixed the rows up, both rows would
+        // report the same streak; the reviewer showed that no test noticed that (TASK-022 U4).
+        val steady = createHabit(TrackingType.BOOLEAN, "Steady", createdOn = monday.minusDays(2))
+        val fresh = createHabit(TrackingType.BOOLEAN, "Fresh", createdOn = monday.minusDays(2))
+        listOf(monday.minusDays(2), monday.minusDays(1), monday).forEach { day ->
+            RecordHabitProgressUseCase(repository)(steady, day, 1.0, now)
+        }
+        // Fresh records only yesterday, so it is scheduled but not completed today: a wrong log
+        // attribution would also show up in isCompleted, not just in the streak.
+        RecordHabitProgressUseCase(repository)(fresh, monday.minusDays(1), 1.0, now)
+
+        val rows = presenter().state.value.habits.associateBy { it.id }
+
+        assertEquals(3, rows.getValue(steady).currentStreak)
+        assertEquals(1, rows.getValue(fresh).currentStreak)
+        assertTrue(rows.getValue(steady).isCompleted)
+        assertFalse(rows.getValue(fresh).isCompleted)
+    }
+
+    @Test
+    fun theWholeListLoadsInAConstantNumberOfQueries() = runBlocking {
+        repeat(5) { index -> createHabit(TrackingType.BOOLEAN, "Habit " + index) }
+        repository.resetReadCalls()
+
+        val state = presenter().state.value
+
+        assertEquals(5, state.habits.size)
+        // Four batch queries for five habits; the per-habit version needed twenty.
+        assertEquals(4, repository.readCalls)
+    }
+
+    @Test
+    fun aTapRefreshesTheListOnce() = runBlocking {
+        val habitId = createHabit(TrackingType.BOOLEAN, "Read")
+        repeat(4) { index -> createHabit(TrackingType.BOOLEAN, "Other " + index) }
+        val presenter = presenter()
+        repository.resetReadCalls()
+
+        presenter.toggle(habitId)
+
+        assertTrue(presenter.state.value.habits.first { it.id == habitId }.isCompleted)
+        // One read in the write path (does this date have a schedule?) plus one four-query rebuild of
+        // the whole list: five, whatever the number of habits. Rebuilding per habit would be 21.
+        assertEquals(5, repository.readCalls)
+    }
 
     @Test
     fun loadsTodaysHabitsWithTheirScheduleState() {

@@ -53,6 +53,30 @@ interface HabitRepository {
     /** Logs of one habit in a closed date range, for streaks and later for statistics. */
     suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog>
 
+    /**
+     * Batch forms of the four per-habit reads above, for the Today list.
+     *
+     * Each one answers for every id at once so a list of 20 habits costs a constant number of
+     * queries instead of 4 per habit. Keys are habit ids; a missing key means "no row", which is
+     * why the maps do not use a nullable value type.
+     *
+     * Deliberately **abstract**: a loop-shaped default here would silently restore the N+1 a
+     * future implementation forgot to override, and nothing in this project can construct the Room
+     * implementation in a JVM test, so no test could notice. A missing override must be a compile
+     * error instead (TASK-022 review, F1).
+     */
+    suspend fun activeSchedules(habitIds: List<Long>, date: LocalDate): Map<Long, HabitSchedule>
+
+    suspend fun dailyLogs(habitIds: List<Long>, date: LocalDate): Map<Long, DailyLog>
+
+    suspend fun scheduleVersionsFor(habitIds: List<Long>): Map<Long, List<HabitSchedule>>
+
+    suspend fun logsInRangeFor(
+        habitIds: List<Long>,
+        from: LocalDate,
+        to: LocalDate,
+    ): Map<Long, List<DailyLog>>
+
     /** Writes the single daily row with status and completedAt computed by the domain rule. */
     suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog
 }

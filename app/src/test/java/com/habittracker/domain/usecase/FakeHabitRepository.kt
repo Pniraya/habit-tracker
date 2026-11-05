@@ -27,6 +27,14 @@ class FakeHabitRepository : HabitRepository {
     var createCalls: Int = 0
         private set
 
+    /** Counts repository reads so a test can prove the Today list does not scale queries by habit. */
+    var readCalls: Int = 0
+        private set
+
+    fun resetReadCalls() {
+        readCalls = 0
+    }
+
     fun storedSchedule(habitId: Long): HabitSchedule? = schedules[habitId]?.lastOrNull()
 
     fun replaceSchedule(schedule: HabitSchedule) {
@@ -108,21 +116,68 @@ class FakeHabitRepository : HabitRepository {
         )
     }
 
-    override suspend fun activeSchedule(habitId: Long, date: LocalDate): HabitSchedule? =
-        schedules[habitId]?.firstOrNull { schedule ->
+    override suspend fun activeSchedule(habitId: Long, date: LocalDate): HabitSchedule? {
+        readCalls += 1
+        return schedules[habitId]?.firstOrNull { schedule ->
             !date.isBefore(schedule.effectiveFrom) &&
                 (schedule.effectiveUntil == null || !date.isAfter(schedule.effectiveUntil))
         }
+    }
 
-    override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? = logs[key(habitId, date)]
+    override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? {
+        readCalls += 1
+        return logs[key(habitId, date)]
+    }
 
-    override suspend fun scheduleVersions(habitId: Long): List<HabitSchedule> =
-        schedules[habitId].orEmpty().sortedBy { it.effectiveFrom }
+    override suspend fun scheduleVersions(habitId: Long): List<HabitSchedule> {
+        readCalls += 1
+        return schedules[habitId].orEmpty().sortedBy { it.effectiveFrom }
+    }
 
-    override suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog> =
-        logs.values
+    override suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog> {
+        readCalls += 1
+        return logs.values
             .filter { it.habitId == habitId && !it.date.isBefore(from) && !it.date.isAfter(to) }
             .sortedBy { it.date }
+    }
+
+    override suspend fun activeSchedules(
+        habitIds: List<Long>,
+        date: LocalDate,
+    ): Map<Long, HabitSchedule> {
+        readCalls += 1
+        return habitIds.mapNotNull { id ->
+            schedules[id]
+                ?.firstOrNull { schedule ->
+                    !date.isBefore(schedule.effectiveFrom) &&
+                        (schedule.effectiveUntil == null || !date.isAfter(schedule.effectiveUntil))
+                }
+                ?.let { id to it }
+        }.toMap()
+    }
+
+    override suspend fun dailyLogs(habitIds: List<Long>, date: LocalDate): Map<Long, DailyLog> {
+        readCalls += 1
+        return habitIds.mapNotNull { id -> logs[key(id, date)]?.let { id to it } }.toMap()
+    }
+
+    override suspend fun scheduleVersionsFor(habitIds: List<Long>): Map<Long, List<HabitSchedule>> {
+        readCalls += 1
+        return habitIds.associateWith { id -> schedules[id].orEmpty().sortedBy { it.effectiveFrom } }
+    }
+
+    override suspend fun logsInRangeFor(
+        habitIds: List<Long>,
+        from: LocalDate,
+        to: LocalDate,
+    ): Map<Long, List<DailyLog>> {
+        readCalls += 1
+        return habitIds.associateWith { id ->
+            logs.values
+                .filter { it.habitId == id && !it.date.isBefore(from) && !it.date.isAfter(to) }
+                .sortedBy { it.date }
+        }
+    }
 
     override suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog {
         val habit = habits[habitId] ?: error("fake repository: habit not found")

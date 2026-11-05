@@ -5,9 +5,9 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-022`（`NOT_STARTED`，Today 查询批量化）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
-- 当前 Git 分支：`main`（本地，无远程）@ `f959f02`，工作区干净；`feat/streak` 已合并、保留未删（另有 14 个历史分支同样保留）
-- 最近 commit：`f959f02 merge: TASK-021 streaks`（功能 `5707e43`/`3104352`，收尾文档 `45b7425`）
+- 当前任务：`TASK-024`（`NOT_STARTED`，接缝补洞）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
+- 当前 Git 分支：`feat/today-queries`（`TASK-022` 修复中）；`main`（本地，无远程）@ `bfb3150`；`feat/streak` 已合并、保留未删（另有 14 个历史分支同样保留）
+- 最近 commit：`b73e03b perf(today): load the list in four queries`（`TASK-022` 实现，评审后修复尚未提交）
 - **会话状态：可继续**——`TASK-021` 已闭环（独立评审第 2 轮 `APPROVE`），下一条从 `TASK-022` 开始
 
 ## Completed This Session
@@ -26,8 +26,8 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (84 tests)** | 较上一存档 +13 项：9 项 `StreakRules` + 4 项 presenter（行内连续、`streakText`、IN_PROGRESS 不计入、多计划版本） |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 分支 `45b7425` 与合入后 `main` `f959f02` 各跑一次；治理 22/22、单测 84、DAO 21、构建 ~27s、`diff --check` 干净 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (91 tests)** | `TASK-021` +13 项；`TASK-022` +5 项（两个查询计数、每习惯归属含 `isCompleted`、3 项 `fromLoaded` 行为） |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | `TASK-021` 合入时一次（`f959f02`）、`TASK-022` 实现时一次（`b73e03b`）；治理 22/22、DAO 27、构建 ~21-27s、`diff --check` 干净 |
 | `pwsh -NoProfile -File tools/check-governance.ps1` | **22 / 22 passed，0 警告** | 收尾时先红过一次：`TASK-022` 的 `NOT_STARTED` 与 §9 日期行冲突、README/STATUS 无当前任务 id，已修 |
 | 变异 M1 `due()` 恒真 | **FAILED（2 项）** | `aDayThatWasNeverDue…`、`aScheduleChange…` |
 | 变异 M2 去「今天不算断」 | **FAILED（2 项）** | 首次跑未生效（正则未匹配），已重跑并如实记录 |
@@ -39,7 +39,8 @@
 ## Not Verified / Known Gaps
 - **UI 无自动化测试**：Compose 渲染与交互仅靠真机手动走查（截图在 `.gradle/shots/`，不入库）
 - **连续天数的真机证据弱**：只有「今天完成 → 1 天」文字叙述，`project/reports` 下无 dump/截图（`F-006`/`F-007` 有 `DEVICE_DUMP`）
-- **N+1 未修**（`TASK-022`）：`describe()` 每习惯 4 次查询，20 个习惯点按一次约 160 次；`record()` 后 Flow 与显式重算各跑一遍
+- **N+1 已改为整表 4 次查询**（`TASK-022`，待评审）：但批量读仍取「全局最早版本 → 今天」的全部日志行，只减少往返、不减少行数（20 习惯 × 3 年 ≈ 2 万行/次），留待统计页一并收敛
+- **主线程计算**：批量读仍是挂起调用，其后的逐习惯「逐日推进」是纯计算，跑在 `Dispatchers.Main.immediate` 上；最坏情况约 2 万次迭代，未实测耗时
 - Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：无自动化验证（本机跑不了 Gradle 测试）
 - 表单由 `remember` 持有，旋转丢输入
 - 统计页、我的页仍为占位；`POST_NOTIFICATIONS` 与 `RECEIVE_BOOT_COMPLETED` 已声明但无代码，属遗留声明待清理
@@ -52,7 +53,7 @@
 - **子进程变异可能留下脏工作区**：评审死亡时留下 `from = today`，直接提交会合入缺陷。恢复后必须复跑测试确认。
 
 ## Next Safe Action
-1. **`TASK-022`（P2，`NOT_STARTED`）**：Today 列表查询批量化——去 N+1、去掉 `record()` 后的重复重算；验收用计数型 fake 断言查询次数上界
+1. **`TASK-022`**：按第 1 轮评审的三条阻断修复后复评（阻断：接口默认实现使 Room 漏 override 可静默上线、缺每习惯归属用例、文档计数不同步）
 2. 之后功能顺序：`F-010`/`F-011` 统计页与热力图 → `F-012`/`F-013` 提醒 → `F-014` 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
 3. 遗留重构（未立任务）：`CreateHabitPresenter` 构造参数为函数类型，评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」
 4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿，再读 `TASK-022`。
