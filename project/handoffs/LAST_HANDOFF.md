@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-020`（`NOT_STARTED`，离线守卫与检查器余留加固）；`TASK-012`~`TASK-019` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前任务：`TASK-021`（`NOT_STARTED`，`F-009` 连续天数）；`TASK-012`~`TASK-020` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
 - 当前 Git 分支：`main`（本地，无远程）@ `accad32`，工作区干净；已合并分支 `fix/error-text`、`docs/feature-matrix`、`chore/governance-probes` 保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（本文件提交时即最新）；基线检查点 `d0f470a`
 - **会话状态：进行中**（`TASK-017`、`TASK-019` 均已 `DONE` 并合入；下一项 `TASK-020`）

@@ -372,20 +372,37 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     $sections = $taskText -split '## 10\. Verification Evidence', 2
     if ($sections.Count -lt 2) { $gateProblems += ($f.BaseName + ' has no Verification Evidence section'); continue }
     $evidence = ($sections[1] -split "\n## ", 2)[0]
-    # Evidence is a row whose RESULT column states a verdict. Naming the script is not evidence: a
-    # row like `| script | 待补 |` used to pass (probe P6). Rows without a verdict, such as a planning
-    # row or prose quoted into the table, are ignored wherever they sit (probe P5).
+    # Evidence is a row whose RESULT column, once emphasis and a trailing parenthetical are removed,
+    # equals a known verdict. Naming the script is not evidence: `| script | 待补 |` used to pass (P6),
+    # and a note quoting the exact placeholder text must not become the verdict row (review probe P12).
+    $verdictWords = @('VERIFY ALL PASS','VERIFY ALL FAILED','PASS','FAILED','未运行（任务未开始）')
     $rows = @([regex]::Matches($evidence, '(?m)^\|[^\r\n]*verify-all\.ps1[^\r\n]*\|') | ForEach-Object { $_.Value })
     $verdicts = @()
     foreach ($r in $rows) {
         $rowCells = @($r.Split('|') | ForEach-Object { $_.Trim() })
         if ($rowCells.Count -lt 5) { continue }
-        if ($rowCells[2] -match 'VERIFY ALL (PASS|FAILED)|^PASS$|^FAILED$|未运行（任务未开始）') {
-            $verdicts += [pscustomobject]@{ Row = $r; Result = $rowCells[2] }
-        }
+        $cell = ($rowCells[2] -replace '\*', '' -replace '（[^）]*）', '' -replace '\([^)]*\)', '').Trim()
+        if ($verdictWords -contains $cell) { $verdicts += [pscustomobject]@{ Row = $r; Result = $rowCells[2] } }
     }
     # A task that has not started has no run to report; a placeholder row is tolerated there (probe P9).
+    # That exemption is also the cheapest way to dodge checks 18/19, so it only holds while the task
+    # shows no work: ticked acceptance boxes, an implementation log, or a real verdict row (probe P16).
     $notStarted = $taskText -match ('- 状态：\s*' + [regex]::Escape($tick) + 'NOT_STARTED' + [regex]::Escape($tick))
+    if ($notStarted) {
+        $acceptance = ($taskText -split '## 6\. Acceptance Criteria', 2)[1]
+        $acceptance = if ($acceptance) { ($acceptance -split "`n## ", 2)[0] } else { '' }
+        $log = (($taskText -split '## 9\. Implementation Log', 2)[1])
+        $log = if ($log) { ($log -split "`n## ", 2)[0] } else { '' }
+        $realVerdict = @($verdicts | Where-Object { $_.Result -notmatch '未运行|未执行|尚未|NOT_STARTED|TBD|NOT_RUN' })
+        $signals = @()
+        if ($acceptance -match '\[x\]') { $signals += 'ticked acceptance' }
+        if ($log -match '(?m)^-\s*(?!尚未开始|未开始)' -and $log -match '(?m)^-\s*\d{4}-') { $signals += 'implementation log' }
+        if ($realVerdict.Count -gt 0) { $signals += 'real verdict row' }
+        if ($signals.Count -gt 0) {
+            $gateProblems += ($f.BaseName + ' declares NOT_STARTED but shows work (' + ($signals -join ', ') + ')')
+            $notStarted = $false
+        }
+    }
     if ($verdicts.Count -eq 0) {
         if (-not $notStarted) { $gateProblems += ($f.BaseName + ' has no verify-all row whose result column states a verdict') }
     }
@@ -398,6 +415,26 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
 }
 if ($gateProblems.Count -eq 0) { Add-Pass 'verify-all evidence' 'post-ADR-014 tasks record a verify-all run' }
 else { Add-Fail 'verify-all evidence' ($gateProblems -join '; ') }
+
+# 22. The offline guarantee behind FEATURE_MATRIX F-015: no INTERNET permission, no network library.
+# Without this guard F-015 is a claim nobody re-checks, and one added permission would silently
+# turn the matrix's VERIFIED into a lie.
+$offlineProblems = @()
+$manifestPath = 'app/src/main/AndroidManifest.xml'
+if (-not (Test-Path $manifestPath)) { $offlineProblems += 'AndroidManifest.xml is missing' }
+else {
+    $manifestText = Get-Content -Raw -Path $manifestPath
+    if ($manifestText -match 'android\.permission\.INTERNET') { $offlineProblems += 'AndroidManifest declares the INTERNET permission' }
+}
+    # A dependency can also be declared straight in a build script, bypassing the catalog entirely
+    # (review probe A), so the build files are scanned with the same substring list.
+    foreach ($buildPath in @('gradle/libs.versions.toml','app/build.gradle.kts','build.gradle.kts')) {
+        if (-not (Test-Path $buildPath)) { continue }
+        $netHits = @(Select-String -Path $buildPath -Pattern 'okhttp|retrofit|ktor|firebase' -AllMatches)
+        if ($netHits.Count -gt 0) { $offlineProblems += ($buildPath + ' references a network library: ' + $netHits[0].Line.Trim()) }
+    }
+if ($offlineProblems.Count -eq 0) { Add-Pass 'offline guarantee' 'no INTERNET permission and no network library' }
+else { Add-Fail 'offline guarantee' ($offlineProblems -join '; ') }
 
 # Report
 $fail = @($results | Where-Object { $_.Status -eq 'FAIL' })

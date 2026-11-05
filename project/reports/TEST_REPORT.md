@@ -6,7 +6,7 @@
 - 日期时间：`2026-11-05`
 - 分支 / commit：`fix/error-text`（`TASK-018`，基线 `main` @ `52e89c1`）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 21 项检查、0 警告 + 单测 71 项 + DAO SQL 21 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 71 项 + DAO SQL 21 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -74,6 +74,7 @@
 | 2026-11-05 | 变异：`onFailure` 改写回 `failure.message`（评审第 1 轮） | **FAILED（1 项）**（修复后） | 新增调用点测试变红；修复前全绿，属真实回归缺口 | TASK-018 |
 | 2026-11-05 | 变异：`prefillText` 改用 `toLong()`（评审第 2 轮） | **FAILED（1 项）**（修复后） | 预填测试变红；修复前全绿 | TASK-018 |
 | 2026-11-05 | 变异：去掉千分位保护（评审第 2 轮） | **FAILED（1 项）** | 千分位断言变红 | TASK-018 |
+| 2026-11-05 | `tools/replay-governance-probes.ps1`（15 个探针） | **0 failed**；基线 22/22 | P5–P19：离线守卫 P17/P18/P19（含绕过 catalog）、`NOT_STARTED` 防规避 P16、脏树守卫 | TASK-020 |
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 
 ## Known Test Gaps

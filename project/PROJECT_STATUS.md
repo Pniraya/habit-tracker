@@ -5,13 +5,13 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-020`（`NOT_STARTED`，离线守卫与检查器余留加固）；`TASK-012`~`TASK-019` 已 `DONE` 合入 `main`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-021`（`NOT_STARTED`，`F-009` 当前/最长连续天数）；`TASK-012`~`TASK-020` 已 `DONE` 合入 `main`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 21-23s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 21/21 验证 DAO 的 SQL 语义、CAS 更新与级联删除）
 - 最近验证测试：`PASS`（71 项，`tools/run-unit-tests.ps1`，`docs/feature-matrix`）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
-- 最近治理一致性检查：`PASS`（2026-11-05，21 项检查；含独立评审记录与 verify-all 证据检查）
+- 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查 + 15 个探针 0 失败；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
 - 最后核对时间：`2026-11-05`
 
 ## 已有设计资产与实现
@@ -21,7 +21,7 @@
 - [x] `project/decisions/ADR-001`~`ADR-014`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
 - [x] `project/FEATURE_MATRIX.md`：F-001/F-002/F-006/F-007 已 `DEVICE_VERIFIED`；F-003/F-004 `IN_PROGRESS`（编辑与归档界面未做）；F-005 `VERIFIED`（三种频率有单测，真机只建过 `DAILY`）；F-008~F-014 未开始；F-015 `VERIFIED`（无 `INTERNET` 权限与网络库，无自动化断言）；F-016~F-019 `OUT_OF_SCOPE`（`TASK-019` 校正）
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
-- [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（21 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`
+- [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（22 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`
 - [x] 构建环境：`D:\AndroidToolchain`（`sdk` + `gradle` + `env.ps1` + `verify.ps1`），JDK 17 在 `D:\javajdk17`
 - [x] Android 工程骨架：Wrapper、Version Catalog、`:app`、主题 token、三页导航
 - [x] 数据层 schema v1：四表 + 外键 + 索引 + Converter + schema export（`TASK-004`）；DAO 语句经 `verify-dao.mjs` 在真实 SQLite 上验证（`TASK-010`）

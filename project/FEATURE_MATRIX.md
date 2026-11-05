@@ -50,7 +50,7 @@
 - **F-006** BOOLEAN 记录 — 代码：`RecordHabitProgressUseCase.kt`、`LogStatusRules.kt`、`TodayScreen` 点击切换；自动化：`LogStatusRulesTest`、`RecordHabitProgressUseCaseTest`；真机：`project/reports/DEVICE_DUMP-2026-11-05.md`、`TASK-013` §10。
 - **F-007** NUMERIC 记录 — 代码：`RecordHabitProgressUseCase`、`TodayScreen.NumericInputDialog`、`TodayPresenter.progressText`/`prefillText`；自动化：`RecordHabitProgressUseCaseTest`、`TodayPresenterTest`（小数显示、预填、逗号归一化）；真机：`TASK-016`/`TASK-018` §10（`0.5 / 2000 ml`、对话框预填 `0.5`）。
 - **F-008~F-014** 撤销/修改、连续天数、统计、热力图、提醒、提醒恢复、备份 — 全量 grep（47 个 Kotlin 文件）无 `streak`、`backup`、`AlarmManager`、`WorkManager`、网络库引用；`StatisticsScreen.kt` 与 `ProfileScreen.kt` 只有占位文字，无数据逻辑。故三列均为 `NOT_STARTED`。
-- **F-015** 离线 — 代码：`app/src/main/AndroidManifest.xml`（仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED`，无 `INTERNET`）、`gradle/libs.versions.toml`（无 `okhttp`/`retrofit`/`ktor`/`firebase`）；自动化：无专门断言；真机：无。
+- **F-015** 离线 — **覆盖范围**：治理检查第 22 项扫 `AndroidManifest.xml` 的 `INTERNET` 权限，以及 `gradle/libs.versions.toml`、`app/build.gradle.kts`、根 `build.gradle.kts` 的 `okhttp`/`retrofit`/`ktor`/`firebase` 字样。**挡不住**：第三方库 manifest 合并进来的 `INTERNET`、手写 socket/URL 代码。`VERIFIED` 主张的是「本仓库未声明网络能力」，不是「应用绝对无法联网」。 代码：`app/src/main/AndroidManifest.xml`（仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED`，无 `INTERNET`）、`gradle/libs.versions.toml`（无 `okhttp`/`retrofit`/`ktor`/`firebase`）；自动化：无专门断言；真机：无。
 
 ## 更新规则
 
