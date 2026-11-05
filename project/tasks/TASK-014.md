@@ -41,10 +41,10 @@
 - `gradlew.bat assembleDebug`
 
 ## 8. Risks and Decisions
-- **数据库触发器仍在**：这次只移动「谁能给出友好错误」，`DATABASE.md` 的约束触发器仍是最后防线，非法数据依旧进不了库。
+- **数据库触发器仍在**：这次只移动「谁能给出友好错误」，`DATABASE.md` 的约束触发器仍是最后防线，非法数据依旧进不了库。`verify-schema.mjs` 40/40 中即有 `habits: BOOLEAN with unit rejected` 与 `habits: NUMERIC without unit rejected` 两条真实 SQLite 断言。
 - **`theRepositoryItselfNoLongerValidates` 的证据强度有限**：它只能证明 `FakeHabitRepository` 不再校验；`RoomHabitRepository` 的等价行为需要 instrumentation/Robolectric，本机没有。因此这条测试被写成「结构性说明」而非「生产行为证明」，验收标准也没有依赖它。
 - **行为变化**：`createHabit` 现在要求调用方传入已归一化的 draft。若将来新增实现（缓存层、内存仓库）直接接收 UI 输入，必须经过 UseCase——接口 KDoc 已写明。
-- `name.trim()` 随之上移；仓库不再裁剪，避免两处都改。
+- `name.trim()` 随之上移；仓库不再裁剪，避免两处都改。**边界**：触发器只保证「合法」，不保证「归一化」——它不 trim，若将来有路径绕过 UseCase，会存下 `'  Water  '`（合法但脏）。当前 `app/src/main` 没有这种路径（评审已核对）。
 
 ## 9. Implementation Log
 - 2026-11-05：`CreateHabitUseCase` 加 `normalizeTarget` 与 `draft.copy(...)`；`RoomHabitRepository` 删两处校验；接口补 KDoc；fake 退回哑实现并移除未用 import。

@@ -9,7 +9,7 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-015`（`DONE`，已合入 `main`）；下一项 `TASK-016`（界面细节）与 `TASK-017`（检查加固） |
+| 当前任务 | `TASK-016`（`DONE`）；下一项 `TASK-018`（错误文案与小数显示） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
 | 最近测试 | `PASS` — 63 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
@@ -60,7 +60,7 @@ gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
 pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：40 项通过（绕过 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
 node tools/verify-dao.mjs                        # 已验证：21/21（DAO 的 SQL 语义，不含 Room 映射）
-adb devices                                      # 当前为空：无真机、未装模拟器
+adb devices                                      # 真机需手动连接（USB 调试已可用）；模拟器不可用：无 WHPX/Hyper-V
 pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply
 pwsh -NoProfile -File tools/check-governance.ps1
 ```

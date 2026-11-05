@@ -5,7 +5,7 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-015`（`DONE`，第 1 轮独立评审 `APPROVE`，已合入 `main`）；`TASK-012`~`TASK-014` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-016`（`DONE`，独立评审 `APPROVE`，真机小数输入已补验）；`TASK-012`~`TASK-015` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，UI 与设备未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 21-23s）
@@ -39,7 +39,7 @@
 
 ## 阻塞项与风险
 
-- 无真机、无模拟器：`adb devices` 为空，`emulator`/`system-images` 未安装，Gate 1 的“设备可安装启动”无法验证。
+- 无模拟器：`emulator`/`system-images` 未安装，`HypervisorPresent=False`（无 WHPX/Hyper-V），x86_64 镜像无法启动。真机可用但需手动连接；`TASK-012`/`TASK-016` 已在 `iQOO Neo7 SE`（Android 15）上手动走查。
 - 沙箱内 `gradlew test` 永远失败（测试 worker 管道被禁）；纯 JVM 测试用 `tools/run-unit-tests.ps1` 运行，Room/Compose 相关测试仍无法在本机执行。
 - 依赖经腾讯镜像获取（官方 SHA-1 只用在校验 SDK 包上，Maven 依赖未逐包校验），镜像不可用时回退到 `google()` 会极慢。
 - Android SDK 许可文件由 AI 按标准哈希写入，等同于代表用户接受条款，需用户复核。
@@ -51,7 +51,7 @@
 
 `AGENTS.md` §7 要求 `PARTIAL` 任务不进 `main`；以下任务因环境限制（无设备、沙箱禁止 Gradle 测试 worker）必须留在 `main`，按 ADR-012 登记为例外：
 
-- `TASK-003`：`PARTIAL` —— 构建通过，设备安装与三页导航未验证（无真机、无 WHPX）。
+- `TASK-003`：`PARTIAL` —— 构建通过；三页导航与安装现已在真机手动走查（`TASK-012`/`TASK-016`），但 `TASK-003` 的验收项本身尚未按自动化方式关闭。
 - `TASK-004`：`PARTIAL` —— schema 与约束已用 `node:sqlite` 验证 40/40，Room 运行时未验证。
 - `TASK-005`：`PARTIAL` —— 27 项纯 JVM 单测通过，Room 事务集成与设备持久化未验证。
 

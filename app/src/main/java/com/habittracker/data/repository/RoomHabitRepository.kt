@@ -7,7 +7,6 @@ import com.habittracker.data.local.entity.HabitEntity
 import com.habittracker.data.local.entity.HabitLogEntity
 import com.habittracker.data.local.entity.HabitScheduleEntity
 import com.habittracker.data.mapper.toDomain
-import com.habittracker.domain.calculation.HabitRules
 import com.habittracker.domain.calculation.LogStatusRules
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.DailyLog
