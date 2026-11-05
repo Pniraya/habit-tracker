@@ -11,7 +11,8 @@ $taskPath = 'project/tasks/TASK-019.md'
 $reportPath = 'project/reports/TEST_REPORT.md'
 $manifestPath = 'app/src/main/AndroidManifest.xml'
 $catalogPath = 'gradle/libs.versions.toml'
-$paths = @($taskPath, $reportPath, $manifestPath, $catalogPath)
+$buildPath = 'app/build.gradle.kts'
+$paths = @($taskPath, $reportPath, $manifestPath, $catalogPath, $buildPath)
 
 function Get-Head([string]$p) { return ((git show ('HEAD:' + $p)) -join "`n") }
 function Restore-All { foreach ($p in $paths) { git checkout -- $p } }
@@ -44,11 +45,19 @@ function Assert-Probe([string]$name, [string]$path, [string]$newText, [int]$expe
     }
 }
 
-Restore-All
+# Refuse to run on a dirty tree: this script writes to tracked files and restores them with
+# git checkout --, which would silently discard someone else's uncommitted work (review probe G).
+$dirtyAtStart = @(git status --porcelain -- $paths)
+if ($dirtyAtStart.Count -gt 0) {
+    Write-Output '[DIRTY] these probe paths have uncommitted changes; commit or stash them first:'
+    $dirtyAtStart | ForEach-Object { Write-Output ('    ' + $_) }
+    exit 1
+}
 $task = Get-Head $taskPath
 $report = Get-Head $reportPath
 $manifest = Get-Head $manifestPath
 $catalog = Get-Head $catalogPath
+$appBuild = Get-Head $buildPath
 $noteIdx = $task.IndexOf('## 11. Completion Review')
 
 Assert-Probe 'P5 note row below the evidence row' $taskPath ($task.Insert($noteIdx, '| 备注 | 使用 verify-all.ps1 复跑 | — | — |' + "`n`n")) 0 ''
@@ -69,6 +78,7 @@ Assert-Probe 'P9 NOT_STARTED with a placeholder row' $taskPath $p9 0 ''
 Assert-Probe 'P16 NOT_STARTED but acceptance is ticked' $taskPath ($p9.Replace('- [ ] ', '- [x] ')) 1 'declares NOT_STARTED but shows work'
 Assert-Probe 'P17 manifest declares INTERNET' $manifestPath ($manifest.Replace('android.permission.POST_NOTIFICATIONS', 'android.permission.INTERNET')) 1 'INTERNET permission'
 Assert-Probe 'P18 catalog references a network library' $catalogPath ($catalog + "`nokhttp = '4.12.0'`n") 1 'network library'
+Assert-Probe 'P19 build script declares okhttp directly' $buildPath ($appBuild + "`ndependencies { implementation(okhttp3) } // com.squareup.okhttp3:okhttp`n") 1 'network library'
 
 Restore-All
 $dirty = @(git status --porcelain -- $paths)

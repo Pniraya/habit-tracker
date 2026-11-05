@@ -71,7 +71,7 @@ pwsh -NoProfile -File tools/check-governance.ps1
 pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 ```
 
-脚本只读，检查 21 项（含「`TASK-009` 起必须有 `verify-all` 证据」）：必备文件、状态文件残留 `UNKNOWN`、`TASK/ADR` 引用、功能矩阵状态词表与证据、交接快照是否填写、Markdown 相对链接、冲突标记与行尾空白、本地草稿是否误入库、`.gitignore` 覆盖、发布报告是否与工程状态矛盾、**改受保护基线是否同时带 ADR**（仅空白改动豁免），以及六项状态同步检查：
+脚本只读，检查 22 项（含「`TASK-009` 起必须有 `verify-all` 证据」）：必备文件、状态文件残留 `UNKNOWN`、`TASK/ADR` 引用、功能矩阵状态词表与证据、交接快照是否填写、Markdown 相对链接、冲突标记与行尾空白、本地草稿是否误入库、`.gitignore` 覆盖、发布报告是否与工程状态矛盾、**改受保护基线是否同时带 ADR**（仅空白改动豁免），以及六项状态同步检查：
 
 - `README` 的当前任务/阶段必须与 `PROJECT_STATUS` 一致；
 - 每个 ADR 必须在 `PROJECT_STATUS` 中被覆盖，且引用处写的状态词必须与 ADR 文件一致；

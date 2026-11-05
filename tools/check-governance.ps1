@@ -426,11 +426,13 @@ else {
     $manifestText = Get-Content -Raw -Path $manifestPath
     if ($manifestText -match 'android\.permission\.INTERNET') { $offlineProblems += 'AndroidManifest declares the INTERNET permission' }
 }
-$catalogPath = 'gradle/libs.versions.toml'
-if (Test-Path $catalogPath) {
-    $netHits = @(Select-String -Path $catalogPath -Pattern 'okhttp|retrofit|ktor|firebase' -AllMatches)
-    if ($netHits.Count -gt 0) { $offlineProblems += ('libs.versions.toml references a network library: ' + $netHits[0].Line.Trim()) }
-}
+    # A dependency can also be declared straight in a build script, bypassing the catalog entirely
+    # (review probe A), so the build files are scanned with the same substring list.
+    foreach ($buildPath in @('gradle/libs.versions.toml','app/build.gradle.kts','build.gradle.kts')) {
+        if (-not (Test-Path $buildPath)) { continue }
+        $netHits = @(Select-String -Path $buildPath -Pattern 'okhttp|retrofit|ktor|firebase' -AllMatches)
+        if ($netHits.Count -gt 0) { $offlineProblems += ($buildPath + ' references a network library: ' + $netHits[0].Line.Trim()) }
+    }
 if ($offlineProblems.Count -eq 0) { Add-Pass 'offline guarantee' 'no INTERNET permission and no network library' }
 else { Add-Fail 'offline guarantee' ($offlineProblems -join '; ') }
 

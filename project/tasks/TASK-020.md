@@ -31,7 +31,9 @@
 - [x] 新增检查通过时 `SUMMARY` 显示 22 项
 - [x] 负向探针 P17：manifest 声明 `INTERNET` → FAIL
 - [x] 负向探针 P18：`libs.versions.toml` 加 `okhttp` → FAIL
-- [x] `tools/replay-governance-probes.ps1` 入库，一键重放 14 个探针（P5–P18）
+- [x] 负向探针 P19：`app/build.gradle.kts` 直接声明 okhttp（绕过 catalog）→ FAIL（评审攻击 A）
+- [x] 探针脚本在脏树上拒绝运行（`[DIRTY]` + exit 1；评审攻击 G）
+- [x] `tools/replay-governance-probes.ps1` 入库，一键重放 15 个探针（P5–P19）
 - [x] 探针 P12：备注行结果列写整格「未运行（任务未开始）」→ 不改变判定（exit 0）
 - [x] 探针 P16：`NOT_STARTED` 但已勾选验收 → FAIL
 - [x] 探针 P13：结果列写中文「通过」→ FAIL（整格锚定 + 词表边界，已写入模板）
@@ -45,20 +47,23 @@
 
 ## 9. Implementation Log
 - 2026-11-05：新增第 22 项「offline guarantee」；第 21 项判定词改为**整格等值**（剥掉强调与括号后比较），并加 `NOT_STARTED` 防规避检测（已勾选验收 / §9 有日志 / §10 有真实判定 → 视为已开工）。
+- 2026-11-05（评审第 1 轮 `REJECT` 后）：补 `TASK_TEMPLATE.md` §9/§10 的机器约束；`README`/`PROJECT_STATUS` 两处「21 项」改 22；第 22 项扫描范围扩到 `app/build.gradle.kts` 与根 `build.gradle.kts`（攻击 A）；探针脚本加脏树守卫（攻击 G）。
 - 2026-11-05：探针脚本从 `.gradle/` 移到 `tools/replay-governance-probes.ps1`，原件用 `git show HEAD:` 取、还原用 `git checkout --`——此前从工作区读原件，脏状态会被当成基线（`TASK-017` 已因此产出过一次假 PASS）。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `tools/replay-governance-probes.ps1` | **PROBES: 14 run, 0 failed**；基线 `22 checks, 22 passed, 0 warnings` | P5–P18 逐个断言退出码与信息片段 |
+| `tools/replay-governance-probes.ps1` | **PROBES: 15 run, 0 failed**；基线 `22 checks, 22 passed, 0 warnings` | P5–P19 逐个断言退出码与信息片段 |
 | 探针 P17（manifest 加 `INTERNET`） | **exit 1** | `AndroidManifest declares the INTERNET permission` |
 | 探针 P18（catalog 加 `okhttp`） | **exit 1** | `libs.versions.toml references a network library` |
+| 探针 P19（`app/build.gradle.kts` 直接写 okhttp） | **exit 1** | `app/build.gradle.kts references a network library` |
+| 脏树守卫（给 `TASK-019.md` 加未提交标记后跑探针） | **exit 1**，输出 `[DIRTY] ... M project/tasks/TASK-019.md` | 在改动任何文件之前中止 |
 | 探针 P16（`NOT_STARTED` 但验收已勾选） | **exit 1** | `declares NOT_STARTED but shows work (ticked acceptance)` |
 | 探针 P12（备注列写整格占位符） | **exit 0** | 整格锚定后不再被备注劫持 |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、0 警告、单测 71 项、DAO 21 项、构建通过 |
 
 ## 11. Completion Review
-- [x] 验收标准满足（8/8）
+- [x] 验收标准满足（10/10）
 - [x] 测试实际运行（14 个探针 + 基线 + 全量门禁）
 - [ ] 独立 Reviewer `APPROVE`
 
@@ -75,6 +80,6 @@
 - 任务：TASK-020
 - 状态：`PARTIAL`
 - 阶段：Gate 2
-- 验收：通过 8 项 / 未通过 0 项
+- 验收：通过 10 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (71 tests)**
 <!-- close-task:end -->

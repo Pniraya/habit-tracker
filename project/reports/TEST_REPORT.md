@@ -74,7 +74,7 @@
 | 2026-11-05 | 变异：`onFailure` 改写回 `failure.message`（评审第 1 轮） | **FAILED（1 项）**（修复后） | 新增调用点测试变红；修复前全绿，属真实回归缺口 | TASK-018 |
 | 2026-11-05 | 变异：`prefillText` 改用 `toLong()`（评审第 2 轮） | **FAILED（1 项）**（修复后） | 预填测试变红；修复前全绿 | TASK-018 |
 | 2026-11-05 | 变异：去掉千分位保护（评审第 2 轮） | **FAILED（1 项）** | 千分位断言变红 | TASK-018 |
-| 2026-11-05 | `tools/replay-governance-probes.ps1`（14 个探针） | **0 failed**；基线 22/22 | P5–P18：含新增离线守卫 P17/P18 与 `NOT_STARTED` 防规避 P16 | TASK-020 |
+| 2026-11-05 | `tools/replay-governance-probes.ps1`（15 个探针） | **0 failed**；基线 22/22 | P5–P19：离线守卫 P17/P18/P19（含绕过 catalog）、`NOT_STARTED` 防规避 P16、脏树守卫 | TASK-020 |
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 
 ## Known Test Gaps
