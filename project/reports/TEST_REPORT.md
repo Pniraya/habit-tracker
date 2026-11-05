@@ -4,7 +4,7 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`feat/today-presenter`（`TASK-011`，基线 `main` @ `5e99ece`；复审修复后）
+- 分支 / commit：`main` @ `f5d4dad`（`TASK-011` 合并提交；分支 `feat/today-presenter` 已合入）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
 - 结果：`tools/verify-all.ps1` `PASS`（治理 21 项检查、0 警告 + 单测 49 项 + DAO SQL 21 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 

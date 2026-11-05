@@ -5,8 +5,8 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（首个功能页已接线）
-- 当前任务：`TASK-011`（`PARTIAL`，Today 页 Presenter/ViewModel 接线完成；首轮独立评审 `REJECT` 已修复待复审）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`feat/today-presenter`（本地，无远程）；`main` @ `5e99ece`
+- 当前任务：`TASK-011`（`DONE`，独立评审 `APPROVE`，已合入 `main` @ `f5d4dad`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`main` @ `f5d4dad`（本地，无远程）；合并后 `verify-all` 复跑通过
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
@@ -38,5 +38,5 @@
 - 写入后整表重建（Repository 无 habit+log 联合 Flow），习惯多时可能成为性能问题
 
 ## Next Safe Action
-1. 独立复审 `REVIEW-TASK-011.md`（通过则 `DONE`、`verify-all`、合入 `main`）
-2. 之后的新任务（尚未创建）：新建习惯页面 + 数值输入 UI，复用 `CreateHabitUseCase`
+1. 下一个新任务（尚未创建）：新建习惯页面 + 数值输入 UI，复用已验收的 `CreateHabitUseCase`；这是让数值习惯真正可用的前置条件
+2. 之后：提醒调度（`ReminderScheduler`）与 `DataStore` 设置
