@@ -5,8 +5,8 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 2`（数据层 + Domain/Repository/UseCase；治理系统已加固，新增单一验证入口）
-- 当前任务：`TASK-009`（`PARTIAL`，`tools/verify-all.ps1` 完成；首轮独立评审 `REJECT` 仅因文档未同步，已修复待复审）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`feat/verify-all-gate`（本地，无远程）；`main` @ `14eb69d`（`TASK-008` 合入后）
+- 当前任务：`TASK-009`（`DONE`，独立评审 `APPROVE`，已合入 `main` @ `7c8b074`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`main` @ `7c8b074`（本地，无远程）；合并后 `verify-all` 复跑通过
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session

@@ -4,7 +4,7 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`feat/verify-all-gate`（`TASK-009`，基线 `main` @ `14eb69d`）
+- 分支 / commit：`main` @ `7c8b074`（`TASK-009` 合并提交；分支 `feat/verify-all-gate` 已合入）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
 - 结果：`tools/verify-all.ps1` `PASS`（治理 21/21 + 单测 40 项 + `assembleDebug` 24s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
@@ -49,6 +49,7 @@
 | 2026-11-05 | `pwsh -NoProfile -File tools/verify-all.ps1`（首次运行） | **FAILED（exit 1）** | 治理步拦下 `ADR-014 not covered by PROJECT_STATUS`；单测/构建/空白三步本身通过 | TASK-009 |
 | 2026-11-05 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）**（预期） | `TASK-009 has no verify-all evidence`；还原后 21/21 PASS | TASK-009 |
 | 2026-11-05 | 补登记 ADR-014 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（7s）、单测 40 项（25s）、`assembleDebug` 21s、空白 0s | TASK-009 |
+| 2026-11-05 | 合入 `main` 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s、单测 25s、构建 23s、空白 0s；`main` 上确认 | TASK-009 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。

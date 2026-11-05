@@ -8,9 +8,9 @@
 - 当前任务：`TASK-009`（`DONE`，独立评审 `APPROVE`，已合入 `main`）；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航壳 + Room schema v1 + Domain/Repository/UseCase；构建通过，约束经真实 SQLite 验证，DAO/Repository 运行时与真机未验证）
-- 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 21s）
+- 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 23s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs`，40/40，含 schema parity）
-- 最近验证测试：`PASS`（40 项，`tools/run-unit-tests.ps1`，在 `main` @ `d7998ad` 上复跑）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
+- 最近验证测试：`PASS`（40 项，`tools/run-unit-tests.ps1`，在 `main` @ `7c8b074` 上经 `verify-all` 复跑）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，21 项检查；含独立评审记录与 verify-all 证据检查）
 - 最后核对时间：`2026-11-05`
 
