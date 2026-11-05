@@ -5,10 +5,10 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-019`（`NOT_STARTED`，功能矩阵校正；会话暂停于此项之前）；`TASK-012`~`TASK-018` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main`（本地，无远程）@ `b64326c`，工作区干净；已合并分支 `fix/error-text` 保留未删
-- 最近 commit：`b64326c merge TASK-018 error text and decimal display`；基线检查点 `d0f470a`
-- **会话状态：已暂停**。恢复时先读本文件与 `TASK-019`，再按「Next Safe Action」继续
+- 当前任务：`TASK-019`（`PARTIAL`，功能矩阵校正，待独立评审）；`TASK-012`~`TASK-018` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`docs/feature-matrix`（本地，无远程）；`main` @ `9ebb646`；已合并分支 `fix/error-text` 保留未删
+- 最近 commit：以 `git log -1 --oneline` 为准（本文件提交时即最新）；基线检查点 `d0f470a`
+- **会话状态：进行中**（`TASK-019` 已实现，评审第 1 轮 `REJECT` 的 5 项文档不一致已修，等待第 2 轮）
 
 ## Completed This Session
 - `TASK-007`~`TASK-018` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页、今日页新建入口、领域规则上移到 UseCase、治理计数检查、界面细节、错误文案中文化与小数显示
@@ -39,11 +39,11 @@
 - **数值输入对话框未在真机走通**：`adb shell input` 在中文输入法下丢字符，无法稳定填表
 - Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：无自动化验证
 - 表单由 `remember` 持有，旋转会丢失输入
-- 统计页、我的页仍为占位
+- 统计页、我的页仍为占位；`POST_NOTIFICATIONS` 与 `RECEIVE_BOOT_COMPLETED` 已在 manifest 声明但无对应代码，属遗留声明，待清理
 - `TASK-015` 已让 `check-governance` 比对 `OK (N tests)` 计数与中文占位符；但评审用 P5–P8 探针证明仍有边界缺陷（结果列无判定词也能过、摘要缺计数即跳过、计数扫全文被污染），已立 `TASK-017`
 
 ## Next Safe Action
-1. **TASK-019（P1）**：校正 `FEATURE_MATRIX.md`——F-002/F-003/F-005/F-006/F-007 已有证据却仍标未开始，属低报（任务文件已建，`NOT_STARTED`）
+1. **TASK-019（P1）**：校正 `FEATURE_MATRIX.md`——已完成实现，待第 2 轮评审（第 1 轮 `REJECT` 的 5 项文档打架已修）
 2. **TASK-017（P2）**：治理检查加固——P5–P8 四个洞，加上本轮新发现的 P9（`TBD|NOT_RUN` 占位判断没尊重 `NOT_STARTED`，与代码注释矛盾）
 3. **遗留重构（未立任务）**：`CreateHabitPresenter` 构造参数为函数类型以便注入失败实现；评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」，属独立重构
 4. 之后的功能顺序：F-009 连续天数 → F-010/011 统计页 → F-012/013 提醒 → F-014 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
