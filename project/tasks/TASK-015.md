@@ -1,11 +1,11 @@
 # TASK-015: 治理检查补计数一致性与中文占位符
 
-- 状态：`PARTIAL`（实现与负向验证完成，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE` 于 `ebdee50`，第 1 轮；边界缺陷另立 `TASK-017`）
 - 阶段：`Gate 3`
 - 优先级：`P2`
 - 依赖：`TASK-012`（暴露盲区）、`TASK-013`（评审建议）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 让 `tools/check-governance.ps1` 能发现两类此前漏过的假证据：`TEST_REPORT` 的 `Latest Run` 计数与最后一次运行不一致；已开工的任务在 §10 仍写着「未运行」。
@@ -64,21 +64,28 @@
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：只改治理脚本，无产品代码、无依赖变化
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（`ebdee50`，第 1 轮）
 
 ## 12. Handoff
 - 下一步：评审 `APPROVE` 后合入 `main`；之后 `TASK-016`（界面细节与 `TASK-014` 的 3 条非阻塞项）。
 - 遗留：治理脚本本身无自动化测试（无 Pester），只能靠人工探针。
 
 ## 13. Independent Review
-- Reviewer record：`project/reviews/REVIEW-TASK-015.md`（待创建）
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-015.md`
+- 结论：`APPROVE`（第 1 轮）
+- 评审用 8 个探针验证，确认 P1/P2/P3 有效，同时找出 4 个边界缺陷并另立 `TASK-017`：
+  - P5 假阳性：合法的「以后还要再跑」备注排在证据行**下方**会被误判
+  - P6 假阴性：写一条含 `verify-all.ps1`、结果列是「待补」的行即可无运行通过
+  - P7 假阴性：`Latest Run` 删掉「单测」二字后计数比对被静默跳过
+  - P8 假阳性：`OK (N tests)` 扫描全报告，`Known Gaps` 里写一句就会污染计数
+- 评审给的正确锚点：**结果列必须是机器可判的判定词**（`VERIFY ALL PASS` / `FAILED（N 项）`），或由 `close-task` 写入机器标记；「行内出现命令名」本质上分不清引用与结果
+- 评审同时指出 `NOT_STARTED` 豁免可被滥用（没有任何检查把「状态」与「是否已改代码」绑定）——检查应被当作**防事故**而非防造假
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-015
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 4 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (63 tests)**
