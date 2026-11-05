@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-025`（`NOT_STARTED`，真机 instrumented 测试 spike）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
+- 当前任务：`TASK-025`（`PARTIAL`，真机 instrumented 测试 spike；runner 可用，安装被设备拒绝）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
 - 当前 Git 分支：`main`（本地，无远程），`feat/seam-hardening` 已合并、保留未删；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（交接记录与代码修复同一次提交时，写死哈希必然立刻过期）
 - **会话状态：可继续**——`TASK-022`、`TASK-024` 均已 `DONE` 合入 `main`；下一条从 `TASK-025` 开始（真机 instrumented 测试 spike）
