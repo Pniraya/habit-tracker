@@ -9,7 +9,7 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-018`（`PARTIAL`，错误文案中文化与小数显示，待独立评审） |
+| 当前任务 | `TASK-019`（`NOT_STARTED`，功能矩阵校正；会话暂停） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
 | 最近测试 | `PASS` — 71 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |

@@ -5,8 +5,8 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
-- 当前任务：`TASK-018`（`PARTIAL`，错误文案中文化与小数显示，待独立评审）；`TASK-012`~`TASK-016` 已 `DONE`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`fix/error-text`（本地，无远程）；`main` @ `52e89c1`；已合并分支保留未删
+- 当前任务：`TASK-019`（`NOT_STARTED`，功能矩阵校正；会话暂停于此项之前）；`TASK-012`~`TASK-018` 已 `DONE` 合入 `main`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`main`（本地，无远程）；已合并分支 `fix/error-text` 保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
@@ -40,6 +40,6 @@
 - `TASK-015` 已让 `check-governance` 比对 `OK (N tests)` 计数与中文占位符；但评审用 P5–P8 探针证明仍有边界缺陷（结果列无判定词也能过、摘要缺计数即跳过、计数扫全文被污染），已立 `TASK-017`
 
 ## Next Safe Action
-1. 独立评审 `TASK-018` 第 2 轮（第 1 轮 `REJECT`：对话框仍截断小数、`onFailure` 调用点无测试、逗号把千分位变小数；三项已修）
+1. **TASK-019（P1）**：校正 `FEATURE_MATRIX.md`——F-002/F-003/F-005/F-006/F-007 已有证据却仍标未开始，属低报
 2. **TASK-017（P2）**：治理检查加固——`TASK-015` 评审用 P5–P8 打穿四个洞（结果列无判定词也能过、摘要不写「单测」就跳过、计数扫全文被 `Known Gaps` 污染、合法备注致假阳性）
 4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度

@@ -1,11 +1,11 @@
 # TASK-018: 错误文案中文化与小数显示
 
-- 状态：`PARTIAL`（实现与真机验证完成，等待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE` 于 `b5bd10f`，第 3 轮）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-012`（表单）、`TASK-014`（规则上移到 UseCase）、`TASK-016`（小数输入）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 修掉两个用户能直接看见的缺陷：中文界面弹出英文领域错误；数值习惯的小数被截断成整数显示。
@@ -49,6 +49,7 @@
 - **映射靠子串匹配**（`"needs a unit"` 等），领域层改文案会静默退化成 `SAVE_FAILED`。这是防「英文直出」的兜底，不是强类型契约；`SAVE_FAILED` 本身仍然是中文可读的，退化方向安全。
 - **领域消息保持英文**：`HabitRules` 的 `require` 文案是给开发者看的契约，且已被 `TASK-014` 的单测断言；把用户文案下沉到领域层会让领域依赖展示需求。
 - `progressText` 放在 `TodayPresenter.companion`：它是纯函数、无状态，放这里能被 JVM 测试直接调用，也避免再出现「格式化写在 Composable 里、无法测试」。
+- 歧义写法（`1,234`、`12,345`）一律拒绝而不是猜测含义：宁可让用户重输，也不按错误量级落库。
 - 逗号归一化区分两种含义：`0,5` 视为小数分隔符转成 `0.5`；`1,234` 命中千分位模式则原样保留，导致解析失败、按钮禁用——**拒绝**比**按另一种含义接受**安全。多小数点同样解析失败。代价是千分位写法不能作为合法输入（本应用不需要）。
 
 ## 9. Implementation Log
@@ -71,26 +72,27 @@
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21、单测 71 项、DAO SQL 21 项、构建通过 |
 
 ## 11. Completion Review
-- [x] 验收标准全部满足（9/9）
+- [x] 验收标准全部满足（8/8）
 - [x] 相关测试实际运行（71 项 + 4 组变异 + 3 项真机）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`（第 3 轮）
 
 ## 12. Handoff
-- 下一步：评审 `APPROVE` 后合入 `main`；之后 `TASK-017`（治理检查加固 P5–P8）。
-- 遗留：映射为子串匹配，领域文案变更会退化为通用提示；千分位写法被拒绝而非解析（本应用不需要该量级）。
+- 下一步：合入 `main`；之后 `TASK-017`（治理检查加固 P5–P8）。
+- 遗留：① 映射为子串匹配，领域文案变更会退化为通用提示；② 千分位与歧义写法（`1,234`、`12,345`）被拒绝而非解析，拒绝是安全方向，但界面只有按钮禁用、没有说明文案；③ `CreateHabitPresenter` 的构造参数松成了函数类型以便注入失败实现，评审建议后续改为「保留 UseCase 形参 + `FakeHabitRepository.createFailure`」，属独立重构，未在本任务内做。
 
 ## 13. Independent Review
-- Reviewer record：`project/reviews/REVIEW-TASK-018.md`（待创建）
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-018.md`（第 3 轮覆盖）
+- 审查 commit：`b5bd10f`
+- 结论：`APPROVE`（变异 A–E 全部打红正确测试；门禁 exit 0）
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-018
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 8 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (71 tests)**
