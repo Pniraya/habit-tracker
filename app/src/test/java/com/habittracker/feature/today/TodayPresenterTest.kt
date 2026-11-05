@@ -63,6 +63,23 @@ class TodayPresenterTest {
         }
 
     @Test
+    fun everyHabitCountsItsOwnDays() = runBlocking {
+        // Two habits with different histories. If a batch read mixed the rows up, both rows would
+        // report the same streak; the reviewer showed that no test noticed that (TASK-022 U4).
+        val steady = createHabit(TrackingType.BOOLEAN, "Steady", createdOn = monday.minusDays(2))
+        val fresh = createHabit(TrackingType.BOOLEAN, "Fresh", createdOn = monday.minusDays(2))
+        listOf(monday.minusDays(2), monday.minusDays(1), monday).forEach { day ->
+            RecordHabitProgressUseCase(repository)(steady, day, 1.0, now)
+        }
+        RecordHabitProgressUseCase(repository)(fresh, monday, 1.0, now)
+
+        val rows = presenter().state.value.habits.associateBy { it.id }
+
+        assertEquals(3, rows.getValue(steady).currentStreak)
+        assertEquals(1, rows.getValue(fresh).currentStreak)
+    }
+
+    @Test
     fun theWholeListLoadsInAConstantNumberOfQueries() = runBlocking {
         repeat(5) { index -> createHabit(TrackingType.BOOLEAN, "Habit " + index) }
         repository.resetReadCalls()

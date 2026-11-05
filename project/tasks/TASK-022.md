@@ -37,9 +37,15 @@
 
 ## 8. Risks and Decisions
 - 批量查询可能引入「一次取太多」的过度读取；按习惯 id 集合限制范围。
-- 计数型断言与实现细节耦合，只能断言上界，不能断言精确 SQL 条数。
+- 计数型断言与实现细节耦合。当前断言的是 **Fake 自身口径的精确值**（5 个习惯 4 次、点按 5 次），不是真实 SQL 条数：真实路径还要加上写事务内的 `findById`/`findByDate` 等未计数读取（评审估 8 次 SELECT + 1 次写）。断言改成精确值是为了让「退回逐习惯」立刻变成 20/21 而不是"仍在某个上界内"，代价是改 fake 的读取实现时要同步改数字。
+- 主线程计算：批量读本身是挂起调用，但读完之后逐习惯的 `StreakRules` 逐日推进是纯计算，跑在 `Dispatchers.Main.immediate` 上。最坏情况 20 习惯 × 3 年 ≈ 2 万次迭代，本机未实测耗时；若统计页引入更长窗口，需移到默认调度器。
 - 接口上的 4 个批量方法给了「逐习惯循环」的默认实现，这样其它实现仍能编译；但默认实现**并不解决 N+1**，所以 Room 与 Fake 都必须覆盖。Fake 的默认实现若被用到，计数会立刻从 4 跳到 20，测试会红——这是故意的绊线。
 - `GetStreakUseCase` 拆出 `fromLoaded`：加载与规则分离后，列表可以一次取完再逐习惯算，规则只有一份实现。`TodayPresenter` 因此不再需要该 use case 实例，构造参数删除。
+- **第 1 轮评审的三条阻断（已修）**：
+  1. 接口 4 个批量方法原本带「逐习惯循环」默认实现，导致 Room 漏 override 会静默复活 N+1（评审变异 U2：86 项全绿）。改为 **abstract**，漏写即编译失败——本机没有任何测试能构造 `RoomHabitRepository`，所以只能用编译期约束。
+  2. 缺「每个习惯各算各的」用例（U4 全绿）。新增 `everyHabitCountsItsOwnDays`：两个习惯历史不同，断言 3 与 1。
+  3. 文档计数不同步：`LAST_HANDOFF`（84 项、`main @ f959f02`、N+1 未修、下一步 NOT_STARTED）、`README` 的 DAO 21/21、`TEST_REPORT` 的 21 项——已全部改为 90 / 27 / 当前事实。
+- **评审非阻断项的处理**：`GetStreakUseCase.invoke` 已无生产调用方（F6），整类改为 `object` 只保留 `fromLoaded`，并补 3 项钳位测试；F4（批量读仍读全行、窗口放宽到全局最早版本）记入 `TASK-023`；F5（空列表早退不可达）保留仓库层守卫作为 Room 的 `IN ()` 防护并在此记录；F7（逐日推进在主线程）见下方风险；F8（断言用精确值）已在 §7/§8 说明计数口径是 fake 自身口径，不代表真实 SQL 条数。
 
 ## 9. Implementation Log
 - 2026-11-05：由 `TASK-021` 评审第 2 轮的技术债建议创建。
@@ -49,14 +55,16 @@
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (86 tests)** | 新增 2 项查询计数断言；既有 84 项全绿 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (90 tests)** | 新增 4 项：两个查询计数、每习惯归属、3 项钳位（合计 90） |
 | 变异 MA：`snapshot()` 退回逐习惯 `activeSchedule` | **FAILED（2 项）** | `theWholeListLoadsInAConstantNumberOfQueries`、`aTapRefreshesTheListOnce` |
 | 变异 MB：`snapshot()` 里多做一次批量读（旧重复刷新） | **FAILED（2 项）** | 同上两条，证明「只刷新一次」被断言住 |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 86、DAO 27、构建通过、`diff --check` 干净 |
+| 复评变异 U2：Room 去掉 `logsInRangeFor` override | **COMPILE FAILED**（已修后） | 接口改为 abstract 后漏 override 无法编译；修复前 86 项全绿 |
+| 复评变异 U4：`describe()` 拿到全部习惯的日志 | **FAILED（1 项）**（已修后） | `everyHabitCountsItsOwnDays` 变红；修复前全绿 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 90、DAO 27、构建通过、`diff --check` 干净 |
 
 ## 11. Completion Review
 - [x] 验收标准满足（3/3）
-- [x] 测试实际运行（86 项 + 2 组变异）
+- [x] 测试实际运行（90 项 + 4 组变异 + DAO 3 组）
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
@@ -73,5 +81,5 @@
 - 状态：`PARTIAL`
 - 阶段：Gate 3
 - 验收：通过 3 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **OK (86 tests)**
+- 最近测试记录：2026-11-05 / **OK (90 tests)**
 <!-- close-task:end -->

@@ -6,7 +6,7 @@
 - 日期时间：`2026-11-05`
 - 分支 / commit：`feat/today-queries`（`TASK-022`，基线 `main` @ `bfb3150`）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 86 项 + DAO SQL 27 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 90 项 + DAO SQL 27 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -78,11 +78,12 @@
 | 2026-11-05 | `tools/replay-governance-probes.ps1`（15 个探针） | **0 failed**；基线 22/22 | P5–P19：离线守卫 P17/P18/P19（含绕过 catalog）、`NOT_STARTED` 防规避 P16、脏树守卫 | TASK-020 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（Today 查询批量化） | **OK (86 tests)** | 新增 2 项查询计数断言：5 个习惯列表固定 4 次查询、点按固定 5 次 | TASK-022 |
 | 2026-11-05 | 变异：`snapshot()` 退回逐习惯读 / 多做一次批量读 | **FAILED（各 2 项）**（预期） | 两条计数断言同时变红；还原后 86 项全绿 | TASK-022 |
+| 2026-11-05 | `tools/run-unit-tests.ps1`（评审阻断项修复后） | **OK (90 tests)** | 新增每习惯归属与 3 项钳位；U2 变异改为编译失败、U4 变异 1 项红 | TASK-022 |
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
-- **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新（`verify-dao.mjs`，21 项）。
+- **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，27 项，含 6 项批量查询场景）——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新（`verify-dao.mjs`，21 项）。
 - **未覆盖（UI）**：Today 状态机 9 项、新建表单状态机 9 项 JVM 覆盖；Compose 渲染与交互未由 Robolectric 或设备自动化验证（手动真机走查记录见 `TASK-012` §14，非自动化）。
 - **未覆盖**：Room 的 Cursor/实体映射；TypeConverter 往返；`Flow` 失效通知；`withTransaction` 边界与并发写入；Room 由 `@Upsert`/`@Insert` **生成的** SQL（harness 验证的是同一冲突列上等价语句的语义与唯一索引存在，不能证明 Room 会选用该冲突列）。
 - 无模拟器（`HypervisorPresent=False`，无 WHPX/Hyper-V）；真机验证为手动走查，非自动化：`TASK-012`（建习惯/打卡/落库）与 `TASK-016`（小数输入 `0.5` 落库）。设备侧行级证据见 `project/reports/DEVICE_DUMP-2026-11-05.md`。
