@@ -6,7 +6,7 @@
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 2`（数据层 + Domain/Repository/UseCase；治理系统已加固并合入 `main`）
 - 当前任务：`TASK-008`（`DONE`，独立评审 `APPROVE`，已随 `feat/usecase-layer` 合入 `main`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main`（本地，无远程）；`TASK-008` 以 `--no-ff` 合入
+- 当前 Git 分支：`main` @ `d7998ad`（本地，无远程；`TASK-008` 以 `--no-ff` 合入）；合并后复跑：40 项单测通过、`assembleDebug` 21s 成功
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session

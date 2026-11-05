@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`feat/usecase-layer`（`TASK-008`，基线 `main` @ `c10f67d`）
+- 分支 / commit：`main` @ `d7998ad`（`TASK-008` 合并提交；分支 `feat/usecase-layer` 已合入）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：治理检查 `PASS`（20/20）；单测 `PASS`（40 项，`tools/run-unit-tests.ps1`）；构建 `PASS`（`assembleDebug` 38s）；schema `PASS`（40/40）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：治理检查 `PASS`（20/20）；单测 `PASS`（40 项，`tools/run-unit-tests.ps1`）；构建 `PASS`（`assembleDebug` 21s）；schema `PASS`（40/40）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
