@@ -49,19 +49,21 @@
 ## 9. Implementation Log
 - 2026-11-05：新增表单状态、Presenter、页面与路由；Today 页增加数值对话框与新建入口。
 - 2026-11-05：首次编译失败 `NewSchedule(frequency = ...)`——参数名是 `frequencyType`，已修正。
+- 2026-11-05：独立评审首轮 `REJECT`：`onTrackingTypeChange` 从数值切回布尔时未清 `unit`，而布尔下单位框隐藏 → 表单无法保存且用户无路可退（真缺陷）；另有三份文档未同步、`TEST_REPORT` 行序错乱导致 `close-task` 摘要取到 49 项。
+- 2026-11-05：修复：切换布尔时同时清空 `unit`，`draft()` 对布尔强制 `unit = null`；补回归测试 `switchingFromNumericToBooleanClearsTheUnit`；`NumericInputDialog` 本地拒绝负值（原先会关框丢输入）；`TEST_REPORT` 行序改为时间序。
 - 2026-11-05：首次测试失败：`numericHabitWithoutUnitIsRefusedByTheUseCase` 断言错误为空——查出 fake 不校验 unit，遂让 fake 与 `RoomHabitRepository` 共用 `normalizeTarget`；测试改名为 `numericHabitWithoutUnitIsRefused` 并去掉「只由 use case 拒绝」的错误声明。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (57 tests)** | 新增 `CreateHabitPresenterTest` 8 项 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (58 tests)** | 新增 `CreateHabitPresenterTest` 9 项（含"数值→布尔切换清空单位"回归） |
 | 变异：`isBlank()` → `isEmpty()` | **FAILED（1 项）** | 空名测试变红，证明本地校验被真的执行 |
 | `gradlew.bat assembleDebug` | **SUCCESSFUL**（29s） | 首次失败：`NewSchedule` 参数名错误 |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 57 项、DAO SQL 21 项、`assembleDebug` 22s、空白 0s |
 
 ## 11. Completion Review
 - [x] 验收标准全部满足（6/6）
-- [x] 相关测试实际运行（57 项 + 1 组变异）
+- [x] 相关测试实际运行（58 项 + 2 组变异）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无新依赖、无 schema 改动、无权限变更
 - [x] 文档/状态已更新
@@ -82,5 +84,5 @@
 - 状态：`PARTIAL`
 - 阶段：Gate 3
 - 验收：通过 6 项 / 未通过 0 项
-- 最近测试记录：2026-11-05 / **OK (49 tests)**
+- 最近测试记录：2026-11-05 / **OK (58 tests)**
 <!-- close-task:end -->

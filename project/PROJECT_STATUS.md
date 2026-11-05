@@ -10,7 +10,7 @@
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，UI 与设备未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 23s）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 21/21 验证 DAO 的 SQL 语义、CAS 更新与级联删除）
-- 最近验证测试：`PASS`（49 项，`tools/run-unit-tests.ps1`，在 `main` @ `f5d4dad` 上经 `verify-all` 复跑）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
+- 最近验证测试：`PASS`（58 项，`tools/run-unit-tests.ps1`，在 `feat/create-habit` @ `1f633a8` 之后的修复提交上运行）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，21 项检查；含独立评审记录与 verify-all 证据检查）
 - 最后核对时间：`2026-11-05`
 

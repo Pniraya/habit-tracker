@@ -54,13 +54,14 @@
 | 2026-11-05 | 变异：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）**（预期） | `observeActive after archive expected 1, got 2` | TASK-010 |
 | 2026-11-05 | 变异：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）**（预期） | 两条边界断言均 `got []`；还原后全绿 | TASK-010 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（Today presenter） | **OK (47 tests)** | 新增 `TodayPresenterTest` 7 项 | TASK-011 |
-| 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新建习惯） | **OK (57 tests)** | 新增 `CreateHabitPresenterTest` 8 项 | TASK-012 |
-| 2026-11-05 | 变异：`isBlank()` → `isEmpty()` | **FAILED（1 项）**（预期） | 空名测试变红；还原后 57 项全绿 | TASK-012 |
 | 2026-11-05 | 变异（复审）：`toggle` 永远写 1.0 / `describe` 忽略 schedule / 绕过 use case 直写 | **FAILED（前两项）/ 未被抓住（第三项）** | 第三项证明"负值拒绝"测试无法鉴别是否走了 use case | TASK-011 |
 | 2026-11-05 | 复审修复后 `tools/run-unit-tests.ps1` | **OK (49 tests)** | 新增"数值习惯点击不写入"与"休息日写入被 use case 拒绝"；后者只在走 use case 时成立 | TASK-011 |
 | 2026-11-05 | `gradlew.bat assembleDebug`（Today 接线） | **SUCCESSFUL**（28s） | 首次失败：`foundation.layout.weight` 为 internal import | TASK-011 |
 | 2026-11-05 | 破坏性验证（复审）：`fun` 改名 / 删 `observeRange` 注册 / 只删场景保留注册 | **FAILED（各 1-2 项）**（预期） | 改名仍打印 `checks/failed` 汇总并 exit 1；删注册触发集合守卫；只删场景暴露"覆盖率可静默削减"，已加 `MIN_CHECKS` 兜底 | TASK-010 |
 | 2026-11-05 | 变异：`findVersionsOn` 下界/上界的 `<=` 改 `<`、`fun` 改名、参数改名 | **FAILED（各 1 项）**（预期） | 上下闭区间各有可证伪断言；改名触发 `query is missing`；参数改名触发 `unbound parameters` | TASK-010 |
+| 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（新建习惯） | **OK (57 tests)** | 新增 `CreateHabitPresenterTest` 8 项 | TASK-012 |
+| 2026-11-05 | 变异：`isBlank()` → `isEmpty()` | **FAILED（1 项）**（预期） | 空名测试变红；还原后 57 项全绿 | TASK-012 |
+| 2026-11-05 | 复审修复后 `tools/run-unit-tests.ps1` | **OK (58 tests)** | 新增「数值→布尔切换清空单位」回归测试；对话框本地拒绝负值 | TASK-012 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。

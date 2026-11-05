@@ -4,39 +4,40 @@
 
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
-- 当前阶段：`Gate 3`（首个功能页已接线）
-- 当前任务：`TASK-011`（`DONE`，独立评审 `APPROVE`，已合入 `main` @ `f5d4dad`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main` @ `f5d4dad`（本地，无远程）；合并后 `verify-all` 复跑通过
+- 当前阶段：`Gate 3`（Today 与新建习惯两个页面已接真实数据）
+- 当前任务：`TASK-012`（`PARTIAL`，新建习惯页与数值输入完成；首轮独立评审 `REJECT` 已修复待复审）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`feat/create-habit`（本地，无远程）；`main` @ `cc4fba5`
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
-- `TASK-007`~`TASK-010` 全部 `DONE` 并合入 `main`：治理加固、单一验证入口 `verify-all`、DAO SQL 运行时验证
-- `TASK-011`：新增 `TodayPresenter`（纯 Kotlin 状态机）、`TodayViewModel`（薄包装 + Room 工厂）、`TodayUiState`；Today 页渲染真实数据，点击记录完成
-- 逻辑放在 Presenter 而非 ViewModel：`lifecycle-viewmodel` 只有 `.aar`，JVM 测试 classpath 无法加载
-- 首轮评审 `REJECT` 抓到真缺陷：数值习惯 `toggle()` 会写入 1.0；已修（仅 BOOLEAN 可切换，UI 禁用非 BOOLEAN 行）
-- 评审还证明"负值拒绝"测试无法鉴别是否走了 use case（两层都会拒绝）；改为"休息日写入"场景（只有 use case 会拒绝）
+- `TASK-007`~`TASK-011` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机
+- `TASK-012`：新建习惯表单（名称/类型/目标/单位/频率/自定义周几）+ Presenter + 路由；Today 页数值输入对话框与空态入口
+- 首轮评审抓到真缺陷：数值习惯填了单位再切回布尔，单位残留且字段隐藏 → 表单永远保存失败。已修（切换时清空 + `draft` 强制 `null`）并补回归测试
+- 首轮评审还发现 `TEST_REPORT` 的 Runs 行序错乱，导致 `close-task` 摘要取到过期的 49 项；已改为时间序并在末端补 58 项行
+- 发现并记录：`target`/`unit` 规则在 `RoomHabitRepository`（`HabitRules.normalizeTarget`）而非 UseCase；`FakeHabitRepository` 已对齐同一规则，规则上移留给后续任务
 
 ## Files Changed
-本任务（TASK-011）：
-- 新增：`feature/today/{TodayUiState,TodayPresenter,TodayViewModel}.kt`、`app/src/test/java/com/habittracker/feature/today/TodayPresenterTest.kt`、`project/tasks/TASK-011.md`、`project/reviews/REVIEW-TASK-011.md`
-- 修改：`feature/today/TodayScreen.kt`、`navigation/AppRoot.kt`、`README.md`、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/handoffs/LAST_HANDOFF.md`
+本任务（TASK-012）：
+- 新增：`feature/create/{CreateHabitForm,CreateHabitPresenter,CreateHabitScreen}.kt`、`app/src/test/java/com/habittracker/feature/create/CreateHabitPresenterTest.kt`、`project/tasks/TASK-012.md`、`project/reviews/REVIEW-TASK-012.md`
+- 修改：`feature/today/TodayScreen.kt`（数值对话框、空态入口）、`navigation/{AppRoot,AppRoutes}.kt`、`app/src/test/java/com/habittracker/domain/usecase/FakeHabitRepository.kt`（与生产规则对齐）、`README.md`、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/handoffs/LAST_HANDOFF.md`
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 5 步：治理 21/21、单测 47→49 项、DAO SQL 21 项、构建 20-28s、空白 0s |
-| `gradlew.bat assembleDebug` | **SUCCESSFUL** | 首次失败：`foundation.layout.weight` 为 internal import |
-| 变异：`toggle` 永远写 1.0 | **FAILED（1 项）** | 被"再切换清零"测试抓住 |
-| 变异：`describe()` 忽略 schedule | **FAILED（1 项）** | 被"休息日"测试抓住 |
-| 变异：绕过 use case 直写 -1.0 | **未被抓住** | 证明该测试无鉴别力，已替换为休息日场景 |
-| `gradlew test` | **FAILED（环境）** | 测试 worker 被沙箱禁止，不能作为通过证据 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 21/21（0 警告）、单测 57→58 项、DAO SQL 21 项、构建 21-29s、空白 0s |
+| `gradlew.bat assembleDebug` | **SUCCESSFUL**（29s） | 首次失败：`NewSchedule(frequency=...)` 参数名应为 `frequencyType` |
+| 变异：`isBlank()` → `isEmpty()` | **FAILED（1 项）** | 空名测试变红 |
+| 变异：CUSTOM mask 固定 `ALL_DAYS_MASK` | **FAILED（1 项）** | 自定义周几测试变红 |
+| 变异：删除 `save()` 本地校验 | **FAILED（4 项）** | 四条本地校验测试全红 |
+| `gradlew test` | **FAILED（环境）** | 测试 worker 被沙箱禁止 |
 
 ## Not Verified / Known Gaps
-- **UI 无自动化验证**：Compose 渲染与交互仅编译进 APK；无 Compose 测试、无 Robolectric、无设备（`HypervisorPresent=False`，`adb devices` 为空）
-- Room 的 Cursor 映射、TypeConverter 往返、Flow 失效通知、`withTransaction` 边界：仍无自动化验证
-- 数值习惯暂无输入 UI，只能通过 `record(id, value)` 写入
-- 写入后整表重建（Repository 无 habit+log 联合 Flow），习惯多时可能成为性能问题
+- **UI 无自动化验证**：Today/新建两页的状态机共有 18 项 JVM 测试；Compose 渲染与交互仅编译进 APK
+- **无设备/模拟器**：`HypervisorPresent=False`（虚拟化未启用），`adb devices` 为空；`DEVICE_VERIFIED` 全程未达成
+- Room 的 Cursor 映射、TypeConverter、Flow 通知、`withTransaction` 边界：无自动化验证
+- 表单由 `remember` 持有，旋转会丢失输入
+- `target`/`unit` 校验仍在数据层；`HabitRepository.createHabit` 的契约未在接口上声明
 
 ## Next Safe Action
-1. 下一个新任务（尚未创建）：新建习惯页面 + 数值输入 UI，复用已验收的 `CreateHabitUseCase`；这是让数值习惯真正可用的前置条件
-2. 之后：提醒调度（`ReminderScheduler`）与 `DataStore` 设置
+1. 独立复审 `REVIEW-TASK-012.md`（通过则 `DONE`、`verify-all`、合入 `main`）
+2. 之后的新任务（尚未创建）：把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase`，并在 `HabitRepository` 接口写明契约——这是 `TASK-012` 暴露的分层问题

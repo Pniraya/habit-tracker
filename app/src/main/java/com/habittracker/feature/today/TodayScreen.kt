@@ -99,7 +99,8 @@ fun TodayScreen(
 @Composable
 private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
     var text by remember(habit.id) { mutableStateOf(if (habit.actualValue > 0.0) habit.actualValue.toLong().toString() else "") }
-    val parsed = text.trim().toDoubleOrNull()
+    // Negative input is refused here so the dialog does not close and discard what was typed.
+    val parsed = text.trim().toDoubleOrNull()?.takeIf { it >= 0.0 }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(habit.name) },

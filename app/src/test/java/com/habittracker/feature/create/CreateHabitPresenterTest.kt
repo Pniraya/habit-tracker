@@ -127,6 +127,33 @@ class CreateHabitPresenterTest {
         assertNull(presenter.form.value.createdHabitId)
     }
 
+    /**
+     * Regression: filling a unit as a numeric habit and then switching to BOOLEAN used to leave the
+     * unit in the form. The unit field is hidden for BOOLEAN, so the form became unsaveable with no
+     * way for the user to fix it.
+     */
+    @Test
+    fun switchingFromNumericToBooleanClearsTheUnit() {
+        val presenter = presenter()
+        presenter.onNameChange("Water")
+        presenter.onTrackingTypeChange(TrackingType.NUMERIC)
+        presenter.onTargetValueChange("2000")
+        presenter.onUnitChange("ml")
+        assertEquals("ml", presenter.form.value.unit)
+
+        presenter.onTrackingTypeChange(TrackingType.BOOLEAN)
+        assertEquals("", presenter.form.value.unit)
+        assertEquals("", presenter.form.value.targetValue)
+
+        presenter.save()
+
+        val id = presenter.form.value.createdHabitId
+        assertNotNull(id)
+        val stored = runBlocking { repository.getHabit(id!!) }
+        assertNull(stored!!.unit)
+        assertEquals(1.0, stored.targetValue, 0.0)
+    }
+
     @Test
     fun editingTheNameClearsAPreviousError() {
         val presenter = presenter()

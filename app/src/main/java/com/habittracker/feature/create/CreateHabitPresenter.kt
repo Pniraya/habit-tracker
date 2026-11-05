@@ -32,7 +32,16 @@ class CreateHabitPresenter(
     fun onNameChange(value: String) = _form.update { it.copy(name = value, error = null) }
 
     fun onTrackingTypeChange(type: TrackingType) = _form.update {
-        it.copy(trackingType = type, error = null, targetValue = if (type == TrackingType.NUMERIC) it.targetValue else "")
+        // Switching to BOOLEAN hides the unit field, so the unit must be cleared here: otherwise the
+        // form would be unsaveable (normalizeTarget rejects a BOOLEAN with a unit) and the user
+        // would have no visible field to fix it.
+        val keepNumeric = type == TrackingType.NUMERIC
+        it.copy(
+            trackingType = type,
+            error = null,
+            targetValue = if (keepNumeric) it.targetValue else "",
+            unit = if (keepNumeric) it.unit else "",
+        )
     }
 
     fun onTargetValueChange(value: String) = _form.update { it.copy(targetValue = value, error = null) }
@@ -91,7 +100,7 @@ class CreateHabitPresenter(
         color = DEFAULT_COLOR,
         trackingType = form.trackingType,
         targetValue = if (form.trackingType == TrackingType.NUMERIC) parseTarget(form) ?: 1.0 else 1.0,
-        unit = form.unit.trim().ifBlank { null },
+        unit = if (form.trackingType == TrackingType.NUMERIC) form.unit.trim().ifBlank { null } else null,
         initialSchedule = NewSchedule(frequencyType = form.frequency, weekdayMask = maskFor(form)),
     )
 
