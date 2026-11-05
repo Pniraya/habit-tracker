@@ -340,6 +340,24 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
 if ($reviewProblems.Count -eq 0) { Add-Pass 'done tasks have review evidence' 'all post-ADR-013 DONE tasks have independent APPROVE records' }
 else { Add-Fail 'done tasks have review evidence' ($reviewProblems -join '; ') }
 
+# 21. Tasks created after ADR-014 must record a verify-all run (TASK-009 onward).
+$gateProblems = @()
+foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
+    if ($f.BaseName -notmatch '^TASK-(\d{3})$') { continue }
+    if ([int]$Matches[1] -lt 9) { continue }
+    $taskText = Get-Content -Raw -Path $f.FullName
+    # Anchor on the Verification Evidence table, not on any mention: a task that merely lists the
+    # script in its Scope must not pass this check.
+    $sections = $taskText -split '## 10\. Verification Evidence', 2
+    if ($sections.Count -lt 2) { $gateProblems += ($f.BaseName + ' has no Verification Evidence section'); continue }
+    $evidence = ($sections[1] -split "\n## ", 2)[0]
+    $row = [regex]::Match($evidence, '(?m)^\|[^\r\n]*verify-all[^\r\n]*\|').Value
+    if (-not $row) { $gateProblems += ($f.BaseName + ' has no verify-all evidence row in section 10') }
+    elseif ($row -match 'TBD|NOT_RUN') { $gateProblems += ($f.BaseName + ' verify-all evidence row is still a placeholder') }
+}
+if ($gateProblems.Count -eq 0) { Add-Pass 'verify-all evidence' 'post-ADR-014 tasks record a verify-all run' }
+else { Add-Fail 'verify-all evidence' ($gateProblems -join '; ') }
+
 # Report
 $fail = @($results | Where-Object { $_.Status -eq 'FAIL' })
 $warn = @($results | Where-Object { $_.Status -eq 'WARN' })

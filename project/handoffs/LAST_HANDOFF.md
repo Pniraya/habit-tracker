@@ -4,38 +4,45 @@
 
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
-- 当前阶段：`Gate 2`（数据层 + Domain/Repository/UseCase；治理系统已加固并合入 `main`）
-- 当前任务：`TASK-008`（`DONE`，独立评审 `APPROVE`，已随 `feat/usecase-layer` 合入 `main`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`main` @ `d7998ad`（本地，无远程；`TASK-008` 以 `--no-ff` 合入）；合并后复跑：40 项单测通过、`assembleDebug` 21s 成功
+- 当前阶段：`Gate 2`（数据层 + Domain/Repository/UseCase；治理系统已加固，新增单一验证入口）
+- 当前任务：`TASK-009`（`PARTIAL`，`tools/verify-all.ps1` 完成；首轮独立评审 `REJECT` 仅因文档未同步，已修复待复审）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`feat/verify-all-gate`（本地，无远程）；`main` @ `14eb69d`（`TASK-008` 合入后）
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
-- 治理任务 `TASK-007` 走完「实现 → 首轮 `REJECT` → 修复 → 复审 `APPROVE` → `--no-ff` 合入 `main`（`c10f67d`）」
-- Reviewer 对门禁做负向验证：`DONE` 缺记录、`INDEPENDENT`+`REJECT`、`NOT_INDEPENDENT`+`APPROVE` 均 exit 1
-- 新建分支 `feat/usecase-layer` 与 `TASK-008`：Repository 增 `activeSchedule`/`dailyLog`，新增三层 UseCase 与 13 项单测（总计 40 项）
-- 首轮独立评审 `REJECT`（`project/reviews/REVIEW-TASK-008.md`）：4 份文档未同步 + 两条测试是同义反复（fake 自己抛异常）+ 断言的是 fake 计算的状态 + arrange 混进 `@Test(expected)`
-- 修复：`FakeHabitRepository` 改为宽松（缺 id 不抛），测试改为「先 arrange → 断言异常消息 → 断言仓库实存值」，并补受控负向验证
-- `close-task.ps1` 两处缺陷修复：PowerShell 参数拼接导致 `Gate 2` 值吞掉反引号、摘要误把治理检查行当「最近测试记录」
+- 治理任务 `TASK-007` 合入 `main`（`c10f67d`）；`TASK-008` UseCase 层经「首轮 `REJECT` → 变异验证 → 复审 `APPROVE`」合入（`d7998ad`）
+- `TASK-008` 首轮评审发现两条测试是同义反复（fake 自己抛异常、断言 fake 计算的状态）；改为宽松 fake + 断言仓库实存值 + arrange 在期望之外，7 组变异验证全部变红
+- `TASK-009`：新增 `tools/verify-all.ps1`（治理 + 单测 + 构建 + 空白检查，任一步失败即非零退出），检查器扩为 21 项
+- `ADR-014` 记录该决策与用户授权来源；`AGENTS.md` §5 的建议命令改为单入口要求
+- 首轮 `verify-all` 运行即在治理步 FAIL（`ADR-014 not covered by PROJECT_STATUS`），补登记后通过——门禁当场拦住了真实遗漏
+- `TASK-009` 首轮独立评审 `REJECT`：`LAST_HANDOFF`/`TEST_REPORT` 未记录本次运行（正是本任务要防的失败），已补
 
 ## Files Changed
-- 新增：`app/src/main/java/com/habittracker/domain/usecase/{CreateHabitUseCase,RecordHabitProgressUseCase,ArchiveHabitUseCase}.kt`、`app/src/test/java/com/habittracker/domain/usecase/{FakeHabitRepository,RecordHabitProgressUseCaseTest,CreateAndArchiveHabitUseCaseTest}.kt`、`project/tasks/TASK-008.md`、`project/reviews/REVIEW-TASK-006.md`、`project/reviews/REVIEW-TASK-007.md`、`project/reviews/REVIEW-TASK-008.md`
-- 修改：`app/src/main/java/com/habittracker/domain/repository/HabitRepository.kt`、`app/src/main/java/com/habittracker/data/repository/RoomHabitRepository.kt`、`tools/close-task.ps1`、`tools/run-unit-tests.ps1`、`README.md`、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/handoffs/LAST_HANDOFF.md`
+本任务（TASK-009）：
+- 新增：`tools/verify-all.ps1`、`project/decisions/ADR-014-single-verification-entry.md`、`project/tasks/TASK-009.md`、`project/reviews/REVIEW-TASK-009.md`
+- 修改：`AGENTS.md`（§5，受保护文件，依据 `ADR-014`）、`project/tasks/TASK_TEMPLATE.md`（§10）、`tools/check-governance.ps1`（第 21 项）、`tools/close-task.ps1`、`README.md`、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/tasks/TASK-009.md`
+
+历史（本会话早前完成，不属于 TASK-009）：
+- TASK-008 产品源码：`app/src/main/java/com/habittracker/domain/{repository,usecase}/*`、`app/src/test/java/com/habittracker/domain/usecase/*`、`tools/run-unit-tests.ps1`
+- `project/tasks/TASK-008.md`、`project/reviews/REVIEW-TASK-008.md`
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/check-governance.ps1` | **20/20 PASS** | `main` 与 `feat/usecase-layer` 均通过 |
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (40 tests)** | 27 项既有 + 13 项新增 |
-| 受控负向验证：删除 `RecordHabitProgressUseCase` 归档校验 | **FAILED（1 项）** | 恢复后 40 项全绿，证明该测试可证伪 |
-| `gradlew.bat assembleDebug` | **SUCCESSFUL**（38s） | UseCase 层进入主源码集 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s（21/21）、单测 25-31s（40 项）、构建 21-24s、空白检查 0s |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | **21/21 PASS**，0 警告 | 分支与 `main` 均通过 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (40 tests)** | 27 项既有 + 13 项 UseCase |
+| 受控负向验证：删除 `RecordHabitProgressUseCase` 归档校验 | **FAILED（1 项）** | 恢复后 40 项全绿 |
+| 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）** | 还原后 21/21 PASS |
+| `gradlew.bat assembleDebug` | **SUCCESSFUL**（21-24s） | 无产品代码改动 |
 | `git diff --check` | exit 0 | 无空白错误 |
 | `gradlew test` | **FAILED（环境）** | Gradle 测试 worker 被沙箱禁止，不能作为通过证据 |
 
 ## Not Verified / Known Gaps
-- Room/DAO/事务运行时行为：无 Robolectric、无设备（`HypervisorPresent=False`），`node tools/verify-schema.mjs` 只覆盖 SQL 层
-- 迁移 v1→v2 与 `MigrationTestHelper` 测试未开始
-- DataStore、ReminderScheduler、ViewModel/Compose 页面未开始
+- Room/DAO/事务运行时行为：无 Robolectric（只能在 Gradle 测试 worker 内跑，而该 worker 被沙箱禁止）、无设备（`HypervisorPresent=False`）
+- 迁移 v1→v2 与 `MigrationTestHelper` 未开始
+- 检查器第 18/21 项验证的是"证据存在"，不验证证据新鲜度；由 Reviewer 复核
 
 ## Next Safe Action
-1. 独立复审 `REVIEW-TASK-008.md`（新会话）：通过则置 `DONE`、`close-task`、`check-governance`、提交并合入 `main`
-2. 之后的新任务（尚未创建任务文件）：Room/DAO 集成测试，Robolectric 优先；不可用则扩展 `verify-schema.mjs` 并明确标注「SQL 层覆盖、非 Room 运行时」
+1. 独立复审 `REVIEW-TASK-009.md`（通过则 `DONE`、`verify-all`、合入 `main`）
+2. 新任务：Room/DAO 运行时验证——用 `node:sqlite` 直接执行 DAO 的 SQL（复用 schema 导出与触发器），覆盖 upsert、archive 的 CAS、range 边界、级联删除；结论只能是 `PARTIAL`（不含 Room 的 Cursor 映射与 Flow 通知）

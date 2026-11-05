@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`main` @ `d7998ad`（`TASK-008` 合并提交；分支 `feat/usecase-layer` 已合入）
+- 分支 / commit：`feat/verify-all-gate`（`TASK-009`，基线 `main` @ `14eb69d`）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：治理检查 `PASS`（20/20）；单测 `PASS`（40 项，`tools/run-unit-tests.ps1`）；构建 `PASS`（`assembleDebug` 21s）；schema `PASS`（40/40）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 21/21 + 单测 40 项 + `assembleDebug` 24s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -46,6 +46,9 @@
 | 2026-11-05 | `pwsh -File tools/run-unit-tests.ps1`（UseCase 层，测试加强后） | **OK (40 tests)** | 13 项新增；断言改为校验仓库实存值，不再依赖 fake 计算的状态 | TASK-008 |
 | 2026-11-05 | 受控负向验证：删除 `RecordHabitProgressUseCase` 的归档校验后运行单测 | **FAILED，1 项失败**（预期） | 证伪 `archivedHabitsRejectWrites`：删除校验才变红 | TASK-008 |
 | 2026-11-05 | 恢复校验后复跑 `tools/run-unit-tests.ps1` | **OK (40 tests)** | 变异全部还原，`git diff --stat` 为空 | TASK-008 |
+| 2026-11-05 | `pwsh -NoProfile -File tools/verify-all.ps1`（首次运行） | **FAILED（exit 1）** | 治理步拦下 `ADR-014 not covered by PROJECT_STATUS`；单测/构建/空白三步本身通过 | TASK-009 |
+| 2026-11-05 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）**（预期） | `TASK-009 has no verify-all evidence`；还原后 21/21 PASS | TASK-009 |
+| 2026-11-05 | 补登记 ADR-014 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（7s）、单测 40 项（25s）、`assembleDebug` 21s、空白 0s | TASK-009 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。

@@ -39,9 +39,11 @@
 按日期记录关键变更，不复制冗长聊天记录。
 
 ## 10. Verification Evidence
+必须包含一行 `tools/verify-all.ps1` 的实际运行结果（`TASK-009` 起；治理检查第 21 项强制）。
+
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| TBD | NOT_RUN | TBD |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | TBD | TBD |
 
 ## 11. Completion Review
 - [ ] 验收标准全部满足
