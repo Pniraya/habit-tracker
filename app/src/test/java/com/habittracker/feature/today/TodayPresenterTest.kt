@@ -8,7 +8,6 @@ import com.habittracker.domain.model.NewSchedule
 import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.FakeHabitRepository
-import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +34,6 @@ class TodayPresenterTest {
     private fun presenter(date: LocalDate = monday): TodayPresenter = TodayPresenter(
         repository = repository,
         recordProgress = RecordHabitProgressUseCase(repository),
-        streaks = GetStreakUseCase(repository),
         scope = scope,
         today = { date },
         now = { now },
@@ -63,6 +61,33 @@ class TodayPresenterTest {
                 now,
             )
         }
+
+    @Test
+    fun theWholeListLoadsInAConstantNumberOfQueries() = runBlocking {
+        repeat(5) { index -> createHabit(TrackingType.BOOLEAN, "Habit " + index) }
+        repository.resetReadCalls()
+
+        val state = presenter().state.value
+
+        assertEquals(5, state.habits.size)
+        // Four batch queries for five habits; the per-habit version needed twenty.
+        assertEquals(4, repository.readCalls)
+    }
+
+    @Test
+    fun aTapRefreshesTheListOnce() = runBlocking {
+        val habitId = createHabit(TrackingType.BOOLEAN, "Read")
+        repeat(4) { index -> createHabit(TrackingType.BOOLEAN, "Other " + index) }
+        val presenter = presenter()
+        repository.resetReadCalls()
+
+        presenter.toggle(habitId)
+
+        assertTrue(presenter.state.value.habits.first { it.id == habitId }.isCompleted)
+        // One read in the write path (does this date have a schedule?) plus one four-query rebuild of
+        // the whole list: five, whatever the number of habits. Rebuilding per habit would be 21.
+        assertEquals(5, repository.readCalls)
+    }
 
     @Test
     fun loadsTodaysHabitsWithTheirScheduleState() {

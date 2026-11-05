@@ -113,7 +113,28 @@ function bind(sql, params) {
   const names = Array.from(sql.matchAll(/:(\w+)/g)).map((m) => m[1]);
   const unbound = names.filter((name) => !(name in params));
   if (unbound.length > 0) throw new Error("unbound parameters: " + unbound.join(", "));
-  return { positional: sql.replace(/:(\w+)/g, "?"), values: names.map((name) => params[name]) };
+  // Room expands "IN (:ids)" into one placeholder per element; mirror that here so the batch
+  // queries are exercised with the same shape Room generates.
+  const values = [];
+  let positional = "";
+  let cursor = 0;
+  const parts = Array.from(sql.matchAll(/:(\w+)/g));
+  for (const match of parts) {
+    const name = match[1];
+    const value = params[name];
+    positional += sql.slice(cursor, match.index);
+    if (Array.isArray(value)) {
+      if (value.length === 0) throw new Error("empty list bound to :" + name + " would not match Room");
+      positional += value.map(() => "?").join(", ");
+      values.push(...value);
+    } else {
+      positional += "?";
+      values.push(value);
+    }
+    cursor = match.index + match[0].length;
+  }
+  positional += sql.slice(cursor);
+  return { positional, values };
 }
 function query(sql, params) {
   const bound = bind(sql, params);
@@ -139,8 +160,18 @@ const insertReminder = db.prepare(
 ok("every expected DAO query was parsed out of the Kotlin sources", () => {
   const expected = {
     HabitDao: [habitQ, ["findById", "observeActive", "findAll", "archive", "restore"]],
-    HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange"]],
-    HabitScheduleDao: [scheduleQ, ["findVersionsOn", "findAll", "findOpenVersion", "closeVersion"]],
+    HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits"]],
+    HabitScheduleDao: [
+      scheduleQ,
+      [
+        "findVersionsOn",
+        "findAll",
+        "findOpenVersion",
+        "closeVersion",
+        "findAllForHabits",
+        "findVersionsOnForHabits",
+      ],
+    ],
   };
   const problems = [];
   const known = new Set();
@@ -164,6 +195,8 @@ insertSchedule.run(readId, "CUSTOM", 1, "2026-01-05", "2026-01-31", 10);
 // The open version is the one closeVersion targets; keep its id instead of assuming fixture order.
 const openVersionId = insertSchedule.run(readId, "DAILY", 127, "2026-02-01", null, 11).lastInsertRowid;
 insertReminder.run(readId, "08:00", 1, 10, 10);
+// A second habit with its own open version, so the batch queries are proved to span more than one id.
+insertSchedule.run(waterId, "DAILY", 127, "2026-01-02", null, 20);
 
 try {
 // --- HabitDao ---
@@ -228,6 +261,41 @@ equal("HabitScheduleDao.closeVersion reports one changed row", queryOne(schedule
 equal("HabitScheduleDao.closeVersion is a compare-and-set (second call changes nothing)", queryOne(scheduleQ.closeVersion, { id: openVersionId, until: "2026-11-05" }), 0);
 equal("HabitScheduleDao.findOpenVersion has no open version left", query(scheduleQ.findOpenVersion, { habitId: readId }).length, 0);
 
+// --- batch forms (TASK-022): one query for the whole Today list ---
+equal(
+  "HabitScheduleDao.findAllForHabits returns every version of every id",
+  query(scheduleQ.findAllForHabits, { habitIds: [readId, waterId] }).length,
+  3,
+);
+equal(
+  "HabitScheduleDao.findAllForHabits respects the id list",
+  query(scheduleQ.findAllForHabits, { habitIds: [waterId] }).map((r) => r.habit_id),
+  [waterId],
+);
+equal(
+  "HabitScheduleDao.findVersionsOnForHabits answers for each id on a date",
+  query(scheduleQ.findVersionsOnForHabits, { habitIds: [readId, waterId], date: "2026-02-01" }).length,
+  2,
+);
+equal(
+  "HabitScheduleDao.findVersionsOnForHabits skips habits with no version yet",
+  query(scheduleQ.findVersionsOnForHabits, { habitIds: [readId, waterId], date: "2026-01-01" }).length,
+  0,
+);
+insertLog.run(waterId, "2026-01-05", 500, 2000, "IN_PROGRESS", null, null, 150, 150);
+equal(
+  "HabitLogDao.findForDate spans habits and keeps only that date",
+  query(logQ.findForDate, { habitIds: [readId, waterId], date: "2026-01-05" }).length,
+  2,
+);
+equal(
+  "HabitLogDao.findRangeForHabits keeps both boundaries and filters by id",
+  query(logQ.findRangeForHabits, { habitIds: [readId, waterId], from: "2026-01-05", to: "2026-01-06" })
+    .map((r) => r.habit_id + "@" + r.log_date)
+    .sort(),
+  [readId + "@2026-01-05", readId + "@2026-01-06", waterId + "@2026-01-05"].sort(),
+);
+
 // --- cascade ---
 ok("deleting a habit cascades to schedules, logs and reminders", () => {
   db.prepare("DELETE FROM habits WHERE id = ?").run(readId);
@@ -245,7 +313,7 @@ ok("deleting a habit cascades to schedules, logs and reminders", () => {
 
 // Deleting a scenario while keeping its registration would otherwise shrink coverage silently.
 // Bump this number in the same commit that adds a scenario.
-const MIN_CHECKS = 21;
+const MIN_CHECKS = 27;
 if (checks < MIN_CHECKS) {
   failed += 1;
   console.log("FAIL  coverage shrank: " + checks + " checks executed, at least " + MIN_CHECKS + " expected");

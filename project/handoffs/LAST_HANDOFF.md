@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-022`（`NOT_STARTED`，Today 查询批量化）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
+- 当前任务：`TASK-022`（`PARTIAL`，Today 查询批量化，待独立评审）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
 - 当前 Git 分支：`main`（本地，无远程）@ `f959f02`，工作区干净；`feat/streak` 已合并、保留未删（另有 14 个历史分支同样保留）
 - 最近 commit：`f959f02 merge: TASK-021 streaks`（功能 `5707e43`/`3104352`，收尾文档 `45b7425`）
 - **会话状态：可继续**——`TASK-021` 已闭环（独立评审第 2 轮 `APPROVE`），下一条从 `TASK-022` 开始
@@ -27,7 +27,7 @@
 | 命令 | 结果 | 备注 |
 |---|---|---|
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (84 tests)** | 较上一存档 +13 项：9 项 `StreakRules` + 4 项 presenter（行内连续、`streakText`、IN_PROGRESS 不计入、多计划版本） |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 分支 `45b7425` 与合入后 `main` `f959f02` 各跑一次；治理 22/22、单测 84、DAO 21、构建 ~27s、`diff --check` 干净 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 分支 `45b7425` 与合入后 `main` `f959f02` 各跑一次；治理 22/22、单测 84、DAO 27、构建 ~27s、`diff --check` 干净 |
 | `pwsh -NoProfile -File tools/check-governance.ps1` | **22 / 22 passed，0 警告** | 收尾时先红过一次：`TASK-022` 的 `NOT_STARTED` 与 §9 日期行冲突、README/STATUS 无当前任务 id，已修 |
 | 变异 M1 `due()` 恒真 | **FAILED（2 项）** | `aDayThatWasNeverDue…`、`aScheduleChange…` |
 | 变异 M2 去「今天不算断」 | **FAILED（2 项）** | 首次跑未生效（正则未匹配），已重跑并如实记录 |

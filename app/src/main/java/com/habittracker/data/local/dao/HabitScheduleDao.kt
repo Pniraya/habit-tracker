@@ -27,6 +27,18 @@ interface HabitScheduleDao {
     @Query("SELECT * FROM habit_schedules WHERE habit_id = :habitId ORDER BY effective_from ASC")
     suspend fun findAll(habitId: Long): List<HabitScheduleEntity>
 
+    /** Batch form of [findAll]: one query for the whole Today list instead of one per habit. */
+    @Query("SELECT * FROM habit_schedules WHERE habit_id IN (:habitIds) ORDER BY habit_id ASC, effective_from ASC")
+    suspend fun findAllForHabits(habitIds: List<Long>): List<HabitScheduleEntity>
+
+    /** Batch form of [findVersionsOn]; more than one row per habit and date is a data error. */
+    @Query(
+        "SELECT * FROM habit_schedules WHERE habit_id IN (:habitIds)" +
+            " AND effective_from <= :date" +
+            " AND (effective_until IS NULL OR :date <= effective_until)",
+    )
+    suspend fun findVersionsOnForHabits(habitIds: List<Long>, date: LocalDate): List<HabitScheduleEntity>
+
     @Query("SELECT * FROM habit_schedules WHERE habit_id = :habitId AND effective_until IS NULL")
     suspend fun findOpenVersion(habitId: Long): HabitScheduleEntity?
 

@@ -53,6 +53,29 @@ interface HabitRepository {
     /** Logs of one habit in a closed date range, for streaks and later for statistics. */
     suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog>
 
+    /**
+     * Batch forms of the four per-habit reads above, for the Today list.
+     *
+     * Each one answers for every id at once so a list of 20 habits costs a constant number of
+     * queries instead of 4 per habit. Keys are habit ids; a missing key means "no row", which is
+     * why the maps do not use a nullable value type.
+     */
+    suspend fun activeSchedules(habitIds: List<Long>, date: LocalDate): Map<Long, HabitSchedule> =
+        habitIds.mapNotNull { id -> activeSchedule(id, date)?.let { id to it } }.toMap()
+
+    suspend fun dailyLogs(habitIds: List<Long>, date: LocalDate): Map<Long, DailyLog> =
+        habitIds.mapNotNull { id -> dailyLog(id, date)?.let { id to it } }.toMap()
+
+    suspend fun scheduleVersionsFor(habitIds: List<Long>): Map<Long, List<HabitSchedule>> =
+        habitIds.associateWith { id -> scheduleVersions(id) }
+
+    suspend fun logsInRangeFor(
+        habitIds: List<Long>,
+        from: LocalDate,
+        to: LocalDate,
+    ): Map<Long, List<DailyLog>> =
+        habitIds.associateWith { id -> logsInRange(id, from, to) }
+
     /** Writes the single daily row with status and completedAt computed by the domain rule. */
     suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog
 }

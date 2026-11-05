@@ -80,6 +80,40 @@ class RoomHabitRepository(private val database: HabitDatabase) : HabitRepository
     override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? =
         logDao.findByDate(habitId, date)?.toDomain()
 
+    override suspend fun activeSchedules(
+        habitIds: List<Long>,
+        date: LocalDate,
+    ): Map<Long, HabitSchedule> {
+        if (habitIds.isEmpty()) return emptyMap()
+        val rows = scheduleDao.findVersionsOnForHabits(habitIds, date)
+        val byHabit = rows.groupBy { it.habitId }
+        check(byHabit.values.all { it.size <= 1 }) { "overlapping schedule versions on " + date }
+        return byHabit.mapValues { (_, versions) -> versions.single().toDomain() }
+    }
+
+    override suspend fun dailyLogs(habitIds: List<Long>, date: LocalDate): Map<Long, DailyLog> {
+        if (habitIds.isEmpty()) return emptyMap()
+        return logDao.findForDate(habitIds, date).associate { it.habitId to it.toDomain() }
+    }
+
+    override suspend fun scheduleVersionsFor(habitIds: List<Long>): Map<Long, List<HabitSchedule>> {
+        if (habitIds.isEmpty()) return emptyMap()
+        return scheduleDao.findAllForHabits(habitIds)
+            .groupBy { it.habitId }
+            .mapValues { (_, rows) -> rows.map { it.toDomain() } }
+    }
+
+    override suspend fun logsInRangeFor(
+        habitIds: List<Long>,
+        from: LocalDate,
+        to: LocalDate,
+    ): Map<Long, List<DailyLog>> {
+        if (habitIds.isEmpty()) return emptyMap()
+        return logDao.findRangeForHabits(habitIds, from, to)
+            .groupBy { it.habitId }
+            .mapValues { (_, rows) -> rows.map { it.toDomain() } }
+    }
+
     override suspend fun archiveHabit(habitId: Long, today: LocalDate, now: Long) {
         val changed = habitDao.archive(id = habitId, archivedAt = now, archivedOn = today, updatedAt = now)
         check(changed == 1) { "habit not found or already archived" }

@@ -2,7 +2,9 @@ package com.habittracker.feature.today
 
 import com.habittracker.data.local.entity.TrackingType
 import com.habittracker.domain.calculation.ScheduleRules
+import com.habittracker.domain.model.DailyLog
 import com.habittracker.domain.model.Habit
+import com.habittracker.domain.model.HabitSchedule
 import com.habittracker.domain.repository.HabitRepository
 import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
@@ -23,7 +25,6 @@ import java.time.LocalDate
 class TodayPresenter(
     private val repository: HabitRepository,
     private val recordProgress: RecordHabitProgressUseCase,
-    private val streaks: GetStreakUseCase,
     private val scope: CoroutineScope,
     private val today: () -> LocalDate = { LocalDate.now() },
     private val now: () -> Long = { System.currentTimeMillis() },
@@ -71,21 +72,48 @@ class TodayPresenter(
         _lastError.value = null
     }
 
+    /**
+     * Four batch queries per snapshot, whatever the number of habits. It used to be four *per
+     * habit*, plus a second full rebuild after every write (TASK-022).
+     */
     private suspend fun snapshot(source: List<Habit>): TodayUiState {
         val date = today()
+        if (source.isEmpty()) return TodayUiState(date = date, habits = emptyList(), isLoading = false)
+
+        val ids = source.map { it.id }
+        val schedulesToday = repository.activeSchedules(ids, date)
+        val logsToday = repository.dailyLogs(ids, date)
+        val versions = repository.scheduleVersionsFor(ids)
+        val firstDay = versions.values.flatten().minOfOrNull { it.effectiveFrom } ?: date
+        val logsSince = repository.logsInRangeFor(ids, minOf(firstDay, date), date)
+
         return TodayUiState(
             date = date,
-            habits = source.map { habit -> describe(habit, date) },
+            habits = source.map { habit ->
+                describe(
+                    habit = habit,
+                    date = date,
+                    schedule = schedulesToday[habit.id],
+                    log = logsToday[habit.id],
+                    versions = versions[habit.id].orEmpty(),
+                    logs = logsSince[habit.id].orEmpty(),
+                )
+            },
             isLoading = false,
         )
     }
 
-    private suspend fun describe(habit: Habit, date: LocalDate): TodayHabit {
-        val schedule = repository.activeSchedule(habit.id, date)
-        val log = repository.dailyLog(habit.id, date)
+    private fun describe(
+        habit: Habit,
+        date: LocalDate,
+        schedule: HabitSchedule?,
+        log: DailyLog?,
+        versions: List<HabitSchedule>,
+        logs: List<DailyLog>,
+    ): TodayHabit {
         val scheduled = schedule != null &&
             ScheduleRules.isScheduledOn(schedule.frequencyType, schedule.weekdayMask, date)
-        val streak = streaks(habit.id, date)
+        val streak = GetStreakUseCase.fromLoaded(versions, logs, date)
         return TodayHabit(
             id = habit.id,
             name = habit.name,

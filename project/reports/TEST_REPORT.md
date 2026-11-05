@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-05`
-- 分支 / commit：`fix/error-text`（`TASK-018`，基线 `main` @ `52e89c1`）
+- 分支 / commit：`feat/today-queries`（`TASK-022`，基线 `main` @ `bfb3150`）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 84 项 + DAO SQL 21 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 86 项 + DAO SQL 27 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -50,7 +50,7 @@
 | 2026-11-05 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）**（预期） | `TASK-009 has no verify-all evidence`；还原后 21/21 PASS | TASK-009 |
 | 2026-11-05 | 补登记 ADR-014 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（7s）、单测 40 项（25s）、`assembleDebug` 21s、空白 0s | TASK-009 |
 | 2026-11-05 | 合入 `main` 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s、单测 25s、构建 23s、空白 0s；`main` 上确认 | TASK-009 |
-| 2026-11-05 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言 + `MIN_CHECKS` 覆盖率兜底（防场景被静默删除）；真实 SQLite，8 个触发器在场 | TASK-010 |
+| 2026-11-05 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 27 项断言（新增 6 项批量查询场景）+ `MIN_CHECKS` 覆盖率兜底（防场景被静默删除）；真实 SQLite，8 个触发器在场 | TASK-010 |
 | 2026-11-05 | 变异：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）**（预期） | `observeActive after archive expected 1, got 2` | TASK-010 |
 | 2026-11-05 | 变异：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）**（预期） | 两条边界断言均 `got []`；还原后全绿 | TASK-010 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（Today presenter） | **OK (47 tests)** | 新增 `TodayPresenterTest` 7 项 | TASK-011 |
@@ -76,6 +76,8 @@
 | 2026-11-05 | 变异：去掉千分位保护（评审第 2 轮） | **FAILED（1 项）** | 千分位断言变红 | TASK-018 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（连续天数） | **OK (84 tests)** | 新增 13 项；5 组变异各 2/2/1/1/1 红；第 2 轮评审 7 组变异全打红 | TASK-021 |
 | 2026-11-05 | `tools/replay-governance-probes.ps1`（15 个探针） | **0 failed**；基线 22/22 | P5–P19：离线守卫 P17/P18/P19（含绕过 catalog）、`NOT_STARTED` 防规避 P16、脏树守卫 | TASK-020 |
+| 2026-11-05 | `tools/run-unit-tests.ps1`（Today 查询批量化） | **OK (86 tests)** | 新增 2 项查询计数断言：5 个习惯列表固定 4 次查询、点按固定 5 次 | TASK-022 |
+| 2026-11-05 | 变异：`snapshot()` 退回逐习惯读 / 多做一次批量读 | **FAILED（各 2 项）**（预期） | 两条计数断言同时变红；还原后 86 项全绿 | TASK-022 |
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 
 ## Known Test Gaps
