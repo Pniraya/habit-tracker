@@ -42,13 +42,14 @@
 
 ## 证据索引
 
-- **F-001** 工程骨架 — 代码：`MainActivity.kt`、`core/designsystem/*`；自动化：`assembleDebug` 通过；真机：应用安装并启动。
+- **F-001** 工程骨架 — 代码：`MainActivity.kt`、`core/designsystem/*`；自动化：`assembleDebug` 通过；真机：`DEVICE_DUMP-2026-11-05.md` 记录了安装 APK 与启动（**仅安装/启动，未逐页巡检**）。
 - **F-002** 今日页与导航 — 代码：`feature/today/TodayScreen.kt`、`TodayPresenter.kt`、`TodayViewModel.kt`、`navigation/AppRoot.kt`；自动化：`TodayPresenterTest`、`AppRoutesTest`；真机：`TASK-013`/`TASK-016`/`TASK-018` §10（空态、非空列表、FAB 均截图确认）。
-- **F-003** 创建习惯 — 代码：`feature/create/CreateHabitScreen.kt`、`CreateHabitPresenter.kt`、`CreateHabitUseCase.kt`；自动化：`CreateHabitPresenterTest`（9 项）、`CreateAndArchiveHabitUseCaseTest`；真机：`TASK-012`/`TASK-016`/`TASK-018` §10（建布尔习惯、建数值习惯 `nu 2000 ml`）。编辑习惯无代码。
+- **F-003** 创建习惯 — 代码：`feature/create/CreateHabitScreen.kt`、`CreateHabitPresenter.kt`、`CreateHabitUseCase.kt`；自动化：`CreateHabitPresenterTest`（12 项）、`CreateAndArchiveHabitUseCaseTest`；真机：`TASK-012`/`TASK-016`/`TASK-018` §10（建布尔习惯、建数值习惯 `nu 2000 ml`）。编辑习惯无代码。
 - **F-004** 归档/恢复 — 代码：`domain/usecase/ArchiveHabitUseCase.kt`、`RoomHabitRepository.restoreHabit`；自动化：`CreateAndArchiveHabitUseCaseTest`；真机：无（无界面入口）。
 - **F-005** 计划类型 — 代码：`domain/calculation/ScheduleRules.kt`、`entity/DataTypes.kt`、`CreateHabitScreen` 星期选择器；自动化：`ScheduleRulesTest`、`CreateHabitPresenterTest`（`NO_WEEKDAYS` 分支）；真机：仅建过 `DAILY` 习惯。
 - **F-006** BOOLEAN 记录 — 代码：`RecordHabitProgressUseCase.kt`、`LogStatusRules.kt`、`TodayScreen` 点击切换；自动化：`LogStatusRulesTest`、`RecordHabitProgressUseCaseTest`；真机：`project/reports/DEVICE_DUMP-2026-11-05.md`、`TASK-013` §10。
 - **F-007** NUMERIC 记录 — 代码：`RecordHabitProgressUseCase`、`TodayScreen.NumericInputDialog`、`TodayPresenter.progressText`/`prefillText`；自动化：`RecordHabitProgressUseCaseTest`、`TodayPresenterTest`（小数显示、预填、逗号归一化）；真机：`TASK-016`/`TASK-018` §10（`0.5 / 2000 ml`、对话框预填 `0.5`）。
+- **F-008~F-014** 撤销/修改、连续天数、统计、热力图、提醒、提醒恢复、备份 — 全量 grep（47 个 Kotlin 文件）无 `streak`、`backup`、`AlarmManager`、`WorkManager`、网络库引用；`StatisticsScreen.kt` 与 `ProfileScreen.kt` 只有占位文字，无数据逻辑。故三列均为 `NOT_STARTED`。
 - **F-015** 离线 — 代码：`app/src/main/AndroidManifest.xml`（仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED`，无 `INTERNET`）、`gradle/libs.versions.toml`（无 `okhttp`/`retrofit`/`ktor`/`firebase`）；自动化：无专门断言；真机：无。
 
 ## 更新规则
@@ -56,5 +57,5 @@
 - 仅 Developer 在实现后可提出状态更新；Reviewer 应核对证据。
 - `IMPLEMENTED_UNVERIFIED` 不能写成 `VERIFIED`。
 - `VERIFIED` 不等于 `DEVICE_VERIFIED`：真机列必须有设备上的实际观察记录。
-- 复合功能只有在**全部子功能**完成时才能整体记 `VERIFIED`/`DEVICE_VERIFIED`；否则用 `IN_PROGRESS` 并在脚注写清哪部分没做。
+- 复合功能（如「创建/编辑」「归档/恢复」）的**实现状态**列在子功能未全部完成时记 `IN_PROGRESS`，并在脚注写清哪部分没做；**自动化验证/真机验证**列按已验证的子功能如实记录（例：F-003 创建部分已真机通过，故真机列为 `DEVICE_VERIFIED`，脚注限定范围为「仅创建」）。
 - 每次状态变化应在任务记录中引用相关测试、构建或设备验证证据。

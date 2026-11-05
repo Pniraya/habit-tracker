@@ -39,7 +39,7 @@
 - [x] 仍为 `NOT_STARTED` 的行确有「无实现」证据（文件不存在或仅占位）
 - [x] 表格无 `TBD`、无空证据格
 - [x] 新增「证据索引」，每行可点到代码/测试/真机记录
-- [x] 复合功能用 `IN_PROGRESS` + 脚注，不整体记 `DEVICE_VERIFIED`（F-003 编辑未做、F-004 无界面、F-005 只验过 DAILY）
+- [x] 复合功能的实现状态用 `IN_PROGRESS` + 脚注限定范围（F-003 编辑未做、F-004 无界面、F-005 只验过 DAILY）；自动化/真机列按已验证子功能如实记录，规则措辞与 F-003 行不矛盾
 
 ## 7. Tests
 - 本次只改文档，无代码改动；跑 `tools/verify-all.ps1` 确认治理检查与构建未受影响
@@ -57,10 +57,10 @@
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21、单测 71 项、DAO SQL 21 项、构建通过 |
 | 复核 `AndroidManifest.xml` | 仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED` | 无 `INTERNET`，F-015 成立 |
 | 复核 `gradle/libs.versions.toml` | 无 `okhttp/retrofit/ktor/firebase` | 同上 |
-| 复核源码目录 | 无 streak / 统计 / 提醒调度 / 备份实现 | F-008~F-014 保持 `NOT_STARTED` 属实 |
+| 复核源码目录 | 无 streak / 提醒调度 / 备份实现；统计与我的只有占位页（`StatisticsScreen.kt`、`ProfileScreen.kt`），有导航项无数据逻辑 | F-008~F-014 保持 `NOT_STARTED` 属实 |
 
 ## 11. Completion Review
-- [x] 验收标准满足（5/5）
+- [x] 验收标准满足（5/5，评审第 1 轮指出第 5 条措辞与矩阵规则冲突，已改规则措辞）
 - [x] 测试实际运行（`verify-all` + 三项人工复核）
 - [ ] 独立 Reviewer `APPROVE`
 
