@@ -92,10 +92,10 @@ class CreateAndArchiveHabitUseCaseTest {
     }
 
     @Test
-    fun theRepositoryItselfNoLongerValidates() {
-        // Structural guard: if validation moves back into the repository, this test still passes,
-        // but the fake and the real repository would drift again. The assertion documents that the
-        // fake stores whatever it is handed, so the use case is the only line of defence.
+    fun theFakeRepositoryStoresWhateverItIsGiven() {
+        // This asserts the TEST DOUBLE, not RoomHabitRepository: the fake must stay dumb so a use
+        // case that forgets to validate cannot be hidden by it. The real repository's behaviour is
+        // only covered by the database triggers (verify-schema.mjs), not by this test.
         kotlinx.coroutines.runBlocking {
             val id = repository.createHabit(numericDraft(unit = null), today, now)
             assertEquals(1, repository.createCalls)

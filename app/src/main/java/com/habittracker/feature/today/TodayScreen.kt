@@ -36,6 +36,13 @@ import androidx.compose.ui.unit.dp
 import com.habittracker.data.local.entity.TrackingType
 import java.time.format.DateTimeFormatter
 
+// Material3 FAB container is 56dp. The list has to clear the button plus the margin it sits in,
+// so the bottom padding is derived instead of being a number with no visible justification.
+private val FabMargin = 20.dp
+private val FabSize = 56.dp
+private val FabSafetyGap = 12.dp
+private val ListBottomPadding = FabSize + FabMargin + FabSafetyGap
+
 /**
  * Today list. All behaviour lives in [TodayPresenter]; this file only renders the state.
  */
@@ -82,7 +89,7 @@ fun TodayScreen(
                 else -> LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     // Leave room so the last row is not hidden behind the create button.
-                    contentPadding = PaddingValues(bottom = 88.dp),
+                    contentPadding = PaddingValues(bottom = ListBottomPadding),
                 ) {
                     items(state.habits, key = { it.id }) { habit ->
                         HabitRow(
@@ -99,7 +106,7 @@ fun TodayScreen(
         if (TodayPresenter.showsCreateAction(state)) {
             FloatingActionButton(
                 onClick = onCreate,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(FabMargin),
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "新建习惯")
             }
@@ -135,7 +142,8 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
                     onValueChange = { text = it },
                     label = { Text("实际完成") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    // Decimal, not Number: actualValue is a Double, so 0.5 L must be typeable.
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 )
             }
         },

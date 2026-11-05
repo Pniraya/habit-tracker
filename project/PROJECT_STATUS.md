@@ -5,7 +5,7 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-015`（`DONE`，第 1 轮独立评审 `APPROVE`，已合入 `main`）；`TASK-012`~`TASK-014` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-016`（`PARTIAL`，界面细节收尾，待独立评审；真机小数输入未验证）；`TASK-012`~`TASK-015` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`IMPLEMENTED_UNVERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，UI 与设备未验证）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-05，合入 `main` 后 21-23s）
