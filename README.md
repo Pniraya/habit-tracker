@@ -9,11 +9,11 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 2` — 数据层与 Domain 规则已建，设备验证未完成 |
-| 当前任务 | `TASK-009`（`DONE`，独立评审 `APPROVE`，已合入 `main`） |
+| 当前任务 | `TASK-010`（`PARTIAL`，DAO SQL 运行时验证完成，待独立评审） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
 | 最近测试 | `PASS` — 40 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
-| 最近数据层校验 | `PASS` — `node tools/verify-schema.mjs`，40/40 |
+| 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 19/19（`verify-dao.mjs`） |
 | ADR | `ADR-001`~`ADR-013` 全部 `ACCEPTED` |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
 
@@ -59,6 +59,7 @@ pwsh -NoProfile -File tools/verify-all.ps1       # 收尾统一入口：治理�
 gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
 pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：40 项通过（绕过 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
+node tools/verify-dao.mjs                        # 已验证：19/19（DAO 的 SQL 语义，不含 Room 映射）
 adb devices                                      # 当前为空：无真机、未装模拟器
 pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply
 pwsh -NoProfile -File tools/check-governance.ps1

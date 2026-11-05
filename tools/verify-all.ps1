@@ -42,6 +42,12 @@ $tests = Invoke-Step 'run-unit-tests.ps1' {
         Select-String -Pattern 'OK \(|Tests run|RESULT:' | ForEach-Object { Write-Host $_.Line }
 }
 
+$dao = Invoke-Step 'verify-dao.mjs' {
+    node (Join-Path $repoRoot 'tools/verify-dao.mjs') 2>&1 |
+        Tee-Object -FilePath (Join-Path $logDir 'verify-dao.log') |
+        Select-String -Pattern 'FAIL|checks:|RESULT:' | ForEach-Object { Write-Host $_.Line }
+}
+
 $build = Invoke-Step 'assembleDebug' {
     $gradle = if (Test-Path (Join-Path $repoRoot 'gradlew.bat')) { Join-Path $repoRoot 'gradlew.bat' } else { Join-Path $repoRoot 'gradlew' }
     & $gradle assembleDebug --console=plain --no-daemon *> (Join-Path $logDir 'verify-build.log')

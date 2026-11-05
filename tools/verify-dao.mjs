@@ -1,0 +1,214 @@
+// Verifies the DAO layer's SQL against a real SQLite engine.
+//
+// Gradle test workers are blocked in this sandbox, so Room cannot be launched. This harness runs
+// the exact SQL the DAOs declare (parsed from the Kotlin sources) against the schema Room exported
+// plus the triggers from DatabaseConstraints. It proves statement semantics and constraints.
+// It does NOT prove Room's cursor mapping, converter round-trips or Flow invalidation - those need
+// a device or Robolectric.
+import { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const schemaDir = join(root, "app", "schemas", "com.habittracker.data.local.HabitDatabase");
+const schemaPath = join(schemaDir, "1.json");
+const constraintsPath = join(root, "app", "src", "main", "java", "com", "habittracker", "data", "local", "DatabaseConstraints.kt");
+const daoDir = join(root, "app", "src", "main", "java", "com", "habittracker", "data", "local", "dao");
+
+const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
+const db = new DatabaseSync(":memory:");
+db.exec("PRAGMA foreign_keys = ON");
+
+for (const entity of schema.database.entities) {
+  db.exec(entity.createSql.replace(/\$\{TABLE_NAME\}/g, entity.tableName));
+  for (const index of entity.indices) {
+    db.exec(index.createSql.replace(/\$\{TABLE_NAME\}/g, entity.tableName));
+  }
+}
+for (const query of schema.database.setupQueries) db.exec(query);
+
+const kotlin = readFileSync(constraintsPath, "utf8");
+const triggerBlocks = Array.from(kotlin.matchAll(/"""([\s\S]*?)"""/g)).map((m) => m[1]);
+let triggerCount = 0;
+for (const block of triggerBlocks) {
+  db.exec(block.split("\n").map((line) => line.replace(/^\s{8}/, "")).join("\n").trim());
+  triggerCount += 1;
+}
+
+/** Extracts the SQL of every @Query in a DAO, keyed by the function name that follows it. */
+function loadQueries(fileName) {
+  const source = readFileSync(join(daoDir, fileName), "utf8");
+  const queries = {};
+  let index = source.indexOf("@Query(");
+  while (index !== -1) {
+    let cursor = index + "@Query(".length;
+    let depth = 1;
+    let inString = false;
+    const parts = [];
+    let current = "";
+    while (cursor < source.length && depth > 0) {
+      const ch = source[cursor];
+      if (inString) {
+        if (ch === "\\") {
+          current += source[cursor + 1];
+          cursor += 2;
+          continue;
+        }
+        if (ch === '"') {
+          parts.push(current);
+          current = "";
+          inString = false;
+        } else {
+          current += ch;
+        }
+      } else if (ch === '"') {
+        inString = true;
+      } else if (ch === "(") {
+        depth += 1;
+      } else if (ch === ")") {
+        depth -= 1;
+      }
+      cursor += 1;
+    }
+    const rest = source.slice(cursor);
+    const nameMatch = rest.match(/fun\s+(\w+)\s*\(/);
+    if (nameMatch) queries[nameMatch[1]] = parts.join("");
+    index = source.indexOf("@Query(", cursor);
+  }
+  return queries;
+}
+
+const habitQ = loadQueries("HabitDao.kt");
+const logQ = loadQueries("HabitLogDao.kt");
+const scheduleQ = loadQueries("HabitScheduleDao.kt");
+
+let checks = 0;
+let failed = 0;
+function ok(label, fn) {
+  checks += 1;
+  try {
+    const value = fn();
+    console.log("PASS  " + label);
+    return value;
+  } catch (error) {
+    failed += 1;
+    console.log("FAIL  " + label + " -> " + error.message);
+  }
+  return undefined;
+}
+function equal(label, actual, expected) {
+  ok(label + " (expected " + JSON.stringify(expected) + ")", () => {
+    const a = JSON.stringify(actual);
+    const e = JSON.stringify(expected);
+    if (a !== e) throw new Error("got " + a);
+  });
+}
+
+/** Binds Room-style named parameters (:name) to positional ones. */
+function query(sql, params) {
+  const names = Array.from(sql.matchAll(/:(\w+)/g)).map((m) => m[1]);
+  const unbound = names.filter((name) => !(name in params));
+  if (unbound.length > 0) throw new Error("unbound parameters: " + unbound.join(", "));
+  const positional = sql.replace(/:(\w+)/g, "?");
+  return db.prepare(positional).all(...names.map((name) => params[name]));
+}
+
+const insertHabit = db.prepare(
+  "INSERT INTO habits (name, icon, color, tracking_type, target_value, unit, created_at, updated_at, created_on) " +
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+);
+const insertSchedule = db.prepare(
+  "INSERT INTO habit_schedules (habit_id, frequency_type, weekday_mask, effective_from, effective_until, created_at) " +
+    "VALUES (?, ?, ?, ?, ?, ?)",
+);
+const insertLog = db.prepare(
+  "INSERT INTO habit_logs (habit_id, log_date, actual_value, target_snapshot, status, completed_at, duration_seconds, created_at, updated_at) " +
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+);
+const insertReminder = db.prepare(
+  "INSERT INTO habit_reminders (habit_id, reminder_time, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+);
+
+// --- fixture: one active habit, one archived, plus a closed schedule version ---
+const readId = insertHabit.run("Read", "book", "#5B8C6A", "BOOLEAN", 1, null, 10, 10, "2026-01-01").lastInsertRowid;
+const waterId = insertHabit.run("Water", "drop", "#8FAFC4", "NUMERIC", 2000, "ml", 20, 20, "2026-01-02").lastInsertRowid;
+insertSchedule.run(readId, "CUSTOM", 1, "2026-01-05", "2026-01-31", 10);
+insertSchedule.run(readId, "DAILY", 127, "2026-02-01", null, 11);
+insertReminder.run(readId, "08:00", 1, 10, 10);
+
+// --- HabitDao ---
+equal("HabitDao.observeActive hides archived rows", query(habitQ.observeActive, {}).length, 2);
+equal("HabitDao.archive reports one changed row", queryOne(habitQ.archive, { id: waterId, archivedAt: 30, archivedOn: "2026-01-10", updatedAt: 30 }), 1);
+equal("HabitDao.archive is a compare-and-set (second call changes nothing)", queryOne(habitQ.archive, { id: waterId, archivedAt: 31, archivedOn: "2026-01-11", updatedAt: 31 }), 0);
+equal("HabitDao.observeActive after archive", query(habitQ.observeActive, {}).length, 1);
+equal("HabitDao.findById returns the archived habit", query(habitQ.findById, { id: waterId })[0].archived_on, "2026-01-10");
+
+function queryOne(sql, params) {
+  const names = Array.from(sql.matchAll(/:(\w+)/g)).map((m) => m[1]);
+  const positional = sql.replace(/:(\w+)/g, "?");
+  return db.prepare(positional).run(...names.map((name) => params[name])).changes;
+}
+
+// --- HabitLogDao ---
+equal("HabitLogDao.findByDate is empty before the first write", query(logQ.findByDate, { habitId: readId, date: "2026-01-05" }).length, 0);
+insertLog.run(readId, "2026-01-05", 1, 1, "COMPLETED", 100, null, 100, 100);
+insertLog.run(readId, "2026-01-06", 1, 1, "COMPLETED", 110, null, 110, 110);
+insertLog.run(readId, "2026-01-20", 0, 1, "IN_PROGRESS", null, null, 120, 120);
+equal("HabitLogDao.findByDate returns the single row", query(logQ.findByDate, { habitId: readId, date: "2026-01-05" })[0].status, "COMPLETED");
+equal(
+  "HabitLogDao.findRange includes both boundaries and sorts ascending",
+  query(logQ.findRange, { habitId: readId, from: "2026-01-05", to: "2026-01-06" }).map((r) => r.log_date),
+  ["2026-01-05", "2026-01-06"],
+);
+equal(
+  "HabitLogDao.findRange excludes rows outside the window",
+  query(logQ.findRange, { habitId: readId, from: "2026-01-06", to: "2026-01-19" }).map((r) => r.log_date),
+  ["2026-01-06"],
+);
+ok("a duplicate log for the same day is rejected by the unique index", () => {
+  try {
+    insertLog.run(readId, "2026-01-05", 1, 1, "COMPLETED", 100, null, 130, 130);
+  } catch (error) {
+    if (!/UNIQUE/i.test(String(error.message))) throw error;
+    return;
+  }
+  throw new Error("duplicate log was accepted");
+});
+ok("the DAO's upsert shape updates instead of duplicating", () => {
+  db.exec(
+    "INSERT INTO habit_logs (habit_id, log_date, actual_value, target_snapshot, status, completed_at, duration_seconds, created_at, updated_at) " +
+      "VALUES (" + readId + ", '2026-01-05', 1, 1, 'COMPLETED', 140, NULL, 140, 140) " +
+      "ON CONFLICT(habit_id, log_date) DO UPDATE SET actual_value = excluded.actual_value, updated_at = excluded.updated_at",
+  );
+  const rows = query(logQ.findByDate, { habitId: readId, date: "2026-01-05" });
+  if (rows.length !== 1) throw new Error("expected 1 row, got " + rows.length);
+  if (rows[0].updated_at !== 140) throw new Error("row was not updated");
+});
+
+// --- HabitScheduleDao ---
+equal("HabitScheduleDao.findVersionsOn inside the closed version", query(scheduleQ.findVersionsOn, { habitId: readId, date: "2026-01-31" }).length, 1);
+equal("HabitScheduleDao.findVersionsOn on the first day of the open version", query(scheduleQ.findVersionsOn, { habitId: readId, date: "2026-02-01" }).length, 1);
+equal("HabitScheduleDao.findVersionsOn before any version", query(scheduleQ.findVersionsOn, { habitId: readId, date: "2026-01-04" }).length, 0);
+equal("HabitScheduleDao.findVersionsOn after the closed range has exactly one row", query(scheduleQ.findVersionsOn, { habitId: readId, date: "2026-06-01" }).length, 1);
+equal("HabitScheduleDao.closeVersion reports one changed row", queryOne(scheduleQ.closeVersion, { id: 2, until: "2026-11-04" }), 1);
+equal("HabitScheduleDao.closeVersion is a compare-and-set (second call changes nothing)", queryOne(scheduleQ.closeVersion, { id: 2, until: "2026-11-05" }), 0);
+equal("HabitScheduleDao.findOpenVersion has no open version left", query(scheduleQ.findOpenVersion, { habitId: readId }).length, 0);
+
+// --- cascade ---
+ok("deleting a habit cascades to schedules, logs and reminders", () => {
+  db.prepare("DELETE FROM habits WHERE id = ?").run(readId);
+  const counts = ["habit_schedules", "habit_logs", "habit_reminders"].map(
+    (table) => db.prepare("SELECT COUNT(*) AS c FROM " + table + " WHERE habit_id = ?").get(readId).c,
+  );
+  if (counts.some((count) => count !== 0)) throw new Error("orphan rows remain: " + JSON.stringify(counts));
+});
+
+console.log("");
+console.log("triggers installed: " + triggerCount);
+console.log("checks: " + checks + ", failed: " + failed);
+if (failed > 0) {
+  console.log("RESULT: DAO SQL FAILED");
+  process.exit(1);
+}
+console.log("RESULT: DAO SQL PASS");

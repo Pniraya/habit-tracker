@@ -50,6 +50,9 @@
 | 2026-11-05 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）**（预期） | `TASK-009 has no verify-all evidence`；还原后 21/21 PASS | TASK-009 |
 | 2026-11-05 | 补登记 ADR-014 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（7s）、单测 40 项（25s）、`assembleDebug` 21s、空白 0s | TASK-009 |
 | 2026-11-05 | 合入 `main` 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s、单测 25s、构建 23s、空白 0s；`main` 上确认 | TASK-009 |
+| 2026-11-05 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 19 项断言；解析 DAO 的 `@Query` 在真实 SQLite 上执行，8 个触发器在场 | TASK-010 |
+| 2026-11-05 | 变异：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）**（预期） | `observeActive after archive expected 1, got 2` | TASK-010 |
+| 2026-11-05 | 变异：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）**（预期） | 两条边界断言均 `got []`；还原后 19 项全绿 | TASK-010 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
