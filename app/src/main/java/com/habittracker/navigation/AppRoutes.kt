@@ -6,6 +6,7 @@ package com.habittracker.navigation
  */
 object AppRoutes {
     const val TODAY: String = "today"
+    const val CREATE_HABIT: String = "create-habit"
     const val STATISTICS: String = "statistics"
     const val PROFILE: String = "profile"
 

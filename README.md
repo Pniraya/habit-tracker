@@ -9,10 +9,10 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — 首个功能页（Today）已接线，设备验证未完成 |
-| 当前任务 | `TASK-011`（`DONE`，独立评审 `APPROVE`，已合入 `main`） |
+| 当前任务 | `TASK-012`（`PARTIAL`，新建习惯页与数值输入完成，待独立评审） |
 | 代码实现 | `IMPLEMENTED_UNVERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，38s，APK 9.4 MB |
-| 最近测试 | `PASS` — 49 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
+| 最近测试 | `PASS` — 58 项单测（`tools/run-unit-tests.ps1`）；`gradlew test` 在沙箱内不可用 |
 | 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 21/21（`verify-dao.mjs`） |
 | ADR | `ADR-001`~`ADR-014` 全部 `ACCEPTED` |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
