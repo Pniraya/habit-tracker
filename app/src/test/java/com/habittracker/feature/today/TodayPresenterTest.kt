@@ -8,6 +8,7 @@ import com.habittracker.domain.model.NewSchedule
 import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.FakeHabitRepository
+import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,12 +35,19 @@ class TodayPresenterTest {
     private fun presenter(date: LocalDate = monday): TodayPresenter = TodayPresenter(
         repository = repository,
         recordProgress = RecordHabitProgressUseCase(repository),
+        streaks = GetStreakUseCase(repository),
         scope = scope,
         today = { date },
         now = { now },
     )
 
-    private fun createHabit(trackingType: TrackingType, name: String, frequency: FrequencyType = FrequencyType.DAILY, mask: Int? = null): Long =
+    private fun createHabit(
+        trackingType: TrackingType,
+        name: String,
+        frequency: FrequencyType = FrequencyType.DAILY,
+        mask: Int? = null,
+        createdOn: LocalDate = monday,
+    ): Long =
         runBlocking {
             CreateHabitUseCase(repository)(
                 NewHabit(
@@ -51,7 +59,7 @@ class TodayPresenterTest {
                     unit = if (trackingType == TrackingType.NUMERIC) "ml" else null,
                     initialSchedule = NewSchedule(frequency, mask),
                 ),
-                monday,
+                createdOn,
                 now,
             )
         }
@@ -170,6 +178,29 @@ class TodayPresenterTest {
         assertEquals("2000 / 2000 ml", TodayPresenter.progressText(2000.0, 2000.0, "ml"))
         assertEquals("0.25 / 1.5 h", TodayPresenter.progressText(0.25, 1.5, "h"))
         assertEquals("0 / 8", TodayPresenter.progressText(0.0, 8.0, null))
+    }
+
+    @Test
+    fun theRowShowsTheStreakComputedFromCompletedDays() = runBlocking {
+        val habitId = createHabit(TrackingType.BOOLEAN, "Read", createdOn = monday.minusDays(2))
+        // Three consecutive days ending today, recorded through the real use case.
+        listOf(monday.minusDays(2), monday.minusDays(1), monday).forEach { date ->
+            RecordHabitProgressUseCase(repository)(habitId, date, 1.0, now)
+        }
+
+        val state = presenter(monday).state.value
+        val habit = state.habits.single()
+
+        assertEquals(3, habit.currentStreak)
+        assertEquals(3, habit.longestStreak)
+    }
+
+    @Test
+    fun aStreakTextStaysQuietWhenThereIsNothingToSay() {
+        assertNull(TodayPresenter.streakText(0, 0))
+        assertEquals("最长 7 天", TodayPresenter.streakText(0, 7))
+        assertEquals("连续 3 天", TodayPresenter.streakText(3, 3))
+        assertEquals("连续 3 天 · 最长 7 天", TodayPresenter.streakText(3, 7))
     }
 
     @Test

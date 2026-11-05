@@ -178,6 +178,14 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Un
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                val streak = TodayPresenter.streakText(habit.currentStreak, habit.longestStreak)
+                if (streak != null) {
+                    Text(
+                        text = streak,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             Text(
                 text = if (habit.isCompleted) "已完成" else "",

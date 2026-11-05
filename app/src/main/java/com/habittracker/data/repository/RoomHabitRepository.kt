@@ -71,6 +71,12 @@ class RoomHabitRepository(private val database: HabitDatabase) : HabitRepository
         return versions.firstOrNull()?.toDomain()
     }
 
+    override suspend fun scheduleVersions(habitId: Long): List<HabitSchedule> =
+        scheduleDao.findAll(habitId).map { it.toDomain() }
+
+    override suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog> =
+        logDao.findRange(habitId, from, to).map { it.toDomain() }
+
     override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? =
         logDao.findByDate(habitId, date)?.toDomain()
 

@@ -108,6 +108,14 @@ class FakeHabitRepository : HabitRepository {
 
     override suspend fun dailyLog(habitId: Long, date: LocalDate): DailyLog? = logs[key(habitId, date)]
 
+    override suspend fun scheduleVersions(habitId: Long): List<HabitSchedule> =
+        listOfNotNull(schedules[habitId])
+
+    override suspend fun logsInRange(habitId: Long, from: LocalDate, to: LocalDate): List<DailyLog> =
+        logs.values
+            .filter { it.habitId == habitId && !it.date.isBefore(from) && !it.date.isAfter(to) }
+            .sortedBy { it.date }
+
     override suspend fun recordDailyValue(habitId: Long, date: LocalDate, value: Double, now: Long): DailyLog {
         val habit = habits[habitId] ?: error("fake repository: habit not found")
         val existing = logs[key(habitId, date)]
