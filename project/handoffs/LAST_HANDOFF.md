@@ -16,7 +16,7 @@
 - `ADR-014` 记录该决策与用户授权来源；`AGENTS.md` §5 的建议命令改为单入口要求
 - 首轮 `verify-all` 运行即在治理步 FAIL（`ADR-014 not covered by PROJECT_STATUS`），补登记后通过——门禁当场拦住了真实遗漏
 - `TASK-009` 首轮独立评审 `REJECT`：`LAST_HANDOFF`/`TEST_REPORT` 未记录本次运行（正是本任务要防的失败），已补
-- `TASK-010`：新增 `tools/verify-dao.mjs`，从 DAO 源码解析 `@Query` 并在真实 SQLite 上执行，20 项断言覆盖 upsert 冲突形状、`archive`/`closeVersion` 的 CAS、`BETWEEN` 闭区间、版本边界查询（一天最多一个有效版本由写入器与事务保证，schema 无此约束）、级联删除
+- `TASK-010`：新增 `tools/verify-dao.mjs`，从 DAO 源码解析 `@Query` 并在真实 SQLite 上执行，21 项断言覆盖 upsert 冲突形状、`archive`/`closeVersion` 的 CAS、`BETWEEN` 闭区间、版本边界查询（一天最多一个有效版本由写入器与事务保证，schema 无此约束）、级联删除
 - 变异验证：去掉 `archived_on IS NULL` → 1 项失败；`BETWEEN` 改开区间 → 2 项失败；还原后全绿
 - `verify-all` 现为 5 步（治理 / 单测 / DAO SQL / 构建 / 空白）；检查器第 21 项已禁止占位行（`TBD`/`NOT_RUN`）通过
 
@@ -32,9 +32,9 @@
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s（21/21）、单测 25-31s（40 项）、构建 21-24s、空白检查 0s |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 5 步：治理 6-7s（21/21）、单测 21-31s（40 项）、DAO SQL 0s（21 项）、构建 19-24s、空白 0s |
 | `pwsh -NoProfile -File tools/check-governance.ps1` | **21/21 PASS**，0 警告 | 分支与 `main` 均通过；曾拦下 TASK-010 的占位证据行 |
-| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 19 项断言；变异 1/2 分别变红 1 项与 2 项 |
+| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言；变异分别变红 1 项与 2 项 |
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (40 tests)** | 27 项既有 + 13 项 UseCase |
 | 受控负向验证：删除 `RecordHabitProgressUseCase` 归档校验 | **FAILED（1 项）** | 恢复后 40 项全绿 |
 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）** | 还原后 21/21 PASS |

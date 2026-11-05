@@ -139,15 +139,22 @@ const insertReminder = db.prepare(
 ok("every expected DAO query was parsed out of the Kotlin sources", () => {
   const expected = {
     HabitDao: [habitQ, ["findById", "observeActive", "findAll", "archive", "restore"]],
-    HabitLogDao: [logQ, ["findByDate", "findRange"]],
+    HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange"]],
     HabitScheduleDao: [scheduleQ, ["findVersionsOn", "findAll", "findOpenVersion", "closeVersion"]],
   };
-  const missing = [];
+  const problems = [];
+  const known = new Set();
   for (const [name, entry] of Object.entries(expected)) {
     const [queries, functions] = entry;
-    for (const fn of functions) if (!queries[fn]) missing.push(name + "." + fn);
+    for (const fn of functions) {
+      known.add(name + "." + fn);
+      if (!queries[fn]) problems.push("not parsed: " + name + "." + fn);
+    }
+    for (const fn of Object.keys(queries)) {
+      if (!known.has(name + "." + fn)) problems.push("unexpected @Query not covered by a scenario: " + name + "." + fn);
+    }
   }
-  if (missing.length > 0) throw new Error("not parsed: " + missing.join(", "));
+  if (problems.length > 0) throw new Error(problems.join("; "));
 });
 
 // --- fixture: one active habit, one archived, plus a closed schedule version ---
@@ -158,6 +165,7 @@ insertSchedule.run(readId, "CUSTOM", 1, "2026-01-05", "2026-01-31", 10);
 const openVersionId = insertSchedule.run(readId, "DAILY", 127, "2026-02-01", null, 11).lastInsertRowid;
 insertReminder.run(readId, "08:00", 1, 10, 10);
 
+try {
 // --- HabitDao ---
 equal("HabitDao.observeActive hides archived rows", query(habitQ.observeActive, {}).length, 2);
 equal("HabitDao.archive reports one changed row", queryOne(habitQ.archive, { id: waterId, archivedAt: 30, archivedOn: "2026-01-10", updatedAt: 30 }), 1);
@@ -185,6 +193,11 @@ equal(
   "HabitLogDao.findRange excludes rows outside the window",
   query(logQ.findRange, { habitId: readId, from: "2026-01-06", to: "2026-01-19" }).map((r) => r.log_date),
   ["2026-01-06"],
+);
+equal(
+  "HabitLogDao.observeRange spans habits and keeps ascending order",
+  query(logQ.observeRange, { from: "2026-01-05", to: "2026-01-06" }).map((r) => r.log_date),
+  ["2026-01-05", "2026-01-06"],
 );
 ok("a duplicate log for the same day is rejected by the unique index", () => {
   try {
@@ -223,6 +236,12 @@ ok("deleting a habit cascades to schedules, logs and reminders", () => {
   );
   if (counts.some((count) => count !== 0)) throw new Error("orphan rows remain: " + JSON.stringify(counts));
 });
+
+} catch (error) {
+  // A parse or bind failure must still produce a summary instead of a bare stack trace.
+  failed += 1;
+  console.log("FAIL  uncaught: " + error.message);
+}
 
 console.log("");
 console.log("triggers installed: " + triggerCount);

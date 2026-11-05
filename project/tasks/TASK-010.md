@@ -46,19 +46,19 @@
 
 ## 9. Implementation Log
 - 2026-11-05：新增 `verify-dao.mjs`，用括号深度扫描解析 `@Query`，命名参数按出现顺序绑定为位置参数。
-- 2026-11-05：20 项断言全部通过（含"所有预期 @Query 均被解析"守卫）；变异 1（`observeActive` 去掉归档过滤）→ 1 项失败；变异 2（`findRange` 改开区间）→ 2 项失败；还原后全绿。
+- 2026-11-05：21 项断言全部通过（含"预期 @Query 集合与已解析集合相等"守卫）；变异 1（`observeActive` 去掉归档过滤）→ 1 项失败；变异 2（`findRange` 改开区间）→ 2 项失败；还原后全绿。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 20 项断言、8 个触发器 |
+| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 21 项断言、8 个触发器 |
 | 变异 1：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）** | `observeActive after archive expected 1, got 2` |
 | 变异 2：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）** | 两条边界断言均 `got []` |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21 项通过、单测 40 项、DAO SQL 20/20、`assembleDebug` 20s、空白 0s（另有 1 个 WARN，来自评审记录内 `TASK-011` 的引用，非本任务文件） |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21 项全部通过、0 警告；单测 40 项、DAO SQL 21/21、`assembleDebug` 20s、空白 0s |
 
 ## 11. Completion Review
 - [x] 验收标准全部满足（5/5）
-- [x] 相关测试实际运行（19 项 + 2 组变异）
+- [x] 相关测试实际运行（21 项 + 5 组变异）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：无产品代码、无依赖、无 schema 改动
 - [x] 文档/状态已更新

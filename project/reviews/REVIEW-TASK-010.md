@@ -1,105 +1,104 @@
 # REVIEW-TASK-010: 独立评审记录
 
 - 审查任务：`TASK-010`
-- 审查 commit：`16aeb1c07d21c9c22573fcf810d7b0969462ef6e`
-- 审查范围：`git diff main...HEAD`（`18360bc`..`16aeb1c`，2 个提交 `69c280e` + `16aeb1c`，7 文件 +323/−11）
+- 审查 commit：`44ff0af2641803027f6c19021d2bb74efbec4642`
+- 审查范围：`git diff main...HEAD`（`18360bc`..`44ff0af`，4 个提交 `69c280e` + `16aeb1c` + `4774f81` + `44ff0af`，8 文件 +454/−15）
 - Reviewer：独立评审 Agent（DeepSeek Harness 子会话，未参与实现）
 - 独立性：`INDEPENDENT`
 - 日期：`2026-11-05`
+- 轮次：第 3 轮（第 2 轮复审的修订版）。第 1 轮针对 `16aeb1c` 的结论为 `REJECT`（记录问题），第 2 轮针对 `44ff0af` 起初判为通过，复查检查器输出后发现残留问题，本记录为最终结论。
 
-评审时工作区：`git status --short` 空。所有变异都先备份源文件、跑完立即还原；结束时 `git status --short` 仅剩本评审文件，`git diff --check` exit 0。
+评审时工作区：`git status --short` 空（开始前）。变异均先备份 DAO 源文件、跑完立即还原；结束时工作区仅剩本评审文件，`git diff --check` exit 0。
 
 ## 1. Scope
 
 **裁决：通过。**
 
-- 改动与 TASK-010 §3/§5 一致：新增 `tools/verify-dao.mjs`、`TASK-010.md`；修改 `tools/verify-all.ps1`（第 5 步）、`TEST_REPORT.md`、`PROJECT_STATUS.md`、`LAST_HANDOFF.md`、`README.md`。
-- `git diff main...HEAD --name-status` 只有 markdown 与 `tools/`：**无 `app/**` 产品代码、无 `gradle/**`、无依赖、无 schema/迁移改动**。
-- 无顺手重构：`verify-dao.mjs` 自带约 20 行建库逻辑而非改动已通过的 `verify-schema.mjs`，改动集中在单一新步骤（理由见 TASK-010 §8）。
+- 与 TASK-010 §3/§5 一致：新增 `tools/verify-dao.mjs`、`TASK-010.md`；修改 `tools/verify-all.ps1`（第 5 步）、`TEST_REPORT.md`、`PROJECT_STATUS.md`、`LAST_HANDOFF.md`、`README.md`。
+- `git diff main...HEAD --name-status` 只有 markdown 与 `tools/`：**无 `app/**` 产品代码、无 `gradle/**`、无依赖、无 schema/迁移改动**（变异只发生在本地并已还原）。
+- 无顺手重构；`verify-schema.mjs` 未被改动。
 
 ## 2. Diff 核对
 
 **裁决：通过。**
 
-- `git diff --check`：**exit 0**；检查器「冲突标记」「no trailing whitespace」均无 FAIL。
-- `verify-all.ps1` 只插入一个 `Invoke-Step 'verify-dao.mjs'`，位置在单测之后、构建之前，日志写 `.gradle/logs/verify-dao.log`，与既有步骤同构（Tee + Select-String + `$LASTEXITCODE`）。实测汇总为 5 步，DAO 步 exit 0 / 0s。
-- 提交聚焦：`69c280e` 是 harness + 接线；`16aeb1c` 只同步文档，未混入脚本行为改动。
+- `git diff --check`：**exit 0**；无冲突标记、无行尾空白。
+- `verify-all.ps1` 单步插入在第 2、3 步之间（单测之后、构建之前），日志写 `.gradle/logs/verify-dao.log`；实测汇总为 5 步。
+- 提交聚焦：`69c280e` harness + 接线；其余三个提交只改文档，未在改文档的同时改断言。
 
 ## 3. 架构与数据
 
-**裁决：通过（含对 `@Upsert` 替身的判断）。**
+**裁决：通过。**
 
-- 不触碰 schema、实体、Converter、迁移；harness 读的是 Room 导出的 `1.json` DDL 和 `DatabaseConstraints.kt` 的触发器文本，属只读消费。
-- 触发器数量：实测 `triggers installed: 8`，与报告一致。
-- **`@Upsert` 用 `ON CONFLICT` 手写语句代替 Room 生成的 SQL**：判定为「可接受但有明确上限」，不是毫无意义，也不是等价验证。它证明了 (a) `habit_logs` 上 `(habit_id, log_date)` 唯一索引真实存在；(b) 该冲突目标上的 `DO UPDATE` 语义是更新而非重复插入。它**不能**证明 Room 对 `@Upsert` 注解生成的 SQL 一定命中这个冲突列——若注解被误写成普通 `@Insert`，本断言依然会绿。任务 §8 已把这一点写成本任务最弱的一环，判断合理。
-- 须纠正的是「写进报告」的声明：TASK-010 §8 称「已写入 `TEST_REPORT.md` Known Gaps」，但该提交没有改 `Known Test Gaps` 一节，且现存文字与结论相反（见 §5）。边界本身诚实，记录不诚实。
+- 不触碰 schema、实体、Converter、迁移；harness 只读消费 `1.json` DDL 与 `DatabaseConstraints.kt` 触发器文本。实测 `triggers installed: 8`。
+- `@Upsert` 的 `ON CONFLICT` 替身：判定为「可接受但有明确上限」——证明 `(habit_id, log_date)` 唯一索引存在、该冲突列上 `DO UPDATE` 为更新；不能证明 Room 生成的 SQL 一定选用该冲突列。该上限已写入 `TEST_REPORT.md` 的 Known Test Gaps 未覆盖项第 5 条，与 §8 一致。
 
 ## 4. 验证证据
 
-**裁决：不通过。harness 的结论可复现，但记录的数字与运行事实不符。**
-
-实测（全部为本轮亲自执行）：
+**裁决：通过（数字可复现，断言有鉴别力）。**
 
 | 命令 | 我的实测 | 与文档对照 |
 |---|---|---|
-| `node tools/verify-dao.mjs` | `triggers installed: 8`、`checks: 19, failed: 0`、`RESULT: DAO SQL PASS`，exit **0** | 19 项 / 8 触发器 **可复现** |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | `RESULT: VERIFY ALL PASS`，exit **0**；治理 7s、单测 21s（`OK (40 tests)`）、DAO 0s、构建 20s、空白 0s | 步骤与顺序一致；单测耗时 21s（文档 26s，属波动） |
-| `pwsh -NoProfile -File tools/check-governance.ps1` | `SUMMARY: 21 checks, 20 passed, 1 warnings, 0 failed` / `RESULT: OK`，exit **0**；WARN 为 `task/adr references  unwritten or misspelled: project/tasks/TASK-010.md -> TASK-011` | **文档写「治理 21/21」，实际 20 通过 + 1 警告** |
+| `node tools/verify-dao.mjs` | `triggers installed: 8`、`checks: 20, failed: 0`、`RESULT: DAO SQL PASS`，exit **0** | 20 项 / 8 触发器 **可复现** |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | `RESULT: VERIFY ALL PASS`，exit **0**；治理 7s、单测 22s（40 项）、DAO 0s、构建 19s、空白 0s | 5 步与顺序一致 |
+| `pwsh -NoProfile -File tools/check-governance.ps1` | `SUMMARY: 21 checks, 20 passed, 1 warnings, 0 failed`，exit **0**；WARN 的来源见 §5 | 见 §5 |
 | `git diff --check` | exit **0** | 一致 |
 
-- 该 WARN 由本任务的 `TASK-010.md:68`（`TASK-011` 尚未创建）触发，是 TASK-009 曾用 `2e7777b`「drop reference to an uncreated task file」专门修掉的同一类问题，本任务又引入了一次。
-- 其余数字（`assembleDebug` 20s、空白 0s、DAO 0s、40 项单测）均可复现或落在测量噪声内。
-
-### 变异验证（全部亲自执行，已还原）
+### 变异验证（本轮亲自执行，已还原）
 
 | # | 变异 | 结果 |
 |---|---|---|
-| M1 | `HabitScheduleDao.findVersionsOn` 下界 `effective_from <= :date` → `<` | `FAIL ... on the first day of the open version (expected 1) -> got 0`，1 项失败，exit **1** |
-| M2 | `HabitLogDao.findRange` 的 `BETWEEN` → 开区间 | `FAIL includes both boundaries ... -> got []`、`FAIL excludes rows outside the window ... -> got []`，**2 项失败**，exit **1**（与文档一致） |
-| M3 | 把 `fun findVersionsOn(` 改名 | `TypeError: Cannot read properties of undefined (reading 'matchAll')`，exit **1** —— 证明 SQL 确实按函数名从 Kotlin 源码解析，不是另抄一份 |
-| M4 | `findVersionsOn` 的参数 `:date` 改名为 `:day` | `Error: unbound parameters: day, day`，exit **1** —— 绑定失败会响亮失败，不会静默跳过 |
-| M5 | `HabitDao.observeActive` 去掉 `archived_on IS NULL`（改用 `WHERE 1 = 1`） | `FAIL ... observeActive after archive (expected 1) -> got 2`，1 项失败，exit **1**（与文档一致） |
-| M6 | `findVersionsOn` 上界 `:date <= effective_until` → `<` | `FAIL ... inside the closed version (expected 1) -> got 0`，1 项失败，exit **1** |
+| M1 | 把 `fun findVersionsOn(` 改名 | 新增守卫先报 `FAIL every expected DAO query was parsed out of the Kotlin sources -> not parsed: HabitScheduleDao.findVersionsOn`，随后 `Error: query is missing: the DAO function name was not found in the Kotlin source`，exit **1** |
+| M2 | `HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | `FAIL includes both boundaries ... -> got []`、`FAIL excludes rows outside the window ... -> got []`，**2 项失败**，exit **1** |
+| M3 | `findVersionsOn` 的参数 `:date` 改名 `:day` | `Error: unbound parameters: day, day`，exit **1** |
 
-结论：**断言确实有鉴别力，不是空转**。闭区间在上下两个边界各有一个可证伪的断言（M1 打中下界、M6 打中上界），`BETWEEN` 的 2 项失败与文档一致，CAS 与归档过滤也都被独立验证。还原后 `checks: 19, failed: 0`、`git status --short` 空。
+- 还原后 `checks: 20, failed: 0`、exit 0、`git status --short` 空。
+- 第 1 轮已实测的下界/上界 `<=` 改 `<`、归档过滤删除，对应代码路径本轮未变，仍有效（闭区间上下两端各有一个可证伪断言）。
+- 小结：解析、绑定、边界、CAS、级联删除都能被打红，失败信息可定位。
 
 ## 5. 文档与分支
 
-**裁决：不通过（报告未同步且与任务结论矛盾）。**
+**裁决：不通过（仅剩一处，但会持续制造警告并作出错误归因）。**
 
-已同步、核对无误：
-- `README.md:12` 当前任务 `TASK-010`；`:16` 数据层校验行含 DAO SQL 19/19；`:62` 命令行含 `node tools/verify-dao.mjs`。
-- `PROJECT_STATUS.md` 当前任务 `TASK-010`、最近验证数据层含 `verify-dao.mjs` 19/19、数据层清单加了 DAO 语句验证。
-- `LAST_HANDOFF.md` Snapshot 改为 `feat/dao-sql-verification` / `main @ 18360bc`，`Not Verified` 正确列出 Room 映射 / Converter / Flow / 事务，`Next Safe Action` 指向评审与 ViewModel。
-- `TASK-010` §10 的 19 项、8 触发器、两组变异（1 项 / 2 项）均与我的实测一致。
+已核对无误：
+- `TEST_REPORT.md` `Latest Run` 已改为 `feat/dao-sql-verification` 且结果行含 DAO SQL 20 项。
+- `Known Test Gaps` 已重写为「已覆盖 / 未覆盖」，含 Cursor 映射、TypeConverter、Flow、`withTransaction` 与并发、Room 生成的 `@Upsert`/`@Insert` SQL 及其原因。
+- TASK-010 §8 改为指向该条目的具体位置；§12 已删除未创建任务编号的引用。
+- `README.md` 当前任务、数据层行（20 项）、ADR 范围 `014`、命令列表均正确。
+- `PROJECT_STATUS.md` 与 `LAST_HANDOFF.md` 的当前任务/分支/数据层行已同步；handoff 的"一天最多一个有效版本"已改为"由写入器与事务保证，schema 无此约束"。
 
 不符合项（阻塞）：
-1. **`TEST_REPORT.md` 的 `Known Test Gaps` 仍写着「Room 事务、DAO 查询、`@Upsert` 行为没有运行时证据，需要 Robolectric 或真机」。** 本任务之后「DAO 查询」的 SQL 语义已有 19 项运行时证据，而 `@Upsert` 恰恰是被 `ON CONFLICT` 替身部分覆盖、需要写明上限的那一项。这句话与任务自身结论相反，且没有记录 upsert 替身这个最弱环节。
-2. **TASK-010 §8「已写入 `TEST_REPORT.md` Known Gaps」不成立**：该提交只往 `Runs` 追加了 3 行，`Known Test Gaps` 一字未改。验收项 5 要求「覆盖边界写入任务与**报告**」，任务文件写了、报告没写，勾选 `[x]` 与实际不符。
-3. **`TEST_REPORT.md` 的 `Latest Run` 过期**：仍是 `main` @ `7c8b074`，结果行只提治理/单测/构建/空白，不含新增的 `verify-dao` 步骤；而 `PROJECT_STATUS.md` 已宣称数据层验证包含 19/19。检查器的「test report summary matches」只比较 `Latest Run` 与最后一行是否同类，抓不到这种滞后。
-4. **TASK-010 §10 的「治理 21/21」不实**：实测 `21 checks, 20 passed, 1 warnings`，警告由本任务 §12 引用未创建的 `TASK-011` 造成。既然 `2e7777b` 已专门修过同类问题，本任务不应再引入。
+- **TASK-010 §10 的证据行自身仍写着那个未创建的任务编号**（`TASK-010.md:57`：该行括号内直接写有那个未创建任务编号的字面量（本记录不复述该编号）。检查器的引用扫描会遍历所有已跟踪的 `.md`，因此**这一行本身**就是当前唯一触发源，检查器输出也明确写着 `project/tasks/TASK-010.md -> <该编号>`。§10 括号里"非本任务文件"的归因与实测相反。
+- 我已把自己的评审记录里对该编号的引用删除（本记录不再出现该编号）。删完后重新运行检查器，警告没有消失，仓库内该编号只剩 `TASK-010.md:57` 一处（`grep -r` 全仓验证）。因此这不是评审记录造成的问题，也不是"已在 §12 修掉"就能清除的：只要这行文字保留，项目就会长期带着 1 个 WARN，`TEST_REPORT.md` `Latest Run` 里"治理 21/21"也就不成立。
 
-## 6. 结论
+## 6. 第 2 轮复审：上轮阻塞项闭合情况
+
+| 上轮阻塞项 | 本轮证据 | 状态 |
+|---|---|---|
+| Known Test Gaps 与结论矛盾 | 重写为"已覆盖 / 未覆盖"，含 `@Upsert` 生成 SQL 的上限 | **已闭合** |
+| §8「已写入 Known Gaps」不成立 | 改为指向具体条目 | **已闭合** |
+| `Latest Run` 过期 | 改为 `feat/dao-sql-verification`，含 DAO 20 项 | **已闭合** |
+| §10「治理 21/21」不实、且 WARN 来自本任务 | §12 的编号引用已删；但 §10 的解释句又把该编号写了回来，WARN 仍在 | **未闭合（见 §5）** |
+
+上轮非阻塞项落实：README ADR 范围改 `014` ✓；缺失查询报 `query is missing`、参数报 `unbound parameters` ✓；新增"所有预期 `@Query` 均被解析"守卫（20 项）✓；`closeVersion` 改用 `lastInsertRowid` ✓；handoff 的版本措辞收窄 ✓。
+
+## 7. 结论
 
 - 结论：`REJECT`
-- 判定说明：**harness 本体通过**——SQL 真从 DAO 源码解析、断言有鉴别力、绑定失败会响亮报错、失败退出码正确，TASK-010 的核心目标成立。阻塞点全部在记录诚实性：任务声称「覆盖边界已写入报告」而报告写的是相反结论；`Latest Run` 未更新；`§10` 的治理数字与实测不符并夹带一个新警告。按 `AGENTS.md` §4「不得伪造…测试结果」与 `REVIEW_CHECKLIST.md` §3/§4，这些必须先修。
+- 判定说明：**harness 与覆盖说明都已达标**，本轮唯一不通过的是 TASK-010 §10 的那句归因：它既与检查器输出相反，又因为把编号写进了自己的文档而成为警告的唯一来源，使"21/21"和"非本任务文件"两个说法同时失真。修改量是一行文字加两个计数，不涉及脚本行为。
 - 证据（本轮实际命令与退出码）：
-  - `node tools/verify-dao.mjs` → `triggers installed: 8` / `checks: 19, failed: 0` / `RESULT: DAO SQL PASS`，exit **0**
-  - `pwsh -NoProfile -File tools/verify-all.ps1` → `RESULT: VERIFY ALL PASS`，exit **0**（治理 7s、单测 21s、DAO 0s、构建 20s、空白 0s，共 5 步）
-  - `pwsh -NoProfile -File tools/check-governance.ps1` → `SUMMARY: 21 checks, 20 passed, 1 warnings, 0 failed` / `RESULT: OK`，exit **0**
+  - `node tools/verify-dao.mjs` → `checks: 20, failed: 0` / `RESULT: DAO SQL PASS`，exit **0**（8 个触发器）
+  - `pwsh -NoProfile -File tools/verify-all.ps1` → `RESULT: VERIFY ALL PASS`，exit **0**（治理 7s、单测 22s/40 项、DAO 0s/20 项、构建 19s、空白 0s，共 5 步）
+  - `pwsh -NoProfile -File tools/check-governance.ps1` → `SUMMARY: 21 checks, 20 passed, 1 warnings, 0 failed` / `RESULT: OK`，exit **0**；WARN 唯一来源 `project/tasks/TASK-010.md`
   - `git diff --check` → exit **0**
-  - 变异 M1/M2/M3/M4/M5/M6 → 全部 exit **1**，失败项分别为 1 / 2 / TypeError / unbound params / 1 / 1；还原后 19/0、exit 0、工作区为空
+  - 变异 M1/M2/M3 → 全部 exit **1**（守卫 `not parsed` + `query is missing`；2 项边界失败；`unbound parameters`），还原后 20/0
 - 需修复项：
-  1. 重写 `TEST_REPORT.md` 的 `Known Test Gaps`：明确「`verify-dao.mjs` 覆盖 SQL 语义、CAS、闭区间、唯一索引、级联删除」；「不覆盖 Room 的 Cursor 映射、TypeConverter 往返、Flow 失效通知、`withTransaction`、Room 生成的 `@Upsert` SQL（harness 用 `ON CONFLICT` 替身，只能证明唯一索引与冲突形状）」。
-  2. 更新 `TEST_REPORT.md` 的 `Latest Run` 为本次分支与本次运行（含 `verify-dao` 19/19 与治理的实际计数）。
-  3. 修正 TASK-010 §10 的「治理 21/21」为实测值；删除 §12 的 `TASK-011` 引用（或先创建任务文件），让治理回到 21/21、0 警告。
-  4. 让 §8「已写入 `TEST_REPORT.md` Known Gaps」为真（随第 1 项一起完成，或删掉该句）。
+  1. 删除 TASK-010 §10 证据行中的未创建任务编号（改成「另一处对尚未创建编号的引用」之类不带编号的描述），使检查器回到 `21 checks, 21 passed, 0 warnings`；随后 `TEST_REPORT.md` `Latest Run` 的「治理 21/21」才成立。
+  2. 顺手把两处过期计数改为 20：TASK-010 §11「（19 项 + 2 组变异）」、`LAST_HANDOFF.md` `Verification Actually Run` 表里的「19 项断言」。
 
 ### 非阻塞建议（不影响 harness 结论）
 
-1. `README.md:17` 仍写「ADR `ADR-001`~`ADR-013` 全部 `ACCEPTED`」，但 `ADR-014` 早已在 `main` 上。这是 TASK-009 合入时遗留（当时的评审也没抓到），建议一并改为 `ADR-014`。
-2. 诊断信息可以更好：M3 改名、M4 改参数名、以及任何 SQL 语法错误都会以未捕获异常中止整个脚本，没有 `FAIL` 行、没有 `checks:` 汇总（我最初一次把 `observeActive` 改成非法 SQL，只看到 `SqliteError` 与 exit 1）。建议把「查不到查询/参数绑不上」包进 `ok()`，输出 `FAIL  <查询名> -> missing/unbound`，比堆栈更可定位。
-3. `queryOne()`（`verify-dao.mjs:147`）没有 `query()` 里的 unbound 参数守卫，参数改名时会落到 `node:sqlite` 的 `TypeError: Provided value cannot be bound`；建议两个入口复用一个绑定函数。
-4. `closeVersion` 断言写死 `{ id: 2 }`，依赖 fixture 的插入顺序；建议改用 `lastInsertRowid` 一类变量，避免以后加 fixture 时静默错位。
-5. `LAST_HANDOFF.md` 说「19 项断言覆盖……每天最多一个计划版本」：schema 没有该约束，harness 证明的是「给定 fixture 下每个日期恰好命中一行」，不是「DB 会拒绝第二个重叠版本」。建议措辞收窄。
-6. `LAST_HANDOFF.md` 的 `Verification Actually Run` 未给出 `verify-dao` 的耗时与 5 步汇总，与 TASK-010 §10 的粒度不一致；下次同步时可补。
+1. 解析守卫是「预期集合 ⊆ 已解析集合」：DAO 新增 `@Query` 而没人补断言时不会提示。建议改为集合相等（或对多出的查询输出提示），让新查询无法静默漏测。
+2. 守卫 FAIL 之后仍会因未捕获的 `query is missing` 中止，没有 `checks:` 汇总（exit 1 正确、消息可读）。建议让 `query()`/`queryOne()` 在守卫未通过时返回空结果，由 `equal` 报错，使一次运行列出全部问题。
+3. `TEST_REPORT.md` `Latest Run` 建议写成「21 项检查、0 警告」，避免把"检查数"与"通过数"混成一个分数。
+4. `LAST_HANDOFF.md` 的 `Verification Actually Run` 未列出 5 步耗时与 DAO 步的 0s，粒度与 TASK-010 §10 不一致。
