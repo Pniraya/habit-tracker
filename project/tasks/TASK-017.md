@@ -1,11 +1,11 @@
 # TASK-017: 治理检查加固（P5–P9）
 
-- 状态：`PARTIAL`（检查器已加固，探针全部重放，待独立评审）
+- 状态：`DONE`（独立评审 `APPROVE` 于 `f01cfa1`）
 - 阶段：`Gate 3`
 - 优先级：`P2`
 - 依赖：`TASK-015`（被本任务加固的检查）
 - 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 堵上 `TASK-015` 评审用探针找出的四个边界：两个假阴性（可以不跑却通过）与两个假阳性（合法写法被误判）。
@@ -76,26 +76,28 @@
 | 还原后基线 | **exit 0**，21/21、0 警告 | 每次探针后 `git status --short` 只剩 `tools/check-governance.ps1` 一处改动 |
 
 ## 11. Completion Review
-- [x] 验收标准全部满足（7/7）
+- [x] 验收标准全部满足（8/8）
 - [x] 相关测试实际运行（P5–P11 七个探针 + 基线复跑）
 - [x] `git diff --check` 通过
 - [x] Diff 已审查：只改 `tools/check-governance.ps1` 两处判定逻辑
 - [x] 文档/状态已更新
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
-- 下一步：评审 `APPROVE` 后合入 `main`；之后 `TASK-020`（manifest `INTERNET` 守卫）。
-- 遗留：判定词为硬编码列表，出现新写法需同步维护。
+- 下一步：合入 `main`；之后 `TASK-020`。
+- 遗留（已写入 `TASK-020` 范围）：① 探针脚本只在 `.gradle/probes.ps1`，不入库，别人只能按 §10 重建——应移到 `tools/`；② 中文「通过」被判为无判定词（评审 P13）；③ `未运行（任务未开始）` 未锚定整格，备注原样引用会被当成最后判定行（评审 P12）；④ `NOT_STARTED` 豁免还能绕过第 18/19 项，可用「已勾选验收 / §9 有日志 / §10 有真实结果行」做部分检测。
+- 评审补充的 P12–P15 结果：P12 假阴性（备注被当成判定行）、P13 词表不含中文、P14 删 `## Runs` 标题即 FAIL、P15 证明比对锚在 Runs 而非全文。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-017.md`
+- 审查 commit：`f01cfa1`
+- 结论：`APPROVE`（P5–P11 七个探针退出码与声明一致；无阻断）
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-017
-- 状态：`PARTIAL`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 8 项 / 未通过 0 项
 - 最近测试记录：2026-11-05 / **OK (71 tests)**
