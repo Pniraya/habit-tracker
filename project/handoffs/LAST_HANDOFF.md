@@ -4,43 +4,42 @@
 
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
-- 当前阶段：`Gate 3`（Today 与新建习惯两个页面已接真实数据）
-- 当前任务：无（`TASK-012` 已 `DONE`，第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main`）；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
-- 当前 Git 分支：`feat/create-habit`（本地，无远程）；`main` @ `cc4fba5`
+- 当前阶段：`Gate 3`（Today 与新建习惯两页接真实数据，主路径已在真机走通）
+- 当前任务：`TASK-013`（`PARTIAL`，今日页新建入口，待独立评审）；`TASK-012` 已 `DONE` 合入 `main` @ `62199e9`；`TASK-003`/`TASK-004`/`TASK-005` 为 `PARTIAL`，已在 `PROJECT_STATUS.md` 的「在册例外」登记
+- 当前 Git 分支：`fix/today-create-entry`（本地，无远程）；`main` @ `d016442`
 - 最近 commit：以 `git log -1 --oneline` 为准；基线检查点 `d0f470a`
 
 ## Completed This Session
-- `TASK-007`~`TASK-011` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机
-- `TASK-012`：新建习惯表单（名称/类型/目标/单位/频率/自定义周几）+ Presenter + 路由；Today 页数值输入对话框与空态入口
-- 三轮评审：第 1 轮 `REJECT`（unit 状态泄漏真缺陷 + 三份文档未同步）、第 2 轮 `REJECT`（仅计数不一致）、第 3 轮 `APPROVE`
-- 首轮评审抓到真缺陷：数值习惯填了单位再切回布尔，单位残留且字段隐藏 → 表单永远保存失败。已修（切换时清空 + `draft` 强制 `null`）并补回归测试
-- 首轮评审还发现 `TEST_REPORT` 的 Runs 行序错乱，导致 `close-task` 摘要取到过期的 49 项；已改为时间序并在末端补 58 项行
-- 发现并记录：`target`/`unit` 规则在 `RoomHabitRepository`（`HabitRules.normalizeTarget`）而非 UseCase；`FakeHabitRepository` 已对齐同一规则，规则上移留给后续任务
+- `TASK-007`~`TASK-012` 全部 `DONE` 合入 `main`：治理加固、`verify-all` 单一入口、DAO SQL 验证、Today 页状态机、新建习惯页
+- `TASK-012` 三轮评审：第 1 轮 `REJECT`（unit 状态泄漏真缺陷 + 三份文档未同步）、第 2 轮 `REJECT`（仅计数不一致）、第 3 轮 `APPROVE`
+- 真机首次接入：`iQOO Neo7 SE`（`V2238A`，Android 15），走通「建习惯 → 今日出现 → 打卡 → 落库」，行级证据在 `project/reports/DEVICE_DUMP-2026-11-05.md`；读库后执行过 `adb shell pm clear`，故该 dump 是唯一行级证据
+- `TASK-013`：Today 页非空时显示 `+` 浮动按钮（空态仍用原按钮），判断规则上移到 `TodayPresenter.showsCreateAction` 并加单测；数值输入框改数字键盘；真机验证可建第 2 个习惯
+- 发现并记录：`target`/`unit` 规则在 `RoomHabitRepository`（`HabitRules.normalizeTarget`）而非 UseCase；`FakeHabitRepository` 已对齐同一规则，规则上移留给 `TASK-014`
 
 ## Files Changed
-本任务（TASK-012）：
-- 新增：`feature/create/{CreateHabitForm,CreateHabitPresenter,CreateHabitScreen}.kt`、`app/src/test/java/com/habittracker/feature/create/CreateHabitPresenterTest.kt`、`project/tasks/TASK-012.md`、`project/reviews/REVIEW-TASK-012.md`
-- 修改：`feature/today/TodayScreen.kt`（数值对话框、空态入口）、`navigation/{AppRoot,AppRoutes}.kt`、`app/src/test/java/com/habittracker/domain/usecase/FakeHabitRepository.kt`（与生产规则对齐）、`README.md`、`project/PROJECT_STATUS.md`、`project/reports/TEST_REPORT.md`、`project/handoffs/LAST_HANDOFF.md`
+`TASK-013`：
+- 修改：`feature/today/TodayScreen.kt`（`Box` + FAB、列表底部 padding、数字键盘）、`feature/today/TodayPresenter.kt`（`showsCreateAction`）、`TodayPresenterTest.kt`（+1 项）
+- 新增：`project/tasks/TASK-013.md`；状态文档（`README.md`、`PROJECT_STATUS.md`、`TEST_REPORT.md`、本文件）
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 21/21（0 警告）、单测 57→58 项、DAO SQL 21 项、构建 21-29s、空白 0s |
-| `gradlew.bat assembleDebug` | **SUCCESSFUL**（29s） | 首次失败：`NewSchedule(frequency=...)` 参数名应为 `frequencyType` |
-| 变异：`isBlank()` → `isEmpty()` | **FAILED（1 项）** | 空名测试变红 |
-| 变异：CUSTOM mask 固定 `ALL_DAYS_MASK` | **FAILED（1 项）** | 自定义周几测试变红 |
-| 变异：删除 `save()` 本地校验 | **FAILED（4 项）** | 四条本地校验测试全红 |
-| `gradlew test` | **FAILED（环境）** | 测试 worker 被沙箱禁止 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (59 tests)** | 新增今日页新建入口规则测试 |
+| 变异：`showsCreateAction` 去掉 `!state.isLoading &&` | **FAILED（1 项）** | 加载态断言变红；还原后全绿 |
+| `gradlew.bat assembleDebug` | **SUCCESSFUL**（43s） | 缺 `PaddingValues`/`KeyboardOptions` 导入，已补 |
+| 真机走查 | **通过** | 建 1 项 → `+` 出现 → 进新建页 → 建第 2 项 → 列表 2 行 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | 见任务 §10 | 合入前在分支上运行 |
 
 ## Not Verified / Known Gaps
-- **UI 无自动化验证**：Today/新建两页的状态机共有 18 项 JVM 测试；Compose 渲染与交互仅编译进 APK
-- **无设备/模拟器**：`HypervisorPresent=False`（虚拟化未启用），`adb devices` 为空；`DEVICE_VERIFIED` 全程未达成
-- Room 的 Cursor 映射、TypeConverter、Flow 通知、`withTransaction` 边界：无自动化验证
+- **UI 无自动化测试**：Compose 渲染与交互仅由真机手动走查覆盖（截图在 `.gradle/shots/`，不入库）
+- **数值输入对话框未在真机走通**：`adb shell input` 在中文输入法下丢字符，无法稳定填表
+- Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：无自动化验证
 - 表单由 `remember` 持有，旋转会丢失输入
-- `target`/`unit` 校验仍在数据层；`HabitRepository.createHabit` 的契约未在接口上声明
+- 统计页、我的页仍为占位
+- `check-governance` 第 15/21 项不比对 `OK (N tests)` 的计数，`TASK-012` 出现过「Latest Run 57 / 末行 58」仍过检的盲区
 
 ## Next Safe Action
-1. **TASK-013（P0，任务文件待建）**：Today 页有习惯后没有新建入口（只有空态有按钮），用户无法添加第二个习惯。修法：非空态也给出入口（顶栏 + 或 FAB），并补 Presenter 测试。
-2. **TASK-014（P1，任务文件待建）**：把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase`，并在 `HabitRepository` 接口写明契约——`TASK-012` 暴露的分层问题（仓库层校验，换实现必漏）。
-3. **TASK-015（P2，任务文件待建）**：`check-governance` 第 15 项只比对日期与 `PASS`/`FAILED` 字样、不比对 `OK (N tests)` 的 N，导致「Latest Run 57 / 末行 58」这类不一致能过检；第 21 项只查是否存在 verify-all 行、不查计数。补计数一致性检查。
-4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度（`ReminderScheduler` + DataStore）。
+1. 独立评审 `TASK-013`（通过则 `DONE`、`verify-all`、合入 `main`）
+2. **TASK-014（P1）**：把 `validateName`/`normalizeTarget` 上移到 `CreateHabitUseCase`，并在 `HabitRepository` 接口写明契约
+3. **TASK-015（P2）**：给 `check-governance` 增加「`OK (N tests)` 计数一致」检查
+4. 之后：图标/颜色选择器、习惯编辑与删除、提醒调度
