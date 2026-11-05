@@ -106,12 +106,18 @@ function equal(label, actual, expected) {
 }
 
 /** Binds Room-style named parameters (:name) to positional ones. */
-function query(sql, params) {
+function bind(sql, params) {
+  if (typeof sql !== "string" || sql.length === 0) {
+    throw new Error("query is missing: the DAO function name was not found in the Kotlin source");
+  }
   const names = Array.from(sql.matchAll(/:(\w+)/g)).map((m) => m[1]);
   const unbound = names.filter((name) => !(name in params));
   if (unbound.length > 0) throw new Error("unbound parameters: " + unbound.join(", "));
-  const positional = sql.replace(/:(\w+)/g, "?");
-  return db.prepare(positional).all(...names.map((name) => params[name]));
+  return { positional: sql.replace(/:(\w+)/g, "?"), values: names.map((name) => params[name]) };
+}
+function query(sql, params) {
+  const bound = bind(sql, params);
+  return db.prepare(bound.positional).all(...bound.values);
 }
 
 const insertHabit = db.prepare(
@@ -130,11 +136,26 @@ const insertReminder = db.prepare(
   "INSERT INTO habit_reminders (habit_id, reminder_time, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
 );
 
+ok("every expected DAO query was parsed out of the Kotlin sources", () => {
+  const expected = {
+    HabitDao: [habitQ, ["findById", "observeActive", "findAll", "archive", "restore"]],
+    HabitLogDao: [logQ, ["findByDate", "findRange"]],
+    HabitScheduleDao: [scheduleQ, ["findVersionsOn", "findAll", "findOpenVersion", "closeVersion"]],
+  };
+  const missing = [];
+  for (const [name, entry] of Object.entries(expected)) {
+    const [queries, functions] = entry;
+    for (const fn of functions) if (!queries[fn]) missing.push(name + "." + fn);
+  }
+  if (missing.length > 0) throw new Error("not parsed: " + missing.join(", "));
+});
+
 // --- fixture: one active habit, one archived, plus a closed schedule version ---
 const readId = insertHabit.run("Read", "book", "#5B8C6A", "BOOLEAN", 1, null, 10, 10, "2026-01-01").lastInsertRowid;
 const waterId = insertHabit.run("Water", "drop", "#8FAFC4", "NUMERIC", 2000, "ml", 20, 20, "2026-01-02").lastInsertRowid;
 insertSchedule.run(readId, "CUSTOM", 1, "2026-01-05", "2026-01-31", 10);
-insertSchedule.run(readId, "DAILY", 127, "2026-02-01", null, 11);
+// The open version is the one closeVersion targets; keep its id instead of assuming fixture order.
+const openVersionId = insertSchedule.run(readId, "DAILY", 127, "2026-02-01", null, 11).lastInsertRowid;
 insertReminder.run(readId, "08:00", 1, 10, 10);
 
 // --- HabitDao ---
@@ -145,9 +166,8 @@ equal("HabitDao.observeActive after archive", query(habitQ.observeActive, {}).le
 equal("HabitDao.findById returns the archived habit", query(habitQ.findById, { id: waterId })[0].archived_on, "2026-01-10");
 
 function queryOne(sql, params) {
-  const names = Array.from(sql.matchAll(/:(\w+)/g)).map((m) => m[1]);
-  const positional = sql.replace(/:(\w+)/g, "?");
-  return db.prepare(positional).run(...names.map((name) => params[name])).changes;
+  const bound = bind(sql, params);
+  return db.prepare(bound.positional).run(...bound.values).changes;
 }
 
 // --- HabitLogDao ---
@@ -191,8 +211,8 @@ equal("HabitScheduleDao.findVersionsOn inside the closed version", query(schedul
 equal("HabitScheduleDao.findVersionsOn on the first day of the open version", query(scheduleQ.findVersionsOn, { habitId: readId, date: "2026-02-01" }).length, 1);
 equal("HabitScheduleDao.findVersionsOn before any version", query(scheduleQ.findVersionsOn, { habitId: readId, date: "2026-01-04" }).length, 0);
 equal("HabitScheduleDao.findVersionsOn after the closed range has exactly one row", query(scheduleQ.findVersionsOn, { habitId: readId, date: "2026-06-01" }).length, 1);
-equal("HabitScheduleDao.closeVersion reports one changed row", queryOne(scheduleQ.closeVersion, { id: 2, until: "2026-11-04" }), 1);
-equal("HabitScheduleDao.closeVersion is a compare-and-set (second call changes nothing)", queryOne(scheduleQ.closeVersion, { id: 2, until: "2026-11-05" }), 0);
+equal("HabitScheduleDao.closeVersion reports one changed row", queryOne(scheduleQ.closeVersion, { id: openVersionId, until: "2026-11-04" }), 1);
+equal("HabitScheduleDao.closeVersion is a compare-and-set (second call changes nothing)", queryOne(scheduleQ.closeVersion, { id: openVersionId, until: "2026-11-05" }), 0);
 equal("HabitScheduleDao.findOpenVersion has no open version left", query(scheduleQ.findOpenVersion, { habitId: readId }).length, 0);
 
 // --- cascade ---

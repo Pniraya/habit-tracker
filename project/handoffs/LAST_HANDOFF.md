@@ -16,7 +16,7 @@
 - `ADR-014` 记录该决策与用户授权来源；`AGENTS.md` §5 的建议命令改为单入口要求
 - 首轮 `verify-all` 运行即在治理步 FAIL（`ADR-014 not covered by PROJECT_STATUS`），补登记后通过——门禁当场拦住了真实遗漏
 - `TASK-009` 首轮独立评审 `REJECT`：`LAST_HANDOFF`/`TEST_REPORT` 未记录本次运行（正是本任务要防的失败），已补
-- `TASK-010`：新增 `tools/verify-dao.mjs`，从 DAO 源码解析 `@Query` 并在真实 SQLite 上执行，19 项断言覆盖 upsert 冲突形状、`archive`/`closeVersion` 的 CAS、`BETWEEN` 闭区间、每天最多一个计划版本、级联删除
+- `TASK-010`：新增 `tools/verify-dao.mjs`，从 DAO 源码解析 `@Query` 并在真实 SQLite 上执行，20 项断言覆盖 upsert 冲突形状、`archive`/`closeVersion` 的 CAS、`BETWEEN` 闭区间、版本边界查询（一天最多一个有效版本由写入器与事务保证，schema 无此约束）、级联删除
 - 变异验证：去掉 `archived_on IS NULL` → 1 项失败；`BETWEEN` 改开区间 → 2 项失败；还原后全绿
 - `verify-all` 现为 5 步（治理 / 单测 / DAO SQL / 构建 / 空白）；检查器第 21 项已禁止占位行（`TBD`/`NOT_RUN`）通过
 

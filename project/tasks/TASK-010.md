@@ -42,19 +42,19 @@
 ## 8. Risks and Decisions
 - 复制了 `verify-schema.mjs` 的建库逻辑（约 20 行）而没有抽取共享模块：避免改动一个已 40/40 通过的脚本；后续若出现第三处再抽。
 - 解析器只处理 `@Query` 的字符串拼接，不处理运行期拼接的 SQL（DAO 中不存在）。
-- `@Upsert` 的 SQL 由 Room 生成，harness 无法直接取得，因此验证的是"该冲突列上 Room 会生成的 upsert 形状"以及唯一索引确实存在——这是本任务最弱的一环，已写入 `TEST_REPORT.md` Known Gaps。
+- `@Upsert` 的 SQL 由 Room 生成，harness 无法直接取得，因此验证的是"该冲突列上等价 upsert 语句的行为"以及唯一索引确实存在——这是本任务最弱的一环，其上限已写入 `TEST_REPORT.md` 的 Known Test Gaps（未覆盖项第 5 条）。
 
 ## 9. Implementation Log
 - 2026-11-05：新增 `verify-dao.mjs`，用括号深度扫描解析 `@Query`，命名参数按出现顺序绑定为位置参数。
-- 2026-11-05：19 项断言全部通过；变异 1（`observeActive` 去掉归档过滤）→ 1 项失败；变异 2（`findRange` 改开区间）→ 2 项失败；还原后全绿。
+- 2026-11-05：20 项断言全部通过（含"所有预期 @Query 均被解析"守卫）；变异 1（`observeActive` 去掉归档过滤）→ 1 项失败；变异 2（`findRange` 改开区间）→ 2 项失败；还原后全绿。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 19 项断言、8 个触发器 |
+| `node tools/verify-dao.mjs` | **DAO SQL PASS** | 20 项断言、8 个触发器 |
 | 变异 1：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）** | `observeActive after archive expected 1, got 2` |
 | 变异 2：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）** | 两条边界断言均 `got []` |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（7s）、单测 40 项（26s）、DAO SQL 19/19（0s）、`assembleDebug` 20s、空白 0s |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（0 警告）、单测 40 项、DAO SQL 20/20、`assembleDebug` 20s、空白 0s |
 
 ## 11. Completion Review
 - [x] 验收标准全部满足（5/5）
@@ -65,7 +65,7 @@
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
-- 下一步：评审后合入 `main`；随后可开始 ViewModel 层（`TASK-011`，任务文件尚未创建）。
+- 下一步：评审后合入 `main`；随后开始 ViewModel 层（任务文件尚未创建）。
 - 遗留：Room 映射与 Flow 通知仍无自动化验证。
 
 ## 13. Independent Review
