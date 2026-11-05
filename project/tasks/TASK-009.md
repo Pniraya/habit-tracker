@@ -63,7 +63,7 @@
 - [ ] 独立 Reviewer `APPROVE`
 
 ## 12. Handoff
-- 下一步：独立复审后合入 `main`；随后 `TASK-010` 做 Room/DAO 集成测试。
+- 下一步：独立复审后合入 `main`；随后开新任务做 Room/DAO 集成测试（任务文件尚未创建）。
 
 ## 13. Independent Review
 - Reviewer record：`project/reviews/REVIEW-TASK-009.md`
