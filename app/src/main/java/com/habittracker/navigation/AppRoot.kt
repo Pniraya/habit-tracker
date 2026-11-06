@@ -1,11 +1,17 @@
 package com.habittracker.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +44,10 @@ import com.habittracker.feature.today.TodayPresenter
 import com.habittracker.feature.today.TodayScreen
 import com.habittracker.feature.today.TodayViewModel
 
+private val NavSelected = Color(0xFF3F6B4D)
+private val NavPill = Color(0xFFE4EDE6)
+private val NavMuted = Color(0xFF6F6A61)
+
 @Composable
 fun AppRoot() {
     val navController = rememberNavController()
@@ -46,7 +56,12 @@ fun AppRoot() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            // Palette from orgins/统计-html: a white bar with a soft green pill behind the
+            // selected item, instead of Material's default tinted surface.
+            NavigationBar(
+                containerColor = Color(0xFFFFFFFF),
+                tonalElevation = 0.dp,
+            ) {
                 AppDestination.entries.forEach { destination ->
                     NavigationBarItem(
                         selected = currentRoute == destination.route,
@@ -59,6 +74,13 @@ fun AppRoot() {
                         },
                         icon = { Icon(destination.icon, contentDescription = destination.label) },
                         label = { Text(destination.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = NavSelected,
+                            selectedTextColor = NavSelected,
+                            indicatorColor = NavPill,
+                            unselectedIconColor = NavMuted,
+                            unselectedTextColor = NavMuted,
+                        ),
                     )
                 }
             }

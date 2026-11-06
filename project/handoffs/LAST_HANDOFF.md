@@ -5,7 +5,7 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-029`（`IMPLEMENTED`：编辑习惯 + 最近 7 天统计，真机走通）；下一条 `TASK-030`（MVP 收口）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
+- 当前任务：`TASK-031`（`IMPLEMENTED`：统计页按设计稿重建，真机走通）；下一条 `TASK-030`（MVP 收口：备份 + 权限清理）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
 - 当前 Git 分支：`feat/androidtest-spike`（`TASK-025`，未合入）；`main` @ `74c3f06`（本地，无远程；`TASK-024` 已合入）；`feat/seam-hardening`、`feat/today-queries`、`feat/streak` 均已合并、保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（交接记录与代码修复同一次提交时，写死哈希必然立刻过期）
 - **会话状态：可继续**——评审按 `ADR-015` 批量后置；`TASK-027`~`TASK-029` 以 `IMPLEMENTED` 合入，均未评审。MVP 主路径已闭环（建/改/打卡/撤销/归档/恢复/统计）；下一步 `TASK-030` 收口
