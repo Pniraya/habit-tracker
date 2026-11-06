@@ -34,6 +34,7 @@ class TodayPresenterTest {
     private fun presenter(date: LocalDate = monday): TodayPresenter = TodayPresenter(
         repository = repository,
         recordProgress = RecordHabitProgressUseCase(repository),
+        archiveHabit = ArchiveHabitUseCase(repository),
         scope = scope,
         today = { date },
         now = { now },
@@ -90,6 +91,7 @@ class TodayPresenterTest {
         val presenter = TodayPresenter(
             repository = repository,
             recordProgress = RecordHabitProgressUseCase(repository),
+            archiveHabit = ArchiveHabitUseCase(repository),
             scope = scope,
             today = { clock },
             now = { now },
@@ -388,5 +390,92 @@ class TodayPresenterTest {
         val state = presenter().state.value
 
         assertTrue(state.habits.isEmpty())
+    }
+
+    @Test
+    fun archivingFromTheListRemovesOnlyThatHabit() {
+        val keep = createHabit(TrackingType.BOOLEAN, "Read")
+        val drop = createHabit(TrackingType.BOOLEAN, "Run")
+        val presenter = presenter()
+
+        presenter.archive(drop)
+
+        val ids = presenter.state.value.habits.map { it.id }
+        assertEquals(listOf(keep), ids)
+        // The row is gone immediately, not after the repository Flow happens to emit.
+        assertTrue(ids.none { it == drop })
+    }
+
+    @Test
+    fun theArchiveRebuildDoesNotWaitForTheRepositoryFlow() {
+        // Emits exactly once, at collection time. A presenter that relied on the Flow to drop the
+        // archived row would keep showing it here: this pins the local rebuild (mutation M-ARCH).
+        val repository = object : FakeHabitRepository() {
+            override fun observeActiveHabits(): kotlinx.coroutines.flow.Flow<List<com.habittracker.domain.model.Habit>> =
+                kotlinx.coroutines.flow.flow { emit(snapshotHabits()) }
+        }
+        val created = runBlocking {
+            CreateHabitUseCase(repository)(
+                NewHabit(
+                    name = "Read",
+                    icon = "book",
+                    color = "#5B8C6A",
+                    trackingType = TrackingType.BOOLEAN,
+                    targetValue = 1.0,
+                    unit = null,
+                    initialSchedule = NewSchedule(FrequencyType.DAILY, null),
+                ),
+                monday,
+                now,
+            )
+        }
+        val presenter = TodayPresenter(
+            repository = repository,
+            recordProgress = RecordHabitProgressUseCase(repository),
+            archiveHabit = ArchiveHabitUseCase(repository),
+            scope = scope,
+            today = { monday },
+            now = { now },
+        )
+        assertEquals(1, presenter.state.value.habits.size)
+
+        presenter.archive(created)
+
+        assertTrue(presenter.state.value.habits.isEmpty())
+    }
+
+    @Test
+    fun archivingAHabitTwiceReportsTheSecondAsAnError() {
+        val id = createHabit(TrackingType.BOOLEAN, "Read")
+        val presenter = presenter()
+
+        presenter.archive(id)
+        assertNull(presenter.lastError.value)
+
+        presenter.archive(id)
+
+        // ArchiveHabitUseCase refuses an archived habit; the presenter must surface that instead of
+        // silently succeeding a second time.
+        assertNotNull(presenter.lastError.value)
+    }
+
+    @Test
+    fun tappingACompletedHabitUndoesIt() {
+        val id = createHabit(TrackingType.BOOLEAN, "Read")
+        val presenter = presenter()
+
+        presenter.toggle(id)
+        assertTrue(presenter.state.value.habits.single().isCompleted)
+
+        presenter.toggle(id)
+        val habit = presenter.state.value.habits.single()
+        assertFalse(habit.isCompleted)
+        assertEquals(0.0, habit.actualValue, 0.0)
+    }
+
+    @Test
+    fun theUndoHintAppearsOnlyForFinishedRows() {
+        assertNull(TodayPresenter.undoHint(false))
+        assertEquals("再点一下撤销", TodayPresenter.undoHint(true))
     }
 }

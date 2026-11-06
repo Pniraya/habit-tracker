@@ -6,6 +6,7 @@ import com.habittracker.domain.model.DailyLog
 import com.habittracker.domain.model.Habit
 import com.habittracker.domain.model.HabitSchedule
 import com.habittracker.domain.repository.HabitRepository
+import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +26,7 @@ import java.time.LocalDate
 class TodayPresenter(
     private val repository: HabitRepository,
     private val recordProgress: RecordHabitProgressUseCase,
+    private val archiveHabit: ArchiveHabitUseCase,
     private val scope: CoroutineScope,
     private val today: () -> LocalDate = { LocalDate.now() },
     private val now: () -> Long = { System.currentTimeMillis() },
@@ -65,6 +67,23 @@ class TodayPresenter(
             runCatching { recordProgress(habitId, today(), value, now()) }
                 .onSuccess { _lastError.value = null; _state.value = snapshot(habits) }
                 .onFailure { _lastError.value = it.message ?: "无法记录进度" }
+        }
+    }
+
+    /**
+     * Archives the habit and rebuilds the list. The repository's Flow also removes the row, but the
+     * snapshot is rebuilt here so the UI does not wait for an emission: a test can assert the row is
+     * gone right after the call returns.
+     */
+    fun archive(habitId: Long) {
+        scope.launch {
+            runCatching { archiveHabit(habitId, today(), now()) }
+                .onSuccess {
+                    _lastError.value = null
+                    habits = habits.filterNot { it.id == habitId }
+                    _state.value = snapshot(habits)
+                }
+                .onFailure { _lastError.value = it.message ?: "无法归档" }
         }
     }
 
@@ -145,6 +164,9 @@ class TodayPresenter(
 
     companion object {
         const val NUMERIC_NEEDS_INPUT: String = "数值习惯需要输入数值，暂不支持一键完成"
+
+        /** True when the row is finished, so a second tap should undo rather than repeat. */
+        fun undoHint(isCompleted: Boolean): String? = if (isCompleted) "再点一下撤销" else null
 
         /**
          * Which lifecycle event rebuilds the list. The decision lives here, not in the composable,

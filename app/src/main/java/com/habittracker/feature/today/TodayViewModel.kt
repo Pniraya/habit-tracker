@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.data.repository.RoomHabitRepository
+import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,7 @@ class TodayViewModel(
 
     fun toggle(habitId: Long) = presenter.toggle(habitId)
     fun record(habitId: Long, value: Double) = presenter.record(habitId, value)
+    fun archive(habitId: Long) = presenter.archive(habitId)
     fun dismissError() = presenter.dismissError()
 
     /** Called when the screen comes back to the foreground, so a date change is picked up. */
@@ -43,6 +45,7 @@ class TodayViewModel(
                 val presenter = TodayPresenter(
                     repository = repository,
                     recordProgress = RecordHabitProgressUseCase(repository),
+                    archiveHabit = ArchiveHabitUseCase(repository),
                     scope = scope,
                 )
                 @Suppress("UNCHECKED_CAST")
