@@ -298,7 +298,7 @@ GitHub 会依次在 `.github/`、仓库根目录、`docs/` 里找 `README.md`，
 
 > 本地优先的 Android 习惯追踪应用。无账号、无服务器，数据只在你的手机上。
 
-[English](README.en.md) · 状态：**开发中（预发布）**
+English · 状态：**开发中（预发布）**
 
 <p>
   <img src="docs/images/today.png" width="200" alt="今日页">
@@ -346,7 +346,7 @@ cd <仓库名>
 ```bash
 ./gradlew testDebugUnitTest   # JVM 单元测试
 ```
-项目还带有治理与数据库校验脚本，说明见 [`tools/`](tools/) 与 [`project/`](project/)。
+项目还带有治理与数据库校验脚本，说明见 `tools/` 与 `project/`。
 
 ## 项目结构
 
@@ -359,9 +359,9 @@ docs/       文档与截图
 
 ## 文档
 
-- [需求](project/REQUIREMENTS.md)
-- [数据库设计](project/DATABASE.md)
-- [架构决策记录（ADR）](project/)
+- 需求
+- 数据库设计
+- 架构决策记录（ADR）
 
 ## 路线图
 
@@ -376,7 +376,7 @@ docs/       文档与截图
 
 ## 许可证
 
-[MIT](LICENSE)（按你的选择修改）
+MIT（按你的选择修改）
 ````
 （路径请按你仓库的实际位置修改，例如 `REQUIREMENTS.md` 是否在 `project/` 下。）
 
