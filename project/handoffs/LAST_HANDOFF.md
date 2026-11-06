@@ -5,10 +5,11 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-05`
 - 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-025`（`NOT_STARTED`，真机 instrumented 测试 spike）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
-- 当前 Git 分支：`main`（本地，无远程），`feat/seam-hardening` 已合并、保留未删；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
+- 当前任务：`TASK-025`（`DONE`：真机 instrumented 测试可用，第 3 轮 `APPROVE`）；下一条 `TASK-026`（设备侧 Room 契约测试）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
+- 当前 Git 分支：`feat/androidtest-spike`（`TASK-025`，未合入）；`main` @ `74c3f06`（本地，无远程；`TASK-024` 已合入）；`feat/seam-hardening`、`feat/today-queries`、`feat/streak` 均已合并、保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（交接记录与代码修复同一次提交时，写死哈希必然立刻过期）
-- **会话状态：可继续**——`TASK-022`、`TASK-024` 均已 `DONE` 合入 `main`；下一条从 `TASK-025` 开始（真机 instrumented 测试 spike）
+- **会话状态：可继续**——`TASK-022`、`TASK-024`、`TASK-025` 均已 `DONE` 合入 `main`（`TASK-025` 第 3 轮 `APPROVE` @ `49c51a8`）；下一步是用设备侧测试补 Room 映射（`TASK-026`）与 Compose 冒烟
+- **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`。首轮需人工授权 USB 安装（授权是粘性的，之后不再逐次确认——Reviewer 本轮从零安装未出现任何确认弹窗）；不保持唤醒会报 `Android device ... is not found` 并 `Finished 0 tests`
 
 ## Completed This Session
 - `TASK-021`（F-009 当前/最长连续天数）：`StreakRules` 纯函数一次正向遍历同时给出当前与最长；`GetStreakUseCase` 取全部计划版本 + 区间内 `COMPLETED` 日志；`TodayPresenter.streakText` 决定文案（`0/0` 不显示、`0/7` 显示「最长 7 天」、`3/7` 显示「连续 3 天 · 最长 7 天」）
@@ -41,7 +42,7 @@
 - **连续天数的真机证据弱**：只有「今天完成 → 1 天」文字叙述，`project/reports` 下无 dump/截图（`F-006`/`F-007` 有 `DEVICE_DUMP`）
 - **N+1 已改为整表 4 次查询**（`TASK-022`，待评审）：但批量读仍取「全局最早版本 → 今天」的全部日志行，只减少往返、不减少行数（20 习惯 × 3 年 ≈ 2 万行/次），留待统计页一并收敛
 - **主线程计算**：批量读仍是挂起调用，其后的逐习惯「逐日推进」是纯计算，跑在 `Dispatchers.Main.immediate` 上；最坏情况约 2 万次迭代，未实测耗时
-- Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：无自动化验证（本机跑不了 Gradle 测试）
+- Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：**无自动化验证**，但通道已经有了（设备侧 `connectedDebugAndroidTest` 可用，`TASK-025`）；缺的是用例，`TASK-026` 接手。`DatabaseConstraints.callback()` 是否真的在 Room 打开时注册，目前零覆盖
 - 表单由 `remember` 持有，旋转丢输入
 - 统计页、我的页仍为占位；`POST_NOTIFICATIONS` 与 `RECEIVE_BOOT_COMPLETED` 已声明但无代码，属遗留声明待清理
 
@@ -53,7 +54,7 @@
 - **子进程变异可能留下脏工作区**：评审死亡时留下 `from = today`，直接提交会合入缺陷。恢复后必须复跑测试确认。
 
 ## Next Safe Action
-1. **`TASK-025`**：`connectedDebugAndroidTest` spike——先加最小 `androidTest` 与依赖，在真机上跑一次，记录真实结果；通过则补 Room 映射与 Compose 冒烟，失败则记录报错并改走 `uiautomator dump`
+1. **`TASK-025` 已做完，只剩复审**：真机通道已打通（`Tests 1/1 completed`，两次通过，详见 `TEST_REPORT`）；拿到第 3 轮 `APPROVE` 后置 `DONE` 并合入 `main`——**不要重跑 spike**，那已经验证过了
 2. 之后功能顺序：`F-010`/`F-011` 统计页与热力图 → `F-012`/`F-013` 提醒 → `F-014` 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
 3. 遗留重构（未立任务）：`CreateHabitPresenter` 构造参数为函数类型，评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」
-4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿，再读 `TASK-024`；其后的候选是 `TASK-025`（真机 instrumented 测试 spike）与 `TASK-023`（统计页）。
+4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿，再读 `TASK-026`（设备侧 Room 契约测试，核心是「删掉 `addCallback` 必须让测试变红」）；其后是 `TASK-023`（统计页）。
