@@ -1,11 +1,11 @@
 # TASK-025: 真机 instrumented 测试可用性 spike
 
-- 状态：`PARTIAL`
+- 状态：`PARTIAL`（第 1 轮 `REJECT` 的 2 项文档阻断已修复，**等第 2 轮复审**；实机通道已验证可用）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：无（但设备必须连接）
 - 创建日期：`2026-11-05`
-- 完成日期：待设备授权后
+- 完成日期：`2026-11-05`
 
 ## 1. Objective
 确认 `connectedDebugAndroidTest` 能否在本机 + USB 真机上跑通。若可，Room 映射、迁移、Compose 冒烟测试一次性获得落点；若不可，记录实际报错，改为 `adb shell uiautomator dump` 的脚本断言或明确接受缺口。
@@ -27,7 +27,7 @@
 - 新增：`app/src/androidTest/...` 最小用例
 
 ## 6. Acceptance Criteria
-- [x] 给出 `connectedDebugAndroidTest` 在本机的真实结果（失败原文已记录）
+- [x] 记录三次运行的真实结果：1 次安装被拒、1 次设备掉线、2 次通过（原文均见 §10）
 - [x] 若通过：至少 1 条设备侧用例稳定通过 2 次（run1 3m09s、run3 40s）
 - [x] 若失败：记录报错（第二次为设备掉线，已记录原文）
 
@@ -59,16 +59,19 @@
 | `adb shell svc power stayon usb` 后第三次重跑 | **BUILD SUCCESSFUL**（40s） | `Tests 1/1 completed (0 failed)` |
 
 ## 11. Completion Review
-- [ ] 验收标准满足
-- [ ] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 验收标准满足
+- [x] 测试实际运行（真机 `Tests 1/1 completed`，另由 Reviewer 独立复跑一次）
+- [ ] 独立 Reviewer `APPROVE`（第 1 轮 `REJECT`：2 项文档阻断，见 §13）
 
 ## 12. Handoff
 - 之后：若通过，用设备侧测试补 Room 映射与 Compose 冒烟；统计页见 `TASK-023`。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：`project/reviews/REVIEW-TASK-025.md`
+- 第 1 轮（`82f67b0`）：**REJECT**，阻断 2 项，均为文档口径——B1 状态文件把 `PARTIAL` 原因写成「等设备授权安装」，与实测相反；B2 被推翻的旧结论未传播到 `PROJECT_STATUS:30/43/47`、`LAST_HANDOFF:45`
+- Reviewer 独立实测：真机 1 次通过（43s，XML `tests=1`）、变异 `com.nonexistent` 变红、还原后复跑通过、门禁全绿；并验证 `androidTestImplementation` 不进 APK（classpath 0 行 / APK 0 条目 / badging 无 `instrumentation` 与 `INTERNET`）
+- 非阻断建议 N1–N7 已全部处理：`TEST_REPORT` 行位置与两次失败轮、`Latest Run` 分支与 commit、APK 体积 9.67 MB、`LAST_HANDOFF` 安装授权口径、本文件 §6 措辞、新增一条治理探针（见下）
+- 结论：待第 2 轮复审
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
