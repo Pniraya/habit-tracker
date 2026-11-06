@@ -37,7 +37,7 @@
 ### 脚注（状态为部分完成的行）
 
 - **F-002**：`TASK-032` 按 `orgins/首页 · 今日-html` 重建今日页与底部导航（进度环、连续徽章、66dp 行、绿色 FAB、白底 28dp 圆角导航）。137 项单测与构建通过；iQOO Neo7 SE（Android 15）上安装后对照通过：列表、点勾后满环 +「今天也做到了」+「连续 1 天」徽章 + 叶片飘落、导航胶囊。真机列恢复为 `DEVICE_VERIFIED`（范围：渲染与打卡状态切换，不含滚动/平板）。
-- **F-003**：创建（`TASK-012`/`TASK-016`/`TASK-018`）与编辑（`TASK-029`：`updateFields` + 编辑弹窗 + 历史快照不被改写）均已实现；`TASK-032` 按 `orgins/新建习惯-html` 重建创建页并新增图标/颜色选择（写入 `habits.icon`/`habits.color`）。真机已确认：修复版创建页无底部导航、按钮不遮挡；「选水滴图标 + 雾蓝 → 保存 → 列表显示水滴图标 → 打卡后勾选圈为雾蓝」走通，`icon`/`color` 落库获设备证据；归档后列表恢复。真机列恢复为 `DEVICE_VERIFIED`。
+- **F-003**：`TASK-037` 增加自定义图标（系统 Photo Picker → 256px 存 `filesDir/icons` → `icon = custom:<file>`，真机走通，未知/丢失文件回退嫩芽）。创建（`TASK-012`/`TASK-016`/`TASK-018`）与编辑（`TASK-029`：`updateFields` + 编辑弹窗 + 历史快照不被改写）均已实现；`TASK-032` 按 `orgins/新建习惯-html` 重建创建页并新增图标/颜色选择（写入 `habits.icon`/`habits.color`）。真机已确认：修复版创建页无底部导航、按钮不遮挡；「选水滴图标 + 雾蓝 → 保存 → 列表显示水滴图标 → 打卡后勾选圈为雾蓝」走通，`icon`/`color` 落库获设备证据；归档后列表恢复。真机列恢复为 `DEVICE_VERIFIED`。
 - **F-010**：只做了**最近 7 天完成率**（`TASK-029`，真机 `0 / 1 · 0%`）。周/月/年切换与热力图（`F-011`）未做，因此实现列为 `IN_PROGRESS`，不是 `VERIFIED` 的完整功能。
 - **F-004**：`TASK-027` 补齐归档入口（今日页 `⋮ → 归档`），`TASK-028` 补齐恢复入口（我的页「恢复」）。真机走通「建 → 归档 → 我的页 → 恢复 → 今日页」，故为 `DEVICE_VERIFIED`。`TASK-034` 把我的页归档列表改为「年-月 → 日」两级分组（展示层，数据仍由 `archived_on` 派生），真机单月单日走通。
 - **F-020**：`TASK-034` 新增永久删除：`⋮ → 删除` + 二次确认（提示可用归档），`HabitDao.deleteById` 单条 `DELETE`，子表由 `ON DELETE CASCADE` 清理；`DeleteHabitUseCase` 校验存在性。真机删除的是无日志的临时习惯；带历史日志的级联由 `verify-schema.mjs`/`verify-dao.mjs` 覆盖，未在真机造数。

@@ -5,12 +5,12 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-038`（`IMPLEMENTED`：应用图标 + GitHub 发布配套——.gitattributes、社区文件、README 截图/隐私，构建与真机安装通过，待批量评审）；`TASK-036`（GitHub 预上传整理）已 `IMPLEMENTED` 合入；`TASK-035`（日切点 04:00 + 偏差登记）已 `IMPLEMENTED` 合入；`TASK-026`（设备侧 Room 契约测试，真机 6/6）已 `IMPLEMENTED` 合入；`TASK-033`（习惯详情页）已 `IMPLEMENTED` 合入；`TASK-034`（统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组）已 `IMPLEMENTED` 合入；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条按外部评审（`ADVICE-RESPONSE-2026-11-06.md`）先做窄口径里程碑评审（8 个 `IMPLEMENTED` 一起），再做 `N5` 提醒数据模型 ADR，然后把 `TASK-030` 拆成 `030a 导出`（先做）与 `030b 恢复`；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-037`（`IMPLEMENTED`：自定义习惯图标——相册自选、256px 本地存储、行内渲染，161 项单测 + 真机走通，待批量评审）；`TASK-038`（应用图标 + 发布配套）已 `IMPLEMENTED` 合入；`TASK-036`（GitHub 预上传整理）已 `IMPLEMENTED` 合入；`TASK-035`（日切点 04:00 + 偏差登记）已 `IMPLEMENTED` 合入；`TASK-026`（设备侧 Room 契约测试，真机 6/6）已 `IMPLEMENTED` 合入；`TASK-033`（习惯详情页）已 `IMPLEMENTED` 合入；`TASK-034`（统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组）已 `IMPLEMENTED` 合入；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条按外部评审（`ADVICE-RESPONSE-2026-11-06.md`）先做窄口径里程碑评审（8 个 `IMPLEMENTED` 一起），再做 `N5` 提醒数据模型 ADR，然后把 `TASK-030` 拆成 `030a 导出`（先做）与 `030b 恢复`；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B；与 `README` 同口径）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 38/38 验证 DAO 的 SQL 语义、CAS 更新与级联删除（含 `deleteById`））
-- 最近验证测试：`PASS`（**159 项**单测 + **6 项设备侧 instrumented**，`connectedDebugAndroidTest`：触发器注册/重开、Converter 往返、Flow 失效、级联删除、事务回滚）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
+- 最近验证测试：`PASS`（**161 项**单测 + **6 项设备侧 instrumented**，`connectedDebugAndroidTest`：触发器注册/重开、Converter 往返、Flow 失效、级联删除、事务回滚）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查 + 15 个探针 0 失败；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
 - 最后核对时间：`2026-11-06`
 
@@ -32,13 +32,14 @@
 - [x] 日期语义单一来源：`domain/calculation/DayCutoff`（04:00 逻辑日，`ADR-016`），今日/新建/详情/统计与前台跨日定时器全部接入
 - [x] 设计偏差登记：`project/DESIGN-DELTA.md`（7 项）+ `ADR-017`（归档为展示层、提醒延后、统计切换取消）
 - [x] 应用图标与发布配套（`TASK-038`）：用户提供的 1254×1254 图标 → 5 档 mipmap + Manifest；`.gitattributes`、`gradlew` 可执行位、`SECURITY.md`、`CONTRIBUTING.md`、README 截图/隐私/构建章节；`LICENSE`（MIT）
+- [x] 自定义习惯图标（`TASK-037`）：系统 Photo Picker → 中心裁方 256px → `filesDir/icons` → `icon='custom:<file>'`；`HabitIcon` 圆形渲染、丢失回退嫩芽；真机「选图 → 保存 → 行内显示」走通
 - [x] GitHub 预上传整理（`TASK-036`）：设备序列号脱敏、工具链路径改为环境变量优先、README 发布说明、`.github/workflows/android.yml`、评估报告 `GITHUB-READINESS-2026-11-06.md`（许可证与提交身份仍待所有者决定）
 
 ## 当前待办
 
 1. 补 `UseCase` 层（`RecordHabitProgressUseCase` 等）与 `DataStore`。
 2. ~~为 Room 事务/DAO 补集成测试~~ → `TASK-026` 已交付（`DatabaseContractTest` 5 项真机通过）；剩余：UI 自动化（外部评审 `N6`，≤8 用例）与迁移测试底座。
-3. `TASK-037`（自定义习惯图标）：**等待用户提供图标素材/风格决定**；相册自选方案不需要素材，可先做。
+3. ~~`TASK-037`（自定义习惯图标）~~ → 相册自选已交付（`IMPLEMENTED`）；素材包方案仍待用户提供文件与风格决定。
 3. 接真机或装模拟器完成 `TASK-003` 的设备验证，再关闭 Gate 1。
 4. 为 TASK-007 取得独立 Reviewer 的 `APPROVE` 记录后合入 `main`；其后每任务结束运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，保持六份状态文档同步。
 
@@ -67,6 +68,7 @@
 - `TASK-035`（日切点 04:00 + 偏差登记）：159 项单测与构建通过，真机日期/打卡/统计不回归；已知缺口：04:00 真实跨日只能靠凌晨手测，当前仅 JVM 证据（用户已明确跳过该项，默认成功）
 - `TASK-036`（GitHub 预上传整理）：脱敏、脚本可移植、CI、评估报告；已知缺口：CI 未在 GitHub 实跑，提交身份/`assembleRelease` 仍未定
 - `TASK-038`（应用图标 + 发布配套）：MIT、图标 5 档、截图、社区文件、`.gitattributes`；已知缺口：未做自适应/单色主题图标，图标缩放清晰度待真机桌面观察
+- `TASK-037`（自定义习惯图标）：相册自选 + 256px 本地存储 + 圆形渲染，真机走通；已知缺口：素材包方案待用户提供文件、编辑旧习惯图标未做、删除习惯不清理孤儿文件
 
 ## 在册例外（main 上的未完成任务）
 

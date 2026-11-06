@@ -83,6 +83,16 @@ fun CreateHabitScreen(
     modifier: Modifier = Modifier,
 ) {
     val accent = Color(HabitVisuals.parseColor(form.color))
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // The system photo picker needs no storage permission; the picked image is copied into
+    // app-private storage and only the file name is stored in habits.icon (TASK-037).
+    val pickCustomIcon = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) {
+            com.habittracker.core.storage.CustomIcons.save(context, uri)?.let(onIconChange)
+        }
+    }
     Column(modifier = modifier.fillMaxSize().background(WarmWhite)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp),
@@ -179,6 +189,41 @@ fun CreateHabitScreen(
                                 icon = icon,
                                 size = 22.dp,
                                 tint = if (selected) accent else TextTertiary,
+                            )
+                        }
+                    }
+                    val customSelected = HabitVisuals.isCustom(form.icon)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(46.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (customSelected) accent.copy(alpha = 0.18f) else SurfaceTint)
+                            .then(
+                                if (customSelected) {
+                                    Modifier.border(2.dp, accent, RoundedCornerShape(14.dp))
+                                } else {
+                                    Modifier
+                                },
+                            )
+                            .clickable {
+                                pickCustomIcon.launch(
+                                    androidx.activity.result.PickVisualMediaRequest(
+                                        androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
+                                    ),
+                                )
+                            }
+                            .semantics { contentDescription = "选择自定义图标" },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (customSelected) {
+                            HabitIcon(icon = form.icon, size = 22.dp)
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_plus),
+                                contentDescription = null,
+                                tint = TextTertiary,
+                                modifier = Modifier.size(16.dp),
                             )
                         }
                     }

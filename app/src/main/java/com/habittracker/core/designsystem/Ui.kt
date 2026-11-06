@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -183,7 +184,26 @@ fun HabitIconTile(icon: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun HabitIcon(icon: String, size: Dp, modifier: Modifier = Modifier, tint: Color? = null) {
-    val key = HabitVisuals.iconKey(icon)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val customFile = androidx.compose.runtime.remember(icon) {
+        com.habittracker.core.storage.CustomIcons.file(context, icon)
+    }
+    val bitmap = androidx.compose.runtime.remember(customFile) {
+        customFile?.takeIf { it.isFile }?.let { file ->
+            runCatching { android.graphics.BitmapFactory.decodeFile(file.path) }.getOrNull()
+        }
+    }
+    if (bitmap != null) {
+        androidx.compose.foundation.Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = null,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = modifier.size(size).clip(CircleShape),
+        )
+        return
+    }
+    // A custom icon whose file disappeared falls back to the sprout instead of an empty tile.
+    val key = HabitVisuals.iconKey(if (HabitVisuals.isCustom(icon)) HabitVisuals.ICON_SPROUT else icon)
     Icon(
         painter = painterResource(drawableFor(key)),
         contentDescription = null,

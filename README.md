@@ -18,7 +18,7 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-038`（`IMPLEMENTED`：日切点 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件）；`TASK-026`（Room 契约测试）已合入；下一条做窄口径里程碑评审，再做 `N5` 提醒数据模型 ADR 与 `TASK-030a` 导出 |
+| 当前任务 | `TASK-037`（`IMPLEMENTED`：日切点 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件）；`TASK-026`（Room 契约测试）已合入；下一条做窄口径里程碑评审，再做 `N5` 提醒数据模型 ADR 与 `TASK-030a` 导出 |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
 | 最近测试 | `PASS` — **159** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
@@ -103,7 +103,7 @@ pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 1. `R1` 窄口径评审：把 8 个 `IMPLEMENTED` 一起过一遍（偏差表 + 写路径/规则边界 + 变异抽查），转 `DONE` 或列阻塞项。
 2. `N5` 提醒数据模型 ADR（先于备份格式定稿）。
 3. `TASK-030a` JSON 导出（只读）→ `030b` 覆盖恢复（依赖 `TASK-026`）。
-4. `TASK-037` 自定义习惯图标（等待用户提供素材；相册自选方案不需要素材）。
+4. `TASK-037` 自定义习惯图标：相册自选已实现（`custom:` + `filesDir/icons`）；用户素材包仍待提供文件。
 5. UI 自动化 ≤8 用例、迁移测试底座、`assembleRelease` + lint 进 CI。
 
 细节见 `project/ROADMAP.md`、`project/PROJECT_STATUS.md` 与 `project/handoffs/LAST_HANDOFF.md`。

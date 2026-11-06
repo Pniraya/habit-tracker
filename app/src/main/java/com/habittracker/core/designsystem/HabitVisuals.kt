@@ -13,6 +13,9 @@ object HabitVisuals {
     const val ICON_MOON: String = "moon"
     const val ICON_HEART: String = "heart"
 
+    /** Prefix of an icon picked from the user's gallery; the rest is a file name in filesDir/icons. */
+    const val CUSTOM_PREFIX: String = "custom:"
+
     const val COLOR_MOSS: String = "#5B8C6A"
     const val COLOR_APRICOT: String = "#F2A65A"
     const val COLOR_BLUE: String = "#8FAFC4"
@@ -29,7 +32,21 @@ object HabitVisuals {
      * Habits created before the icon picker existed carry icon "star" (the old default), which has
      * no artwork. Anything unknown falls back to the sprout so a row never renders an empty tile.
      */
-    fun iconKey(icon: String): String = if (icon in ICONS) icon else ICON_SPROUT
+    fun iconKey(icon: String): String = if (icon in ICONS || isCustom(icon)) icon else ICON_SPROUT
+
+    fun isCustom(icon: String): Boolean = icon.startsWith(CUSTOM_PREFIX)
+
+    /**
+     * File name behind a `custom:` value, or null when the value is not custom or would escape the
+     * icons directory. The check is pure so it can be tested without Android.
+     */
+    fun customFileName(icon: String): String? {
+        if (!isCustom(icon)) return null
+        val name = icon.removePrefix(CUSTOM_PREFIX)
+        return name.takeIf {
+            it.isNotBlank() && !it.contains('/') && !it.contains('\\') && !it.contains("..")
+        }
+    }
 
     fun colorKey(color: String): String = if (color in COLORS) color else COLOR_MOSS
 

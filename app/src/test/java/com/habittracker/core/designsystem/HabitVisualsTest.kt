@@ -1,6 +1,9 @@
 package com.habittracker.core.designsystem
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Pins the presentation rules the mockups encode, without loading any Compose type. */
@@ -72,6 +75,25 @@ class HabitVisualsTest {
         assertEquals(HabitVisuals.ICON_SPROUT, HabitVisuals.iconKey("star"))
         assertEquals(HabitVisuals.ICON_SPROUT, HabitVisuals.iconKey(""))
         assertEquals(HabitVisuals.ICON_WATER, HabitVisuals.iconKey(HabitVisuals.ICON_WATER))
+    }
+
+    @Test
+    fun aCustomIconKeepsItsFileNameAndIsNotReplacedByTheSprout() {
+        val icon = HabitVisuals.CUSTOM_PREFIX + "a1b2c3.png"
+        assertTrue(HabitVisuals.isCustom(icon))
+        assertEquals("a1b2c3.png", HabitVisuals.customFileName(icon))
+        assertEquals(icon, HabitVisuals.iconKey(icon))
+        assertFalse(HabitVisuals.isCustom(HabitVisuals.ICON_SPROUT))
+        assertNull(HabitVisuals.customFileName(HabitVisuals.ICON_SPROUT))
+    }
+
+    @Test
+    fun aMalformedCustomIconCannotEscapeTheIconsDirectory() {
+        // The value comes from the database, so a hand-edited row must not read outside filesDir.
+        assertNull(HabitVisuals.customFileName(HabitVisuals.CUSTOM_PREFIX))
+        assertNull(HabitVisuals.customFileName(HabitVisuals.CUSTOM_PREFIX + "../secrets.png"))
+        assertNull(HabitVisuals.customFileName(HabitVisuals.CUSTOM_PREFIX + "dir/icon.png"))
+        assertNull(HabitVisuals.customFileName(HabitVisuals.CUSTOM_PREFIX + "dir\\\\icon.png"))
     }
 
     @Test
