@@ -8,6 +8,7 @@
 - 日期：`2026-11-05`
 - 结论（第 1 轮，`82f67b0`）：**REJECT**（阻断 2 项，均为文档/状态口径；实现与测试证据本身通过）
 - 结论（第 2 轮，`7b3cb62`）：**REJECT**（阻断 2 项，均为文档口径；技术证据与门禁全部通过，见 §12）
+- 结论（第 3 轮，`49c51a8`）：`APPROVE`（阻断 0 项；技术证据、门禁、文档口径全部通过，见 §13）
 
 评审开始与结束 `git status --short` 均为空（唯一改动是本评审文件本身，未入库）。所有 Gradle 任务串行执行，未与其他 Gradle 任务并发。按任务要求未使用 `gradlew.bat test`。
 
@@ -255,7 +256,7 @@ XML: <testsuite name="com.habittracker.SmokeTest" tests="1" failures="1" errors=
 
 ### 12.6 关于「先 APPROVE 再置 DONE」的顺序
 
-**这个顺序我认可，不驳回。** 实测依据：治理第 17 项（`tools/check-governance.ps1:359-360`）要求 `DONE` 任务的评审文件里存在 `- 结论：`APPROVE``，先把 `TASK-025` 置 `DONE` 必然打红门禁，形成「没有 APPROVE 不能 DONE、没 DONE 又没得审」的死结。可执行的顺序只能是：**评审先把 APPROVE 落到本文件 → 再置 DONE → 门禁转绿 → 同一次提交带上两者**。
+**这个顺序我认可，不驳回。** 实测依据：治理第 17 项（`tools/check-governance.ps1:359-360`）要求 `DONE` 任务的评审文件里存在一条 APPROVE 结论行（反引号包住 `APPROVE`），先把 `TASK-025` 置 `DONE` 必然打红门禁，形成「没有 APPROVE 不能 DONE、没 DONE 又没得审」的死结。可执行的顺序只能是：**评审先把 APPROVE 落到本文件 → 再置 DONE → 门禁转绿 → 同一次提交带上两者**。
 
 边界（第 3 轮请照此执行，否则本次 APPROVE 不覆盖）：置 `DONE` 的那次提交只允许改 `TASK-025.md` 的状态行 / §11 / §13 结论 / 自动摘要，加 `README.md:12`、`PROJECT_STATUS.md:8`、`LAST_HANDOFF.md:8` 的 `PARTIAL`→`DONE` 字样；**不得**夹带 `app/**`、`gradle/**`、`tools/**` 或其他文档内容改动。
 
@@ -279,5 +280,76 @@ XML: <testsuite name="com.habittracker.SmokeTest" tests="1" failures="1" errors=
 ### 12.8 第 2 轮结论与下一步
 
 - 结论：**REJECT**（阻断 2 项，均文档口径，共约 4 行文字；技术内容、依赖隔离、真机证据、门禁全部通过，第 1 轮阻断确已修复）。
-- 第 3 轮只需复核 `TASK-025.md:73`、`LAST_HANDOFF.md:11`、`:57`、`:60` 四处；若这四处之外还有 `app/**`/`gradle/**`/`tools/**` 改动，将重新完整评审。届时按 §12.6 边界写入 `- 结论：`APPROVE``。
+- 第 3 轮只需复核 `TASK-025.md:73`、`LAST_HANDOFF.md:11`、`:57`、`:60` 四处；若这四处之外还有 `app/**`/`gradle/**`/`tools/**` 改动，将重新完整评审。届时按 §12.6 边界写入 APPROVE 结论行。
 - 未验证项：`TASK-026` §2「删掉 `addCallback` 后 105 项单测与 27 项 DAO 检查仍全绿」这一**假设**未实测（属 TASK-026 开工前提，不在本任务 Scope）；我只核对了 `HabitDatabase.kt:55` 当前确实注册了回调。
+
+## 13. 第 3 轮复审（`49c51a8`）→ APPROVE
+
+按第 2 轮划定的范围复核（`TASK-025` §13 的 `73–75`、`LAST_HANDOFF` `:11/:57/:60`），外加 N9/N10/N11 与整轮 diff 抽查。
+
+### 13.1 本轮 diff 性质
+
+| 项 | 实测 |
+|---|---|
+| `git show 49c51a8 --stat` | 5 文件 +109/−13，**全部落在 `project/**`** |
+| `git diff 7b3cb62..49c51a8 --stat -- app gradle tools` | **空** → 无代码、无依赖、无治理脚本改动 |
+| `git diff 7b3cb62..49c51a8 --name-only` | `PROJECT_STATUS.md`、`LAST_HANDOFF.md`、`REVIEW-TASK-025.md`、`TASK-025.md`、`TASK-026.md` |
+| `REVIEW-TASK-025.md` 的改动 | 正是我第 2 轮写在**工作区未提交**的 §12 与表头（+99/−5），blob 与我的内容一致，**实现者未改写评审记录** |
+| `git diff --check` | exit 0（实现者报过的 `TASK-026` EOF 空行已修掉） |
+| `git status --short` | 空 |
+
+### 13.2 门禁重跑（HEAD=`49c51a8`，串行）
+
+| 步骤 | 实测 | 退出码 |
+|---|---|---|
+| `check-governance.ps1` | `SUMMARY: 22 checks, 22 passed, 0 warnings, 0 failed` | 0 |
+| `run-unit-tests.ps1` | `OK (105 tests)` | 0 |
+| `verify-dao.mjs` | `checks: 27, failed: 0` | 0 |
+| `assembleDebug` | `BUILD SUCCESSFUL in 19s` | 0 |
+| `git diff --check` | `no whitespace errors` | 0 |
+| 合计 | `RESULT: VERIFY ALL PASS` | **0** |
+
+与实现者自查的差异只有构建耗时（19–20s，属正常抖动），其余数字逐项相同。
+
+### 13.3 B3 / B4 复核（逐条看语义）
+
+**B3 —— 已修复，而且修得比我要求的多。**
+`TASK-025.md:73` 现为第 2 轮阻断的自述：「B3 本条曾写『新增一条治理探针（见下）』，**不实**：`git diff 82f67b0..7b3cb62 -- tools` 为空，探针不存在」。`:74` 把 N 项拆开：「N2–N7 已处理……**N1 根治未在本任务做**，探针会改变治理检查项数（22→23）并牵动 8 处计数，已作为输入写进 `TASK-026` §8；N8 已确认调行序无助于第 15 项……不再靠排序规避」。
+- 我核对：`project/` 内「新增一条治理探针」只剩 `TASK-025:73` 这一处**引述并否定**它的文本，以及本评审 §12.4 的原始记录；**没有任何地方再声称探针已存在**。
+- 保留自我否定（而不是删掉原句）是正确做法：仓库里既有的教训是「声称必须可核对」，把错误留在记录里比隐去更容易被下一会话识别。这一点我明确记为正例。
+
+**B4 —— 已修复。**
+- `:11` 现为「`TASK-022`、`TASK-024` 已 `DONE` 合入 `main`；`TASK-025` 为 `PARTIAL`（通道已验证可用，**等第 2 轮复审 → 第 3 轮**，尚无 `APPROVE`，按 §7 不得视为 `DONE`）」→ 不再声称 `DONE`，且显式引用 §7，与 `:8` 的 `PARTIAL` 一致。
+- `:57` 现为「`TASK-025` 已做完，只剩复审……**不要重跑 spike**」→ 下一会话不会再重做。
+- `:60` 现为「再读 `TASK-026`（设备侧 Room 契约测试，核心是「删掉 `addCallback` 必须让测试变红」）；其后是 `TASK-023`」→ 候选里已无 `TASK-025`。
+
+**N9/N10/N11 —— 已确认。** `TASK-026` 的 §8 已移到 §9 之前（章节恢复升序，原末尾副本删除）；`PROJECT_STATUS.md:11` 改为「20s；与 `README` 同口径」；`LAST_HANDOFF.md:9` 改为「`feat/androidtest-spike`（`TASK-025`，未合入）；`main` @ `74c3f06`（`TASK-024` 已合入）」——与我实测的 `main`=`74c3f06`、当前分支一致，N11 关闭。
+
+### 13.4 非阻断（不影响本轮 APPROVE，建议在置 `DONE` 的那次提交里顺手处理）
+
+- **N12** `TASK-025.md:75–76` 有**两条**「结论：」行，内容几乎重复（「待第 3 轮复审」/「待第 3 轮复审（第 3 轮送审范围仅……三处）」）。置 `DONE` 时请把**两条都**替换成一条 APPROVE 结论，别只改一条留下「待复审」。另：该行说「三处」，实际送审范围是 `TASK-025:73` 加 `LAST_HANDOFF:11/57/60`（四处）再加你顺手修的 N9/N10，措辞偏窄。
+- **N12b** `LAST_HANDOFF.md:11` 的「等第 2 轮复审 → 第 3 轮」略滞后：第 2 轮已经 `REJECT` 并修完，现在等的是第 3 轮。建议写「第 2 轮 `REJECT` 已修，等第 3 轮 `APPROVE`」。语义不假，只是口径滞后。
+- **N12c** `TASK-025.md:74` 的「牵动 8 处计数」是估计：我在 4 份状态文档（`README`/`PROJECT_STATUS`/`LAST_HANDOFF`/`TEST_REPORT`）里就数到 18 行提到「22」，改成 23 时涉及的位置明显多于 8。建议写「多处」，别给一个可被数出来的数字。
+- **N13（治理盲区，新发现，建议与 N8 一起给 `TASK-026` §8）** 治理第 18 项（`check-governance.ps1:359`）用正则 `- 结论：\s*\*{0,2}\s*`APPROVE`` 在整个评审文件里找 APPROVE，**引述这个格式本身就会命中**。实证：`git show 49c51a8:project/reviews/REVIEW-TASK-025.md` 上该正则命中 **2 次**，两次都是我第 2 轮正文里引述「要求评审文件里存在该结论行」的句子——也就是说，**在没有任何 APPROVE 的情况下，只要评审文本提到这个格式，`TASK-025` 一置 `DONE` 第 18 项就会绿**。我已把这两处引述改写成「一条 APPROVE 结论行」，本文件现在只由 §13.5 的真实结论行命中。这与 N8（第 15 项结果词恒真）是同一类问题：**检查器验证的是字符串出现，不是语义**。建议 `TASK-026` §8 的探针同时覆盖两处（或另立一个小任务）。
+
+### 13.5 第 3 轮逐项结论
+
+| # | 项 | 结论 |
+|---|---|---|
+| 1 | 本轮 diff 只含 `project/**` 文档、无顺手改动 | APPROVE |
+| 1 | 无新依赖/权限/module/治理脚本改动 | APPROVE（`app`、`gradle`、`tools` 零改动） |
+| 1 | `git diff --check` 干净 | APPROVE |
+| 3 | 门禁实测与记录一致 | APPROVE（22/22、105、27、19–20s、exit 0） |
+| 4 | B3 不实声称已撤回，且不再有未做事项的声称 | APPROVE |
+| 4 | `LAST_HANDOFF` Snapshot 与 Next Safe Action 自洽 | APPROVE（N12b 仅措辞滞后） |
+| 4 | README / PROJECT_STATUS / 待办口径一致 | APPROVE（`TASK-025` `PARTIAL` 三处同口径，`TASK-026` 已入 Next Safe Action） |
+| 5 | 分支策略 | APPROVE（`feat/androidtest-spike`；置 `DONE` 前必须先有本 APPROVE） |
+| 6 | 结论 | **APPROVE**（阻断 0 项） |
+
+### 13.6 评审结论
+
+- 结论：`APPROVE`
+- 覆盖范围：commit `49c51a8e0a4f15f043674e31cb8dfa48a8857d6a`（分支 `feat/androidtest-spike`，基线 `main` @ `74c3f06`）。第 1–3 轮共 4 条阻断（B1–B4）全部关闭，0 条遗留。
+- 本 APPROVE 允许的后续动作（边界，超出即失效）：置 `DONE` 的那次提交只允许改 `TASK-025.md` 的状态行 / §11 / §13 结论（含 N12 的两条结论行合并）/ 自动摘要，以及 `README.md:12`、`PROJECT_STATUS.md:8`、`LAST_HANDOFF.md:8` 的 `PARTIAL`→`DONE` 字样；**不得**夹带 `app/**`、`gradle/**`、`tools/**` 或其他文档内容。
+- 合入前请再跑一次 `pwsh -NoProfile -File tools/verify-all.ps1`（置 `DONE` 后、合入 `main` 前），确认第 18 项在真实 APPROVE 下转绿；合入 `main` 后在 `main` 上再跑一次，与 `TASK-009`/`TASK-024` 的做法保持一致。
+- 遗留（不阻塞本任务，已记录给 `TASK-026`）：N1/N8（第 15 项结果词恒真）、N13（第 18 项可被引述命中）、`TASK-026` §2 的「删 `addCallback` 后仍全绿」假设未实测、Compose 冒烟仍无设备侧用例。
