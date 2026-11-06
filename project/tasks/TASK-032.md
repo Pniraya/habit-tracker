@@ -25,7 +25,7 @@
 - **习惯详情页**（`orgins/习惯详情-html/Detail.dc.html`）：需要日志历史、热力图与编辑入口，另立任务。
 - **设计稿的「每日提醒」开关**：`F-012` 未实现，渲染一个不工作的开关属于假功能，本轮不做。
 - **编辑弹窗改图标/颜色**：`UpdateHabitUseCase` 只更新名称/目标/单位，扩展它超出本任务。
-- 真机/模拟器视觉走查：本机 `adb devices` 为空且无模拟器镜像，见 §7。
+- 真机视觉走查的**扩展范围**：本轮只对照今日页、全部完成态与新建页渲染；新建页保存后图标/颜色是否落库的设备复验视设备可用性，见 §7。
 - 通知权限清理与备份（`TASK-030`）。
 
 ## 5. Expected Files
@@ -41,12 +41,13 @@
 - [x] 图标/颜色选择写入 `NewHabit`（不写死默认值），并有单测证明
 - [x] 纯规则（颜色解析、环比例、文案、回退）有 JVM 单测
 - [x] `compileDebugKotlin` 与 `assembleDebug` 通过；`run-unit-tests.ps1` 137 项通过
-- [x] 未能验证的项目（真机视觉）在 §7 明确记为 `NOT_RUN`
+- [x] 真机（iQOO Neo7 SE / Android 15）安装后对照：今日页进度卡/徽章/行/FAB/导航、全部完成态（满环 + 徽章 + 叶片）与设计稿一致；新建页渲染一致
+- [x] 真机发现的问题（新建页底部导航未隐藏，压住「开始养成」）已修复：非顶层路由不再显示底部导航
 
 ## 7. Tests
 - 单元测试：`HabitVisualsTest` 11 项（颜色解析/回退、环比例、文案、徽章口径、图标回退）；`CreateHabitPresenterTest` +2（图标颜色落库、新表单默认值）
 - 构建/静态检查：`compileDebugKotlin`、`assembleDebug`、`tools/run-unit-tests.ps1`、`tools/verify-all.ps1`
-- 真机验证：**NOT_RUN** —— `adb devices` 返回空列表，无模拟器镜像；本轮只做代码/构建/单测级验证，视觉效果需下一轮真机确认
+- 真机验证（iQOO Neo7 SE / Android 15，1080×2400 / 480dpi）：**今日页与全部完成态通过**（`today.png`/`done2.png`）；**新建页渲染通过**（`create2.png`），并暴露底部导航遮挡按钮的缺陷，已修复。修复后的复装因设备掉线未完成，**图标/颜色落库的设备复验未做**
 
 ## 8. Risks and Decisions
 - **无真机**：布局在 390×844 画板外（平板/大屏）按弹性宽度展开，圆环 96dp、条形高度固定，未实测。
@@ -62,14 +63,17 @@
 - 2026-11-06：发现 `draft()` 写死 `DEFAULT_ICON/DEFAULT_COLOR`，先加表单字段与 `onIconChange/onColorChange`，再写选择器；单测用「保存后的 NewHabit」断言，防止选择器与落库再次脱节。
 - 2026-11-06：导航栏不能再用 `NavigationBar`（无法表达 28dp 上圆角与胶囊尺寸），改为 `Surface` + 自定义 `Row`，并补 `navigationBars` 内边距（targetSdk 35 强制 edge-to-edge）。
 - 2026-11-06：设计稿的「每日提醒」开关与「习惯详情」页没有对应实现，明确写在 §4，不用假控件凑齐画面。
-- 2026-11-06：`adb devices` 为空，真机视觉验证未执行；构建、单测、治理检查按实际结果记录。
+- 2026-11-06：设备接入后安装并截图。首次 `adb install` 报 `INSTALL_FAILED_ABORTED: User rejected permissions`（锁屏时 vivo 自动拒绝安装）；`input keyevent KEYCODE_WAKEUP` + `wm dismiss-keyguard` 后安装成功。
+- 2026-11-06：真机截图暴露缺陷——新建页仍显示底部导航，「开始养成」压住频率卡。改为仅在三个顶层路由显示导航栏；同时给名称输入框加占位文案「例如：晨跑」。
+- 2026-11-06：复装时设备从 `adb devices` 掉线（`offline` → 消失），修复后的新建页截图与图标/颜色落库复验**未完成**，如实记入 §7。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **PASS** | `OK (137 tests)`：124 → 137（`HabitVisualsTest` 11、`CreateHabitPresenterTest` +2） |
 | `gradlew.bat assembleDebug` | **PASS** | `BUILD SUCCESSFUL`，13s，APK 10,559,569 B |
-| `adb devices` | `NOT_RUN` | 空列表：无设备、无模拟器镜像，真机视觉对照无法执行 |
+| 真机：安装 + 今日页 / 全部完成态 / 新建页对照 | **PASS**（范围有限） | 今日页与设计稿一致；点勾选后满环 + 「今天也做到了」+「连续 1 天」徽章 + 叶片；新建页渲染一致。截图在 `.gradle/shots/`（不入库） |
+| 真机：修复后复装 | `NOT_RUN` | 设备掉线（`adb devices` 为空），修复后的新建页与图标/颜色落库复验未做 |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 见下（治理 + 单测 + 构建 + `git diff --check`） |
 
 ## 11. Completion Review

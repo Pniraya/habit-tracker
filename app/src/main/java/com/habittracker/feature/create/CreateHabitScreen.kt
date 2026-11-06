@@ -118,7 +118,7 @@ fun CreateHabitScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             FormCard(title = "习惯名称") {
-                BeigeField(value = form.name, onValueChange = onNameChange)
+                BeigeField(value = form.name, onValueChange = onNameChange, placeholder = "例如：晨跑")
             }
 
             FormCard(title = "记录方式") {
@@ -289,6 +289,7 @@ private fun BeigeField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text,
+    placeholder: String? = null,
 ) {
     Box(
         modifier = modifier
@@ -299,6 +300,9 @@ private fun BeigeField(
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
+        if (value.isEmpty() && placeholder != null) {
+            Text(placeholder, fontSize = 17.sp, color = TextTertiary.copy(alpha = 0.8f))
+        }
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
