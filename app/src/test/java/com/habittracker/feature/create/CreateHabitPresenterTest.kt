@@ -1,5 +1,6 @@
 package com.habittracker.feature.create
 
+import com.habittracker.core.designsystem.HabitVisuals
 import com.habittracker.data.local.entity.FrequencyType
 import com.habittracker.data.local.entity.TrackingType
 import com.habittracker.domain.model.NewHabit
@@ -206,6 +207,32 @@ class CreateHabitPresenterTest {
         val message = errorMessageFor(RuntimeException("constraint failed"))
         assertEquals(CreateHabitPresenter.SAVE_FAILED, message)
         assertFalse(message.contains("constraint"))
+    }
+
+    @Test
+    fun thePickedIconAndColourAreSavedWithTheHabit() {
+        // Mutation guard: draft() used to hard-code DEFAULT_ICON/DEFAULT_COLOR, so the picker
+        // rendered a selection the database never received.
+        val saved = mutableListOf<NewHabit>()
+        val presenter = presenterWith { habit, _, _ ->
+            saved += habit
+            1L
+        }
+        presenter.onNameChange("喝水")
+        presenter.onIconChange(HabitVisuals.ICON_WATER)
+        presenter.onColorChange(HabitVisuals.COLOR_BLUE)
+
+        presenter.save()
+
+        assertEquals(HabitVisuals.ICON_WATER, saved.single().icon)
+        assertEquals(HabitVisuals.COLOR_BLUE, saved.single().color)
+    }
+
+    @Test
+    fun aNewFormStartsFromTheMockupsFirstSwatch() {
+        val form = presenter().form.value
+        assertEquals(HabitVisuals.ICON_SPROUT, form.icon)
+        assertEquals(HabitVisuals.COLOR_MOSS, form.color)
     }
 
     @Test

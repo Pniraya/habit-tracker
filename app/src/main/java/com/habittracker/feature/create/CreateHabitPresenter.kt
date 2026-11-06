@@ -1,5 +1,6 @@
 package com.habittracker.feature.create
 
+import com.habittracker.core.designsystem.HabitVisuals
 import com.habittracker.data.local.entity.FrequencyType
 import com.habittracker.data.local.entity.TrackingType
 import com.habittracker.domain.calculation.ScheduleRules
@@ -49,6 +50,10 @@ class CreateHabitPresenter(
     fun onTargetValueChange(value: String) = _form.update { it.copy(targetValue = value, error = null) }
 
     fun onUnitChange(value: String) = _form.update { it.copy(unit = value, error = null) }
+
+    fun onIconChange(icon: String) = _form.update { it.copy(icon = icon, error = null) }
+
+    fun onColorChange(color: String) = _form.update { it.copy(color = color, error = null) }
 
     fun onFrequencyChange(frequency: FrequencyType) = _form.update {
         it.copy(frequency = frequency, error = null, weekdays = if (frequency == FrequencyType.CUSTOM) it.weekdays else emptySet())
@@ -102,8 +107,8 @@ class CreateHabitPresenter(
 
     private fun draft(form: CreateHabitForm): NewHabit = NewHabit(
         name = form.name.trim(),
-        icon = DEFAULT_ICON,
-        color = DEFAULT_COLOR,
+        icon = form.icon,
+        color = form.color,
         trackingType = form.trackingType,
         targetValue = if (form.trackingType == TrackingType.NUMERIC) parseTarget(form) ?: 1.0 else 1.0,
         unit = if (form.trackingType == TrackingType.NUMERIC) form.unit.trim().ifBlank { null } else null,
@@ -117,8 +122,10 @@ class CreateHabitPresenter(
         const val NO_UNIT: String = "数值习惯需要填写单位"
         const val NO_UNIT_UNEXPECTED: String = "「完成 / 未完成」的习惯不能填单位"
         const val SAVE_FAILED: String = "保存失败，请检查输入"
-        const val DEFAULT_ICON: String = "star"
-        const val DEFAULT_COLOR: String = "#5B8C6A"
+        // Defaults match the first swatch in orgins/新建习惯-html. Habits created before the
+        // picker existed stored "star", which HabitVisuals.iconKey maps to the sprout.
+        const val DEFAULT_ICON: String = HabitVisuals.ICON_SPROUT
+        const val DEFAULT_COLOR: String = HabitVisuals.COLOR_MOSS
     }
 }
 

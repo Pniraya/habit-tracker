@@ -10,6 +10,8 @@ data class CreateHabitForm(
     val trackingType: TrackingType = TrackingType.BOOLEAN,
     val targetValue: String = "",
     val unit: String = "",
+    val icon: String = CreateHabitPresenter.DEFAULT_ICON,
+    val color: String = CreateHabitPresenter.DEFAULT_COLOR,
     val frequency: FrequencyType = FrequencyType.DAILY,
     val weekdays: Set<DayOfWeek> = emptySet(),
     val isSaving: Boolean = false,
