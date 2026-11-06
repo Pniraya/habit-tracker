@@ -15,14 +15,14 @@
 |---|---|---|---|---|---|
 | F-001 | Android 工程骨架 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-002 | 今日页与导航 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
-| F-003 | 创建/编辑习惯 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
+| F-003 | 创建/编辑习惯 | 已定义 | VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-004 | 归档/恢复习惯 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
 | F-005 | DAILY/WEEKDAYS/CUSTOM 计划 | 已定义 | VERIFIED | VERIFIED | NOT_STARTED |
 | F-006 | BOOLEAN 日记录 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-007 | NUMERIC 日累计记录 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-008 | 撤销/修改日记录 | 已定义 | IN_PROGRESS | VERIFIED | IN_PROGRESS |
 | F-009 | 当前/最长连续天数 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
-| F-010 | 周/月/年统计 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
+| F-010 | 周/月/年统计 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
 | F-011 | 日历热力图/趋势 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
 | F-012 | 多条 Normal 提醒 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
 | F-013 | 重启/时区后提醒恢复 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
@@ -35,7 +35,8 @@
 
 ### 脚注（状态为部分完成的行）
 
-- **F-003**：创建已实现并真机验证；**编辑习惯未开始**（无编辑入口、无 `updateHabit` 调用路径）。`VERIFIED` 只覆盖创建。
+- **F-003**：创建（`TASK-012`/`TASK-016`/`TASK-018`）与编辑（`TASK-029`：`updateFields` + 编辑弹窗 + 历史快照不被改写）均已实现；编辑的**真机**只验证了弹窗与保存路径，未逐项造多习惯历史数据，故真机列仍按「创建部分」的历史证据记录。
+- **F-010**：只做了**最近 7 天完成率**（`TASK-029`，真机 `0 / 1 · 0%`）。周/月/年切换与热力图（`F-011`）未做，因此实现列为 `IN_PROGRESS`，不是 `VERIFIED` 的完整功能。
 - **F-004**：`TASK-027` 补齐归档入口（今日页 `⋮ → 归档`），`TASK-028` 补齐恢复入口（我的页「恢复」）。真机走通「建 → 归档 → 我的页 → 恢复 → 今日页」，故为 `DEVICE_VERIFIED`。
 - **F-008**：布尔习惯点两次即撤销（`TASK-027`，真机未逐项走查撤销这一步，只验证了归档）；数值习惯要重新输入 0 才算撤销；修改历史某天的记录仍未实现。故 `PARTIAL`。
 - **F-009**：真机只验证了「今天完成 → 显示连续 1 天」；多段历史、最长连续、计划变更这三类需要跨日数据，**未在真机造数验证**，仅由 `StreakRulesTest` 与 `TodayPresenterTest` 覆盖。
@@ -52,7 +53,7 @@
 - **F-005** 计划类型 — 代码：`domain/calculation/ScheduleRules.kt`、`entity/DataTypes.kt`、`CreateHabitScreen` 星期选择器；自动化：`ScheduleRulesTest`、`CreateHabitPresenterTest`（`NO_WEEKDAYS` 分支）；真机：仅建过 `DAILY` 习惯。
 - **F-006** BOOLEAN 记录 — 代码：`RecordHabitProgressUseCase.kt`、`LogStatusRules.kt`、`TodayScreen` 点击切换；自动化：`LogStatusRulesTest`、`RecordHabitProgressUseCaseTest`；真机：`project/reports/DEVICE_DUMP-2026-11-05.md`、`TASK-013` §10。
 - **F-007** NUMERIC 记录 — 代码：`RecordHabitProgressUseCase`、`TodayScreen.NumericInputDialog`、`TodayPresenter.progressText`/`prefillText`；自动化：`RecordHabitProgressUseCaseTest`、`TodayPresenterTest`（小数显示、预填、逗号归一化）；真机：`TASK-016`/`TASK-018` §10（`0.5 / 2000 ml`、对话框预填 `0.5`）。
-- **F-008/F-010~F-014** 撤销/修改、统计、热力图、提醒、提醒恢复、备份 — 全量 grep（含 `streak` 以外的 `backup`、`AlarmManager`、`WorkManager`、网络库）无相关实现；`StatisticsScreen.kt` 与 `ProfileScreen.kt` 只有占位文字，无数据逻辑。故三列均为 `NOT_STARTED`。
+- **F-011~F-014** 热力图、提醒、提醒恢复、备份 — 全量 grep（含 `streak` 以外的 `backup`、`AlarmManager`、`WorkManager`、网络库）无相关实现；`StatisticsScreen.kt` 与 `ProfileScreen.kt` 只有占位文字，无数据逻辑。故三列均为 `NOT_STARTED`（`F-010` 的 7 天完成率子集已由 `TASK-029` 实现，见上）。
 - **F-015** 离线 — **覆盖范围**：治理检查第 22 项扫 `AndroidManifest.xml` 的 `INTERNET` 权限，以及 `gradle/libs.versions.toml`、`app/build.gradle.kts`、根 `build.gradle.kts` 的 `okhttp`/`retrofit`/`ktor`/`firebase` 字样。**挡不住**：第三方库 manifest 合并进来的 `INTERNET`、手写 socket/URL 代码。`VERIFIED` 主张的是「本仓库未声明网络能力」，不是「应用绝对无法联网」。 代码：`app/src/main/AndroidManifest.xml`（仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED`，无 `INTERNET`）、`gradle/libs.versions.toml`（无 `okhttp`/`retrofit`/`ktor`/`firebase`）；自动化：无专门断言；真机：无。
 
 ## 更新规则

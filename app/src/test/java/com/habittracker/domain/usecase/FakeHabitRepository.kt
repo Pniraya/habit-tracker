@@ -93,6 +93,20 @@ open class FakeHabitRepository : HabitRepository {
         state.value = habits.values.toList()
     }
 
+    override suspend fun updateHabit(
+        habitId: Long,
+        name: String,
+        targetValue: Double,
+        unit: String?,
+        now: Long,
+    ): Boolean {
+        val current = habits[habitId] ?: return false
+        if (current.archivedOn != null) return false
+        habits[habitId] = current.copy(name = name, targetValue = targetValue, unit = unit)
+        state.value = habits.values.toList()
+        return true
+    }
+
     override suspend fun restoreHabit(habitId: Long, now: Long) {
         habits[habitId] = requireNotNull(habits[habitId]).copy(archivedOn = null)
         state.value = habits.values.toList()

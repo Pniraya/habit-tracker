@@ -9,6 +9,7 @@ import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.FakeHabitRepository
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
+import com.habittracker.domain.usecase.UpdateHabitUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -35,6 +36,7 @@ class TodayPresenterTest {
         repository = repository,
         recordProgress = RecordHabitProgressUseCase(repository),
         archiveHabit = ArchiveHabitUseCase(repository),
+        updateHabit = UpdateHabitUseCase(repository),
         scope = scope,
         today = { date },
         now = { now },
@@ -92,6 +94,7 @@ class TodayPresenterTest {
             repository = repository,
             recordProgress = RecordHabitProgressUseCase(repository),
             archiveHabit = ArchiveHabitUseCase(repository),
+            updateHabit = UpdateHabitUseCase(repository),
             scope = scope,
             today = { clock },
             now = { now },
@@ -433,6 +436,7 @@ class TodayPresenterTest {
             repository = repository,
             recordProgress = RecordHabitProgressUseCase(repository),
             archiveHabit = ArchiveHabitUseCase(repository),
+            updateHabit = UpdateHabitUseCase(repository),
             scope = scope,
             today = { monday },
             now = { now },
@@ -471,6 +475,34 @@ class TodayPresenterTest {
         val habit = presenter.state.value.habits.single()
         assertFalse(habit.isCompleted)
         assertEquals(0.0, habit.actualValue, 0.0)
+    }
+
+    @Test
+    fun editingUpdatesTheRowWithoutTouchingPastLogs() {
+        val id = createHabit(TrackingType.BOOLEAN, "Read")
+        val presenter = presenter()
+        presenter.toggle(id)
+        val completedBefore = runBlocking { repository.dailyLog(id, monday) }
+        assertNotNull(completedBefore)
+
+        presenter.edit(id, "Read more", 1.0, null)
+
+        assertEquals("Read more", presenter.state.value.habits.single().name)
+        // The log keeps its own snapshot and status: an edit is not a rewrite of history.
+        val after = runBlocking { repository.dailyLog(id, monday) }
+        assertEquals(completedBefore!!.targetSnapshot, after!!.targetSnapshot, 0.0)
+        assertEquals(completedBefore.status, after.status)
+    }
+
+    @Test
+    fun editingRejectsABlankName() {
+        val id = createHabit(TrackingType.BOOLEAN, "Read")
+        val presenter = presenter()
+
+        presenter.edit(id, "   ", 1.0, null)
+
+        assertNotNull(presenter.lastError.value)
+        assertEquals("Read", presenter.state.value.habits.single().name)
     }
 
     @Test

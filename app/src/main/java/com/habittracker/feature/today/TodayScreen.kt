@@ -58,10 +58,12 @@ fun TodayScreen(
     onRecord: (Long, Double) -> Unit,
     onCreate: () -> Unit,
     onArchive: (Long) -> Unit,
+    onEdit: (Long, String, Double, String?) -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var numericTarget by remember { mutableStateOf<TodayHabit?>(null) }
+    var editing by remember { mutableStateOf<TodayHabit?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
@@ -102,6 +104,7 @@ fun TodayScreen(
                             onToggle = { onToggle(habit.id) },
                             onRecord = { numericTarget = habit },
                             onArchive = { onArchive(habit.id) },
+                            onEdit = { editing = habit },
                         )
                     }
                 }
@@ -117,6 +120,18 @@ fun TodayScreen(
                 Icon(Icons.Filled.Add, contentDescription = "新建习惯")
             }
         }
+    }
+
+    val editTarget = editing
+    if (editTarget != null) {
+        EditHabitDialog(
+            habit = editTarget,
+            onDismiss = { editing = null },
+            onConfirm = { name, target, unit ->
+                onEdit(editTarget.id, name, target, unit)
+                editing = null
+            },
+        )
     }
 
     val target = numericTarget
@@ -163,7 +178,64 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
 }
 
 @Composable
-private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Unit, onArchive: () -> Unit) {
+private fun EditHabitDialog(
+    habit: TodayHabit,
+    onDismiss: () -> Unit,
+    onConfirm: (String, Double, String?) -> Unit,
+) {
+    var name by remember(habit.id) { mutableStateOf(habit.name) }
+    var target by remember(habit.id) { mutableStateOf(TodayPresenter.formatQuantity(habit.targetValue)) }
+    var unit by remember(habit.id) { mutableStateOf(habit.unit.orEmpty()) }
+    val numeric = habit.trackingType == TrackingType.NUMERIC
+    val parsedTarget = if (numeric) target.trim().toDoubleOrNull() else 1.0
+    val canSave = name.trim().isNotEmpty() && parsedTarget != null && parsedTarget > 0.0 &&
+        (!numeric || unit.trim().isNotEmpty())
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("编辑习惯") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("名称") },
+                    singleLine = true,
+                )
+                if (numeric) {
+                    OutlinedTextField(
+                        value = target,
+                        onValueChange = { target = normaliseQuantityInput(it) },
+                        label = { Text("目标值") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    )
+                    OutlinedTextField(
+                        value = unit,
+                        onValueChange = { unit = it },
+                        label = { Text("单位") },
+                        singleLine = true,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (canSave) onConfirm(name, parsedTarget ?: 1.0, if (numeric) unit else null) },
+                enabled = canSave,
+            ) { Text("保存") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+    )
+}
+
+@Composable
+private fun HabitRow(
+    habit: TodayHabit,
+    onToggle: () -> Unit,
+    onRecord: () -> Unit,
+    onArchive: () -> Unit,
+    onEdit: () -> Unit,
+) {
     var menuOpen by remember(habit.id) { mutableStateOf(false) }
     val clickable = habit.isScheduledToday
     Card(
@@ -206,6 +278,13 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Un
                     Icon(Icons.Filled.MoreVert, contentDescription = "更多操作")
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("编辑") },
+                        onClick = {
+                            menuOpen = false
+                            onEdit()
+                        },
+                    )
                     DropdownMenuItem(
                         text = { Text("归档") },
                         onClick = {

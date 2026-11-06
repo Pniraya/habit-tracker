@@ -31,6 +31,13 @@ interface HabitRepository {
 
     suspend fun getHabit(habitId: Long): Habit?
 
+    /**
+     * Edits name/target/unit. Contract: [name] and [target] are already validated and normalised by
+     * the use case. Never rewrites `habit_logs.target_snapshot`, so past completion rates stay true.
+     * Returns false when the habit does not exist or is archived.
+     */
+    suspend fun updateHabit(habitId: Long, name: String, targetValue: Double, unit: String?, now: Long): Boolean
+
     /** Archive keeps every child row and never rewrites habit_reminders.enabled (ADR-008). */
     suspend fun archiveHabit(habitId: Long, today: LocalDate, now: Long)
 

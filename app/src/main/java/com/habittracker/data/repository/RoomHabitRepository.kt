@@ -122,6 +122,20 @@ class RoomHabitRepository(private val database: HabitDatabase) : HabitRepository
         check(changed == 1) { "habit not found or already archived" }
     }
 
+    override suspend fun updateHabit(
+        habitId: Long,
+        name: String,
+        targetValue: Double,
+        unit: String?,
+        now: Long,
+    ): Boolean = habitDao.updateFields(
+        id = habitId,
+        name = name,
+        targetValue = targetValue,
+        unit = unit,
+        updatedAt = now,
+    ) > 0
+
     override suspend fun restoreHabit(habitId: Long, now: Long) {
         val changed = habitDao.restore(id = habitId, updatedAt = now)
         check(changed == 1) { "habit not found" }
