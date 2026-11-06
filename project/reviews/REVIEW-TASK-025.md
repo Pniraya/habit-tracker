@@ -4,7 +4,7 @@
 - 审查 commit：第 1 轮 `82f67b0a7f47615263ab0676f8ac1147f2071669`；第 2 轮 `7b3cb62ecd1b7f941a149b0f9a6215892be44e55`（分支 `feat/androidtest-spike`，基线 `main` @ `74c3f06668291e51613d70c4f09e33332f483c01`）
 - Reviewer：独立评审 Agent（DeepSeek Harness 子会话，**未参与实现**，本轮只读 + 运行命令）
 - 独立性：`INDEPENDENT`
-- 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9；真机 `V2238A - 15`（`10CDAK0B71005KU`，Android 15）
+- 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9；真机 `V2238A - 15`（`<device>`，Android 15）
 - 日期：`2026-11-05`
 - 结论（第 1 轮，`82f67b0`）：**REJECT**（阻断 2 项，均为文档/状态口径；实现与测试证据本身通过）
 - 结论（第 2 轮，`7b3cb62`）：**REJECT**（阻断 2 项，均为文档口径；技术证据与门禁全部通过，见 §12）
@@ -39,7 +39,7 @@
 
 - 我无法重放 `36c7e95` 之前的历史运行，只能核对**记载本身的内部一致性 + 我的独立复现**：
   - 第一次失败的签名 `INSTALL_FAILED_ABORTED: User rejected permissions` 是 vivo 的 USB 安装确认被拒，**发生在安装阶段**；`TASK-025` §10 同时记 `TEST-...xml` 为 `tests="0"`，即测试根本没跑。把这次写成「BUILD FAILED」而不是「测试失败」是正确的区分。
-  - 第二次失败记 `Android device (10CDAK0B71005KU) is not found` + `Finished 0 tests`，并明确标注「与测试代码无关」。这是 UTP 启动前的设备发现失败，性质判断正确，**没有把基础设施故障写成测试通过，也没有反过来把测试通过说成环境失败**。
+  - 第二次失败记 `Android device (<device>) is not found` + `Finished 0 tests`，并明确标注「与测试代码无关」。这是 UTP 启动前的设备发现失败，性质判断正确，**没有把基础设施故障写成测试通过，也没有反过来把测试通过说成环境失败**。
   - 第三次 `adb shell svc power stayon usb` 后通过，并把「设备必须保持连接与唤醒」写成通过前提，属如实归因。
 - 我的独立复现（同一设备、锁屏已唤醒、`stayon usb`、`connectedDebugAndroidTest`）**一次通过**，输出与记载的第三次同形：`Starting 1 tests on V2238A - 15` → `Tests 1/1 completed. (0 skipped) (0 failed)` → `BUILD SUCCESSFUL in 43s`。
 - 差异点：**我这次安装没有出现「继续安装」的人工确认**（见 N5），因此「安装被设备拒绝」不应继续作为当前状态的原因（见阻断 B1）。
@@ -108,7 +108,7 @@ XML: <testsuite name="com.habittracker.SmokeTest" tests="1" failures="1" errors=
 | 变异 | 断言改 `com.nonexistent` | `BUILD FAILED in 48s`，1 项 `AssertionError`（`SmokeTest.kt:19`）；XML `failures="1"` |
 | 还原后复跑 | `git checkout -- app/src/androidTest` | `BUILD SUCCESSFUL in 40s`，`Tests 1/1 completed (0 failed)`；`git status --short` 空 |
 
-`adb devices`：`10CDAK0B71005KU\tdevice`。运行结束后 `adb shell pm list packages com.habittracker` 为空（UTP 收尾卸载），说明本轮是**从零安装**成功，未出现安装确认阻塞。
+`adb devices`：`<device>\tdevice`。运行结束后 `adb shell pm list packages com.habittracker` 为空（UTP 收尾卸载），说明本轮是**从零安装**成功，未出现安装确认阻塞。
 
 ## 7. D. 文档同步
 

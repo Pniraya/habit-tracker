@@ -44,7 +44,7 @@
 - 2026-11-05：**关键结论——runner 路径本身可用**。`gradlew.bat connectedDebugAndroidTest` 完成了 66 个任务（编译、打包 androidTest APK、连接设备、尝试安装），说明设备侧 runner 不受「Gradle 单元测试 worker 被禁」影响。外部评审的推断成立。
 - 2026-11-05：**但安装被设备拒绝**：`INSTALL_FAILED_ABORTED: User rejected permissions`；`adb install` 手动安装 app 与 androidTest 两个 APK 同样失败。截图显示设备处于**锁屏**状态（`00:16`）。vivo/iQOO 在锁屏或未授权「USB 安装」时会自动拒绝。这不是沙箱限制，是设备策略 + 需要人工确认。
 - 2026-11-05：解锁设备后重跑，**通过**：`adb install` 返回 `Success`，`Starting 1 tests on V2238A - 15` → `Tests 1/1 completed (0 failed)` → `BUILD SUCCESSFUL in 3m 9s`；XML `tests="1" failures="0"`。
-- 2026-11-05：第二次重跑**失败，但与测试无关**：`Android device (10CDAK0B71005KU) is not found`，即设备在中途掉线/休眠；`Finished 0 tests`。
+- 2026-11-05：第二次重跑**失败，但与测试无关**：`Android device (<device>) is not found`，即设备在中途掉线/休眠；`Finished 0 tests`。
 - 2026-11-05：执行 `adb shell svc power stayon usb` 保持唤醒后第三次重跑**通过**（`BUILD SUCCESSFUL in 40s`）。因此「稳定通过」成立的前提是：**设备保持连接与唤醒**，否则 UTP 会在启动前就报告设备不存在。
 - 结论：`connectedDebugAndroidTest` 在本机可用。此前「本机无法跑 Android 侧测试」的结论只对 **Gradle 单元测试 worker** 成立，对设备侧 runner 不成立。Room 映射、迁移、Compose 冒烟测试现在有落点。
 
@@ -55,7 +55,7 @@
 | `adb install -r -t` app APK / androidTest APK | **均失败** | 同上错误；设备锁屏时 vivo 自动拒绝 |
 | 设备屏幕截图 | 锁屏，`00:16` | 解释拒绝原因；也证明设备时间已跨午夜 |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 105、DAO 27；新增 androidTest 依赖不影响离线保证（第 22 项仍过） |
-| `gradlew.bat connectedDebugAndroidTest`（第二次，设备掉线） | **BUILD FAILED**（45s） | `Finished 0 tests`；`Android device (10CDAK0B71005KU) is not found`，与测试代码无关 |
+| `gradlew.bat connectedDebugAndroidTest`（第二次，设备掉线） | **BUILD FAILED**（45s） | `Finished 0 tests`；`Android device (<device>) is not found`，与测试代码无关 |
 | `adb shell svc power stayon usb` 后第三次重跑 | **BUILD SUCCESSFUL**（40s） | `Tests 1/1 completed (0 failed)` |
 
 ## 11. Completion Review

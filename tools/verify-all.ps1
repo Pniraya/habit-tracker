@@ -12,10 +12,13 @@ $logDir = Join-Path $repoRoot '.gradle\logs'
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 # Gradle needs the local toolchain; only source it when the environment is not already set.
-if (-not $env:ANDROID_HOME) {
-    $envScript = 'D:\AndroidToolchain\env.ps1'
-    if (Test-Path $envScript) { . $envScript | Out-Null }
+if (-not $env:ANDROID_HOME -or -not $env:JAVA_HOME) {
+    $candidates = @($env:HABIT_ENV_SCRIPT, (Join-Path $repoRoot '..\AndroidToolchain\env.ps1'))
+    foreach ($candidate in $candidates) {
+        if ($candidate -and (Test-Path $candidate)) { . $candidate | Out-Null; break }
+    }
 }
+if (-not $env:ANDROID_HOME) { Write-Output 'RESULT: ANDROID_HOME is not configured'; exit 1 }
 
 $results = @()
 function Invoke-Step([string]$Name, [scriptblock]$Body) {

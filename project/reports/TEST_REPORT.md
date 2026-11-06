@@ -4,7 +4,7 @@
 
 ## Latest Run
 - 日期时间：`2026-11-06`
-- 分支 / commit：`feat/day-cutoff`（`TASK-035`，基线 `main` @ `e732b0c`；最终合入 commit 以 `git log -1` 为准）
+- 分支 / commit：`feat/github-prep`（`TASK-036`，基线 `main` @ `dc7e37c`；最终合入 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
 - 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 159 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；设备侧 `connectedDebugAndroidTest` `PASS`（6 项：5 项 Room 契约 + SmokeTest）；真机 `PASS`（日切改造后今日页日期/打卡/统计页标签不回归）
 
@@ -81,7 +81,7 @@
 | 2026-11-05 | `tools/run-unit-tests.ps1`（第 1 轮评审修复后） | **OK (90 tests)** | 新增每习惯归属与 3 项 `fromLoaded` 行为；U2 变异改为编译失败、U4 变异 1 项红 | TASK-022 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（第 2 轮评审修复后） | **OK (91 tests)** | 删掉冗余钳位、补「昨天漏今天补 → 1」、归属用例加 `isCompleted` 断言 | TASK-022 |
 | 2026-11-05 | `gradlew.bat connectedDebugAndroidTest`（第 1 次，设备锁屏） | **FAILED（环境）** | `INSTALL_FAILED_ABORTED: User rejected permissions`，失败在**安装阶段**；XML `tests="0"` 说明测试未启动。锁屏时 vivo 自动拒绝安装 | TASK-025 |
-| 2026-11-05 | `gradlew.bat connectedDebugAndroidTest`（第 2 次，设备掉线） | **FAILED（环境）** | `Finished 0 tests`；`Android device (10CDAK0B71005KU) is not found`，UTP 启动前失败，与测试代码无关 | TASK-025 |
+| 2026-11-05 | `gradlew.bat connectedDebugAndroidTest`（第 2 次，设备掉线） | **FAILED（环境）** | `Finished 0 tests`；`Android device (<device>) is not found`，UTP 启动前失败，与测试代码无关 | TASK-025 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（接缝补洞） | **OK (105 tests)** | 转换器 7（含闰日、非法日期）、差分 1（3000 组随机对拍）、往返 3、翻日 1、接线规则 1、午夜算术 1；变异实测 M1=3、M2=1、M3=11、M4=5、ME=2、MH=1、MH2=1 | TASK-024 |
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 | 2026-11-05 | `gradlew.bat connectedDebugAndroidTest`（唤醒 + `stayon usb` 后，第 3 次） | **PASS**（`BUILD SUCCESSFUL`，40s；另有 3m09s 一次） | `Tests 1/1 completed (0 skipped) (0 failed)`，XML `tests="1" failures="0"`；设备侧 runner 可用。由 Reviewer 独立复跑一次（43s）同形通过 | TASK-025 |
