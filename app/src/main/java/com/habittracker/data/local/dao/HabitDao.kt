@@ -23,6 +23,10 @@ interface HabitDao {
     @Query("SELECT * FROM habits WHERE archived_on IS NULL ORDER BY created_at ASC")
     fun observeActive(): Flow<List<HabitEntity>>
 
+    /** Archived rows, newest archive first, so the profile page can offer a restore (TASK-028). */
+    @Query("SELECT * FROM habits WHERE archived_on IS NOT NULL ORDER BY archived_at DESC")
+    fun observeArchived(): Flow<List<HabitEntity>>
+
     @Query("SELECT * FROM habits ORDER BY created_at ASC")
     suspend fun findAll(): List<HabitEntity>
 

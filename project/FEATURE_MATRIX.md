@@ -16,7 +16,7 @@
 | F-001 | Android 工程骨架 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-002 | 今日页与导航 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-003 | 创建/编辑习惯 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
-| F-004 | 归档/恢复习惯 | 已定义 | IN_PROGRESS | VERIFIED | IN_PROGRESS |
+| F-004 | 归档/恢复习惯 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
 | F-005 | DAILY/WEEKDAYS/CUSTOM 计划 | 已定义 | VERIFIED | VERIFIED | NOT_STARTED |
 | F-006 | BOOLEAN 日记录 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-007 | NUMERIC 日累计记录 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
@@ -36,7 +36,7 @@
 ### 脚注（状态为部分完成的行）
 
 - **F-003**：创建已实现并真机验证；**编辑习惯未开始**（无编辑入口、无 `updateHabit` 调用路径）。`VERIFIED` 只覆盖创建。
-- **F-004**：`ArchiveHabitUseCase` 与 `HabitRepository.restoreHabit` 已实现并有单测；`TASK-027` 补了**归档入口**（今日页 `⋮ → 归档`，真机走通），**恢复入口仍缺**，故真机列为 `PARTIAL` 而非 `DEVICE_VERIFIED`。
+- **F-004**：`TASK-027` 补齐归档入口（今日页 `⋮ → 归档`），`TASK-028` 补齐恢复入口（我的页「恢复」）。真机走通「建 → 归档 → 我的页 → 恢复 → 今日页」，故为 `DEVICE_VERIFIED`。
 - **F-008**：布尔习惯点两次即撤销（`TASK-027`，真机未逐项走查撤销这一步，只验证了归档）；数值习惯要重新输入 0 才算撤销；修改历史某天的记录仍未实现。故 `PARTIAL`。
 - **F-009**：真机只验证了「今天完成 → 显示连续 1 天」；多段历史、最长连续、计划变更这三类需要跨日数据，**未在真机造数验证**，仅由 `StreakRulesTest` 与 `TodayPresenterTest` 覆盖。
 - **F-005**：三种频率的模型、`ScheduleRules` 与创建页选择器都已实现并有单测；真机只验证过 `DAILY`（现存的 3 个习惯都是每天），`WEEKDAYS`/`CUSTOM` 未在设备上建过，故真机列保持 `NOT_STARTED`，不按 `DEVICE_VERIFIED` 记。

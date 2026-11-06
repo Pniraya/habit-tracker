@@ -6,7 +6,7 @@
 - 日期时间：`2026-11-05`
 - 分支 / commit：`feat/adr-015` → `feat/mvp-archive`（`TASK-027`，基线 `main` @ `0c3f03a`；最终合入 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 110 项 + DAO SQL 27 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 115 项 + DAO SQL 31 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -50,7 +50,7 @@
 | 2026-11-05 | 受控负向验证：删除 `TASK-009` 的 verify-all 证据 | **FAILED（第 21 项）**（预期） | `TASK-009 has no verify-all evidence`；还原后 21/21 PASS | TASK-009 |
 | 2026-11-05 | 补登记 ADR-014 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 21/21（7s）、单测 40 项（25s）、`assembleDebug` 21s、空白 0s | TASK-009 |
 | 2026-11-05 | 合入 `main` 后复跑 `tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 7s、单测 25s、构建 23s、空白 0s；`main` 上确认 | TASK-009 |
-| 2026-11-05 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 27 项断言（新增 6 项批量查询场景）+ `MIN_CHECKS` 覆盖率兜底（防场景被静默删除）；真实 SQLite，8 个触发器在场 | TASK-010 |
+| 2026-11-05 | `node tools/verify-dao.mjs` | **DAO SQL PASS** | 31 项断言（新增 6 项批量查询场景）+ `MIN_CHECKS` 覆盖率兜底（防场景被静默删除）；真实 SQLite，8 个触发器在场 | TASK-010 |
 | 2026-11-05 | 变异：`HabitDao.observeActive` 去掉 `archived_on IS NULL` | **FAILED（1 项）**（预期） | `observeActive after archive expected 1, got 2` | TASK-010 |
 | 2026-11-05 | 变异：`HabitLogDao.findRange` 的 `BETWEEN` 改开区间 | **FAILED（2 项）**（预期） | 两条边界断言均 `got []`；还原后全绿 | TASK-010 |
 | 2026-11-05 | `pwsh -NoProfile -File tools/run-unit-tests.ps1`（Today presenter） | **OK (47 tests)** | 新增 `TodayPresenterTest` 7 项 | TASK-011 |
@@ -86,6 +86,10 @@
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 | 2026-11-05 | `gradlew.bat connectedDebugAndroidTest`（唤醒 + `stayon usb` 后，第 3 次） | **PASS**（`BUILD SUCCESSFUL`，40s；另有 3m09s 一次） | `Tests 1/1 completed (0 skipped) (0 failed)`，XML `tests="1" failures="0"`；设备侧 runner 可用。由 Reviewer 独立复跑一次（43s）同形通过 | TASK-025 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（撤销 + 归档） | **OK (110 tests)** | 新增 5 项：归档只移除目标行、重复归档报错、撤销回未完成、提示文案、静默 Flow 不等仓库 | TASK-027 |
+| 2026-11-05 | `tools/run-unit-tests.ps1`（归档恢复） | **OK (115 tests)** | 新增 5 项：只列归档、恢复后回活动、重复恢复报错、静默 Flow、空态文案 | TASK-028 |
+| 2026-11-05 | 变异 M-RESTORE：删掉 `restore()` 的本地重建 | **FAILED（1 项）**（预期） | `theRestoreRebuildDoesNotWaitForTheRepositoryFlow` 变红 | TASK-028 |
+| 2026-11-05 | `node tools/verify-dao.mjs`（归档/恢复场景） | **DAO SQL PASS**（31 项） | 27 → 31；`MIN_CHECKS` 同步提升；恢复场景放在 `findById` 之后，否则会清掉被断言的 `archived_on` | TASK-028 |
+| 2026-11-05 | 真机：建 → 归档 → 我的页 → 恢复 → 今日页 | **通过** | 两条归档恢复一条后，`Walk` 回到今日列表 | TASK-028 |
 | 2026-11-05 | 变异 M-ARCH：删掉 `archive()` 的本地重建 | **FAILED（1 项）**（预期） | 修复前**同变异全绿**（测试证明的是 Flow 不是代码）；补「只发射一次」的假仓库后变红 | TASK-027 |
 | 2026-11-05 | 真机：建习惯 → `⋮` → 归档 | **通过** | 列表回到空状态；`dumpsys activity top` 前台仍为 `com.habittracker` | TASK-027 |
 | 2026-11-05 | 探针 A：虚构任务 `TASK-9XX` 标 `IMPLEMENTED` 但未登记待批审清单 | **FAILED（预期）** | `TASK-9XX is IMPLEMENTED but missing from the batched-review register`。**首次运行未变红**——新代码里 `$Matches[1]` 被后续 `-match` 覆盖，导致所有任务被 `continue` 跳过；修复后变红 | ADR-015 |
@@ -95,7 +99,7 @@
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
 - **重要更新（`TASK-025`）**：`connectedDebugAndroidTest` 在真机上**可用**（`Tests 1/1 completed`，两次通过）。此前「本机无法跑 Android 侧测试」只对 Gradle 单元测试 worker 成立。约束有两条：安装需要**解锁**设备；运行期间需 `adb shell svc power stayon usb` 保持唤醒，否则 UTP 会报 `Android device ... is not found`。
-- **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，27 项，含 6 项批量查询场景）——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新。
+- **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，31 项，含 6 项批量查询场景与归档/恢复 4 项）——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新。
 - **未覆盖（UI）**：Today 状态机 9 项、新建表单状态机 9 项 JVM 覆盖；Compose 渲染与交互未由 Robolectric 或设备自动化验证（手动真机走查记录见 `TASK-012` §14，非自动化）。
 - **未覆盖**：Room 的 Cursor/实体映射；TypeConverter 往返；`Flow` 失效通知；`withTransaction` 边界与并发写入；Room 由 `@Upsert`/`@Insert` **生成的** SQL（harness 验证的是同一冲突列上等价语句的语义与唯一索引存在，不能证明 Room 会选用该冲突列）。
 - 无模拟器（`HypervisorPresent=False`，无 WHPX/Hyper-V）；真机验证为手动走查，非自动化：`TASK-012`（建习惯/打卡/落库）与 `TASK-016`（小数输入 `0.5` 落库）。设备侧行级证据见 `project/reports/DEVICE_DUMP-2026-11-05.md`。

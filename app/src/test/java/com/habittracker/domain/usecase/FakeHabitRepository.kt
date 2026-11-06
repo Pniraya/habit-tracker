@@ -80,6 +80,9 @@ open class FakeHabitRepository : HabitRepository {
     override fun observeActiveHabits(): Flow<List<Habit>> =
         state.map { list -> list.filter { habit -> habit.archivedOn == null } }
 
+    override fun observeArchivedHabits(): Flow<List<Habit>> =
+        state.map { list -> list.filter { habit -> habit.archivedOn != null } }
+
     override suspend fun getHabit(habitId: Long): Habit? = habits[habitId]
 
     // Deliberately permissive: a missing id is a no-op here, so a test can only pass when the
