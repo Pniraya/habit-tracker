@@ -59,6 +59,7 @@
 - **F-011**：月度热力图与本周柱状趋势由 `TASK-031` 实现并在真机对照；`TASK-033` 补齐每习惯的「本周 + 近 5 周」网格（详情页）。故三列均为已验证。限制：统计页的周/年切换未实现（标签显式变淡）。
 - **F-012~F-014** 提醒、提醒恢复、备份 — 全量 grep（`AlarmManager`、`WorkManager`、`backup`、网络库）无相关实现；`ProfileScreen.kt` 已承载归档列表，但没有提醒或备份逻辑。故仍为 `NOT_STARTED`。
 - **F-008** 的「修改历史记录」仍未实现：`TASK-033` 详情页只读展示历史，编辑只在当前习惯字段上，故 `F-008` 实现列保持 `PARTIAL`。
+- **数据层契约（不占功能行）**：`TASK-026` 新增设备侧 `DatabaseContractTest` 5 项——生产 `DatabaseConstraints.callback()` 的 8 个触发器注册与「重开后仍生效」、实体/Converter 往返（闰日、REAL 精度、可空 unit、枚举、时区切换）、`observeActive()` 失效、四表级联删除、`changeSchedule` 失败回滚。真机 6/6（含 `SmokeTest`）通过；仍未覆盖迁移与 UI。
 - **F-015** 离线 — **覆盖范围**：治理检查第 22 项扫 `AndroidManifest.xml` 的 `INTERNET` 权限，以及 `gradle/libs.versions.toml`、`app/build.gradle.kts`、根 `build.gradle.kts` 的 `okhttp`/`retrofit`/`ktor`/`firebase` 字样。**挡不住**：第三方库 manifest 合并进来的 `INTERNET`、手写 socket/URL 代码。`VERIFIED` 主张的是「本仓库未声明网络能力」，不是「应用绝对无法联网」。 代码：`app/src/main/AndroidManifest.xml`（仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED`，无 `INTERNET`）、`gradle/libs.versions.toml`（无 `okhttp`/`retrofit`/`ktor`/`firebase`）；自动化：无专门断言；真机：无。
 
 ## 更新规则

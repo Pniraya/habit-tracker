@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-06`
-- 分支 / commit：`feat/habit-detail`（`TASK-033`，基线 `main` @ `a3b7c94`；最终合入 commit 以 `git log -1` 为准）
+- 分支 / commit：`feat/room-contract-tests`（`TASK-026`，基线 `main` @ `6876de8`；最终合入 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 154 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；真机 `PASS`（今日页行点击进详情、打卡后 1/1 与 100%、编辑弹窗、返回）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 154 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；设备侧 `connectedDebugAndroidTest` `PASS`（6 项：5 项 Room 契约 + SmokeTest）；真机 `PASS`（跑完 App 被卸载，从备份恢复 3 个习惯）
 
 ## Runs
 
@@ -100,6 +100,7 @@
 | 2026-11-06 | `tools/run-unit-tests.ps1`（统计滚动 + 导航隐藏 + 删除 + 归档分组） | **OK (145 tests)** | 137 → 145：`ArchiveGroupsTest` 5（月父/日子、倒序、同日按名、缺归档日忽略、空归档）、`DeleteHabitUseCaseTest` 3（删主表与子记录、已归档可删、缺失 id 拒绝）；首轮同日顺序断言写反，修正后通过 | TASK-034 |
 | 2026-11-06 | `node tools/verify-dao.mjs`（删除语句） | **DAO SQL PASS**（38 项） | 新增 `HabitDao.deleteById` 场景：删除返回 1 行、三张子表级联清零、未知 id 返回 0；`MIN_CHECKS` 37 → 38 | TASK-034 |
 | 2026-11-06 | 真机：统计页滚动 / 空白点击收导航栏 / 删除习惯 / 归档分组 | **PASS** | 趋势卡滚动后完整可见；空白点击后 UI 树无导航节点、再点恢复；建 `T` → 删除二次确认 → 列表回 3 条；归档后「2026 年 11 月 → 11 月 6 日」两级展示，随后恢复 | TASK-034 |
+| 2026-11-06 | `gradlew.bat connectedDebugAndroidTest`（Room 契约） | **PASS**（40s） | 6 tests / 0 failures / 0 errors（`DatabaseContractTest` 5 + `SmokeTest`）：触发器 8 个在真实 `callback()` 路径注册且重开后仍拒绝非法行、闰日/REAL 精度/枚举/时区往返、`observeActive()` 失效、四表级联、`changeSchedule` 失败回滚旧版本；另实测确认跑完 App 被 AGP 卸载（`pm list packages` 为空），已用备份恢复数据 | TASK-026 |
 | 2026-11-06 | `tools/run-unit-tests.ps1`（习惯详情页） | **OK (154 tests)** | 145 → 154：`HabitDetailRulesTest` 9（周一到周日边界、未计划日不算失败、首版本前不算失败、5 周周一对齐、完成率按应做天数、无应做日不除零、累计含窗口外历史、频率文案、版本区间）；首轮两处期望写错（周五的周六应为 FUTURE；5 周完成率分母是整窗口），修正后通过 | TASK-033 |
 | 2026-11-06 | 真机：今日页行点击 → 详情 → 返回 | **PASS** | 行标题进详情（顶部返回/标题/编辑），打卡前 `0/1`、`0%`；勾选圈仍直接打卡 | TASK-033 |
 | 2026-11-06 | 真机：详情页数据与编辑弹窗 | **PASS** | 打卡后重进详情：连续 1 天、本周 `1/1`、今天杏橙勾点、近 5 周 `100%`、累计/本月各 1；铅笔弹出「编辑习惯/名称/保存/取消」，两次返回回今日页 | TASK-033 |

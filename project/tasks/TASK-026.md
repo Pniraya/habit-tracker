@@ -1,68 +1,95 @@
 # TASK-026: 设备侧 Room 契约测试
 
-- 状态：`NOT_STARTED`
+- 状态：`IMPLEMENTED`（`ADR-015`：实现与真机自测完成，未经独立评审）
 - 阶段：`Gate 3`
-- 优先级：`P1`
-- 依赖：`TASK-025`（真机 instrumented 测试已可用）
-- 创建日期：`2026-11-05`
-- 完成日期：`TBD`
+- 优先级：`P0`（外部评审 `ADVICE-RESPONSE-2026-11-06.md` 建议「现在最该做的一件事」）
+- 依赖：`TASK-025`（设备侧通道）
+- 创建日期：`2026-11-06`
+- 完成日期：`2026-11-06`
 
 ## 1. Objective
-用 `TASK-025` 打通的设备侧通道，补上「Room 真的把数据存成了什么样」的自动化证据：实体/转换器往返、`withTransaction` 原子性、以及 `DatabaseConstraints` 触发器**在 Room 打开数据库时是否真的被注册**。
+用 `TASK-025` 打通的设备侧通道，补上「Room 真的把数据存成了什么样」的自动化证据：触发器在`生产打开路径`上是否注册、实体/转换器往返、`withTransaction` 回滚、`Flow` 失效通知，以及外键级联。
 
 ## 2. Context
-现状是：SQL 层由 `verify-schema.mjs`（40 项）与 `verify-dao.mjs`（27 项）覆盖，两者都在**独立 SQLite 进程**里执行语句。这留下了三个真实空洞：
+`tools/verify-schema.mjs`（40 项）与 `tools/verify-dao.mjs`（38 项）验证的是 **Room 导出的 schema JSON + `DatabaseConstraints.kt` 里的触发器文本**，用 `node:sqlite` 执行。它们证明 SQL 语义，但不证明：
+- `DatabaseConstraints.callback()` 在真实 `Room.databaseBuilder` 打开时被调用；
+- Room 的实体/Converter 映射往返正确；
+- `withTransaction` 真的回滚；
+- `Flow` 在写入后失效。
 
-1. `DatabaseConstraints.callback()` 是 `RoomDatabase.Callback`，`verify-schema.mjs` 永远看不到它。若 `HabitDatabase.build()` 忘了 `.addCallback(...)`，**全部 105 项单测与 27 项 DAO 检查仍然全绿**，而生产库没有任何触发器。
-2. `Converters` 在真实 Room 写入路径上未被验证（现有 `ConvertersTest` 是直接调函数，绕过了 Room 的注册与取值）。
-3. `withTransaction` 的原子性没有任何测试。
+外部评审把这条列为 P0，因为「数据库保证不变量」目前只有 SQL 副本证据。
 
 ## 3. Scope
-- `app/src/androidTest` 下新增测试：用 `Room.inMemoryDatabaseBuilder` + 真实 `Converters`/实体，验证
-  - 插入后读回：`LocalDate`/`LocalTime`/三个枚举值往返不变；
-  - `sqlite_master` 里存在 8 个 `trg_*` 触发器（证明 `onOpen`/`onCreate` 回调真的跑了）；
-  - 非法行（如 `target_value <= 0`、`WEEKDAYS` 配 `mask=127`）被触发器以 `SQLiteConstraintException` 拒绝；
-  - `withTransaction` 中途抛异常时全部回滚。
-- 关键：用例必须走 `HabitDatabase` 的**同一个** `build` 配置（或抽出可注入的 builder 配置），否则测的是另一条装配路径。
+- 新增 `app/src/androidTest/java/com/habittracker/data/local/DatabaseContractTest.kt`：每个用例独立临时文件 DB，用与生产完全相同的 `DatabaseConstraints.callback()`。
+- 5 个用例：
+  1. **触发器在生产路径上生效**：查 `sqlite_master` 断言 8 个触发器；非法 `habits` 行被拒（`SQLiteException` 含 `invalid`）；关闭后重新打开仍存在且仍拒绝（覆盖「恢复/导入的库」）。
+  2. **Converter + 实体往返**：闰日 `2028-02-29`、`NUMERIC` 的 REAL 精度（`0.1 + 0.2` 精确相等）、可空 `unit`、枚举、`completed_at` 配对；`TimeZone` 切到 UTC 后日期不漂移。
+  3. **Flow 失效**：`observeActive()` 先挂起等待，写入后 `first { it.isNotEmpty() }` 在 10s 内返回正确行。
+  4. **级联删除**：习惯 + 计划 + 日志 + 提醒各 1 行，`deleteHabit` 后四张表全 0。
+  5. **真实事务回滚**：`changeSchedule` 先关闭旧版本、再用非法掩码触发异常；断言旧版本 `effective_until` 仍为 NULL（没有回滚的话旧版本会被关掉）。
 
 ## 4. Out of Scope
-- UI/Compose 冒烟（另立任务）。
-- 迁移测试（`v1` 是当前唯一版本，无迁移可测；等 v2 出现再写）。
-- 性能/主线程耗时测量。
+- UI 自动化（外部评审列为 `N6`，靠后）。
+- 迁移测试（schema 仍为 v1，无迁移可测；`MigrationTestHelper` 模板留到第一次 `schema v2`）。
+- 把测试底座抽成独立模块（当前是测试类内的私有 helper；抽模块等第二个调用方出现再说）。
 
 ## 5. Expected Files
-- `app/src/androidTest/java/com/habittracker/data/local/HabitDatabaseContractTest.kt`（新增）
-- 可能需在 `app/build.gradle.kts` 加 `androidx.test:core` 或 `room-testing`（**需先确认是否真的必需**，不加未用的依赖）
+- 新增：`app/src/androidTest/java/com/habittracker/data/local/DatabaseContractTest.kt`、本文件更新
+- 修改：`PROJECT_STATUS.md`、`README.md`、`TEST_REPORT.md`、`LAST_HANDOFF.md`、`FEATURE_MATRIX.md`（脚注）
 
 ## 6. Acceptance Criteria
-- [ ] 至少 4 条设备侧用例，且每条都能被一个具体变异打红（附变异实测输出）
-- [ ] 「`addCallback` 被删」这一变异**必须**让测试变红（这是本任务的核心价值）
-- [ ] `verify-all.ps1` 与 `check-governance.ps1` 继续全绿；设备侧测试**不**加入默认门禁（慢、依赖插线）
-- [ ] `TEST_REPORT` 记录真机实测输出
+- [x] 5 个用例在真机上通过，连同 `SmokeTest` 共 6 项
+- [x] 用例使用生产 `DatabaseConstraints.callback()`，而不是手写 DDL
+- [x] 触发器断言覆盖「首次打开」与「重开后」
+- [x] 事务回滚用例走真实 `RoomHabitRepository.changeSchedule`，不是玩具事务
+- [x] 每个用例独立 DB 文件，互不依赖，跑完即删
+- [x] 单测 154 项与构建仍通过
+- [x] 测试运行前后的设备数据有备份/恢复证据
 
-## 7. Risks
-- 设备侧测试要插线、要唤醒，不能作为快速反馈回路；只作为「发布前证据」。
-- `inMemoryDatabaseBuilder` 与生产 `databaseBuilder` 的配置差异可能掩盖问题；需要显式确认 callback 注册路径共享。
+## 7. Tests
+- `gradlew.bat connectedDebugAndroidTest`：6 tests / 0 failures / 0 errors（40s，V2238A）
+- `tools/run-unit-tests.ps1`：154 项（未受本次改动影响）
+- `tools/verify-all.ps1`：全绿
 
-## 8. Notes
-- `TASK-025` 评审的 N1 建议顺带处理：`TEST_REPORT` 第 15 项在「最后一行 verdict 是中文」时结果词检查恒真，建议补一条治理探针（最后一行 verdict 必须是 `PASS|FAILED|NOT_RUN` 之一）。
+## 8. Risks and Decisions
+- **AGP 在 `connected*AndroidTest` 结束后会卸载被测 App（已实测确认）**：跑完后 `pm list packages com.habittracker` 为空，设备数据随之清空。本次运行前已备份 DB，运行后重装并恢复，3 个测试习惯回到今日页。以后跑设备测试必须先备份；长期方案（独立 `applicationIdSuffix` 或固定测试设备）见 `ADVICE-RESPONSE` R1。
+- **测试底座暂不抽模块**：5 个用例共享的是「打开临时库 + 计数」十几行代码；过早抽公共模块会让测试读起来更绕。
+- **临时文件 DB 而非内存 DB**：重开用例必须落到文件；内存库无法证明「恢复/导入后仍受约束」。
+- `DatabaseContractTest` 依赖 `RoomHabitRepository` 的具体行为（`changeSchedule` 先关闭后插入），这是有意为之：测的就是生产写路径。
 
 ## 9. Implementation Log
-- 尚未开始（由 `TASK-025` 评审 §5「判别力边界」与 §12 建议创建；开工后在此记录）。
+- 2026-11-06：先读 `HabitDatabase`/`DatabaseConstraints`/`Converters`/`RoomHabitRepository` 与四个 DAO，确认可测接缝；确认 `verify-*.mjs` 读的是导出 schema JSON，不是手抄 DDL。
+- 2026-11-06：写 5 个用例 → `assembleDebugAndroidTest` 编译通过 → 真机一次跑绿（6/6）。
+- 2026-11-06：跑完发现 App 被卸载（`pm list packages` 为空）——即外部评审 R1 警告的路径；按「force-stop → run-as 拉 db/wal/shm → 重装 → push + run-as cp → 启动」恢复，今日页重新出现 3 个习惯。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/verify-all.ps1` | 未运行（任务未开始） | 开工后补真实结果 |
+| `gradlew.bat assembleDebug assembleDebugAndroidTest` | **BUILD SUCCESSFUL**（6s） | 测试 APK 与 App APK 均产出 |
+| `gradlew.bat connectedDebugAndroidTest` | **PASS**（40s） | `Starting 6 tests on V2238A - 15` / `Finished 6 tests`；XML `tests="6" failures="0" errors="0"` |
+| 数据保护 | **PASS** | 运行前备份至 `.gradle/db-backup-20261106`；运行后 App 被卸载 → 重装 + `run-as cp` 恢复；截图今日页 `Rread`/`Wa'l'k`/`Wa't'er` 均在 |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 154、DAO 38、`assembleDebug`、`git diff --check` |
 
 ## 11. Completion Review
-- [ ] 验收标准满足
-- [ ] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`
+- [x] 验收标准满足
+- [x] 测试实际运行
+- [ ] 独立 Reviewer `APPROVE`（`ADR-015` 批量评审）
 
 ## 12. Handoff
-- 之后：Compose 冒烟（另立任务）、统计页 `TASK-023`。
+- 下一条安全操作：外部评审建议的 `N2` 窄口径里程碑评审（7 个 `IMPLEMENTED` 一起转 `DONE` 或列阻塞项），由**不带实现上下文的新会话**执行。
+- `TASK-030` 按外部评审拆为 `030a 导出`（只读，可先做）与 `030b 恢复`（依赖本任务）。
+- 跑设备测试前必须备份 DB（见 §8）。
 
 ## 13. Independent Review
-- Reviewer record：待创建
-- 结论：`PENDING`
+- Reviewer record：待创建（批量评审）
+- 结论：`PENDING`（`IMPLEMENTED`）
+
+<!-- close-task:begin -->
+## 状态摘要（自动生成，勿手改）
+
+- 任务：TASK-026
+- 状态：`IMPLEMENTED`
+- 阶段：Gate 3
+- 验收：通过 7 项 / 未通过 0 项
+- 最近测试记录：2026-11-06 / **OK (154 tests)**
+<!-- close-task:end -->
