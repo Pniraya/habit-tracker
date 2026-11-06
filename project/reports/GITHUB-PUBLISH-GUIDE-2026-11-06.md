@@ -108,7 +108,7 @@ git update-index --chmod=+x gradlew
 
 **当前文件：**
 ```powershell
-git grep -nIE "(api[_-]?key|secret|token|passw(or)?d|storePassword|keyPassword|sk-|ghp_)" 
+git grep -nIE "(api[_-]?key|secret|token|passw(or)?d|storePassword|keyPassword|sk-|ghp_)"
 ```
 
 **历史记录（比当前文件更重要，因为推送的是完整历史）：**
