@@ -107,6 +107,14 @@ open class FakeHabitRepository : HabitRepository {
         return true
     }
 
+    override suspend fun deleteHabit(habitId: Long) {
+        // Mirrors ON DELETE CASCADE: children never outlive their habit.
+        habits.remove(habitId)
+        schedules.remove(habitId)
+        logs.keys.removeAll { key -> key.startsWith(habitId.toString() + "@") }
+        state.value = habits.values.toList()
+    }
+
     override suspend fun restoreHabit(habitId: Long, now: Long) {
         habits[habitId] = requireNotNull(habits[habitId]).copy(archivedOn = null)
         state.value = habits.values.toList()

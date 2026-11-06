@@ -6,7 +6,7 @@
 - 日期时间：`2026-11-06`
 - 分支 / commit：`main`（`TASK-032`，基线 `main` @ `e2c585a`；最终合入 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 137 项 + DAO SQL 37 项 + `assembleDebug` 13s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；真机对照 `PASS`（今日页 / 全部完成态 / 新建页 / 图标颜色落库）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 145 项 + DAO SQL 38 项 + `assembleDebug` 10s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；真机 `PASS`（统计页滚动、导航栏收起/恢复、删除习惯、归档按月日分组）
 
 ## Runs
 
@@ -97,6 +97,9 @@
 | 2026-11-05 | 变异：`SmokeTest` 断言改 `startsWith("com.nonexistent")` | **FAILED（预期）** | 1 项 `AssertionError`（`SmokeTest.kt:19`），`BUILD FAILED`；还原后复跑通过 → 断言有判别力。但只证明「安装 + runner attach」，不能当回归哨兵 | TASK-025 |
 | 2026-11-06 | `tools/run-unit-tests.ps1`（今日页/新建页重建） | **OK (137 tests)** | 124 → 137：`HabitVisualsTest` 11（颜色解析与回退、环比例与越界钳制、文案、徽章口径、图标回退）、`CreateHabitPresenterTest` +2（图标/颜色落库、新表单默认值） | TASK-032 |
 | 2026-11-06 | `pwsh -NoProfile -File tools/verify-all.ps1`（今日页/新建页重建） | **VERIFY ALL PASS** | 治理 22/22、单测 137、DAO 37、`assembleDebug` 13s、`git diff --check` 干净 | TASK-032 |
+| 2026-11-06 | `tools/run-unit-tests.ps1`（统计滚动 + 导航隐藏 + 删除 + 归档分组） | **OK (145 tests)** | 137 → 145：`ArchiveGroupsTest` 5（月父/日子、倒序、同日按名、缺归档日忽略、空归档）、`DeleteHabitUseCaseTest` 3（删主表与子记录、已归档可删、缺失 id 拒绝）；首轮同日顺序断言写反，修正后通过 | TASK-034 |
+| 2026-11-06 | `node tools/verify-dao.mjs`（删除语句） | **DAO SQL PASS**（38 项） | 新增 `HabitDao.deleteById` 场景：删除返回 1 行、三张子表级联清零、未知 id 返回 0；`MIN_CHECKS` 37 → 38 | TASK-034 |
+| 2026-11-06 | 真机：统计页滚动 / 空白点击收导航栏 / 删除习惯 / 归档分组 | **PASS** | 趋势卡滚动后完整可见；空白点击后 UI 树无导航节点、再点恢复；建 `T` → 删除二次确认 → 列表回 3 条；归档后「2026 年 11 月 → 11 月 6 日」两级展示，随后恢复 | TASK-034 |
 | 2026-11-06 | 真机（iQOO Neo7 SE / Android 15）：安装 + 今日页 / 全部完成态 / 新建页 / 图标颜色落库对照 | **PASS** | 首次安装 `INSTALL_FAILED_ABORTED: User rejected permissions`（锁屏），唤醒 + `dismiss-keyguard` 后成功；今日页与设计稿一致；打卡后满环 +「连续 1 天」徽章 + 叶片；新建页曾有底部导航遮挡按钮，修复后复装确认无导航、按钮不遮挡；新建「水滴 + 雾蓝」习惯后列表显示水滴图标、打卡圈为雾蓝，归档后列表恢复 | TASK-032 |
 
 ## Known Test Gaps

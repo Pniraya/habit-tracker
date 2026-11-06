@@ -5,9 +5,9 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-06`（Asia/Shanghai）
 - 当前阶段：`Gate 3`（今日页 / 新建页 / 统计页均已按设计稿重建；无设备，重建后的界面未真机复验）
-- 当前任务：`TASK-032`（`IMPLEMENTED`：今日页与新建页按设计稿重建，构建 + 137 项单测通过，缺真机视觉走查与独立评审）；`TASK-031`（统计页）同样 `IMPLEMENTED` 待批量评审；下一条功能任务仍为 `TASK-030`（MVP 收口：备份导出 + 权限清理）
+- 当前任务：`TASK-034`（`IMPLEMENTED`：统计页可滚动、点空白处收起导航栏、删除习惯、归档按月日分组，145 项单测 + 真机走通，缺独立评审）；`TASK-032`/`TASK-031` 均已 `IMPLEMENTED` 合入待批量评审；下一条 `TASK-030`（MVP 收口：备份导出 + 权限清理）
 - 当前 Git 分支：`main`（本地，无远程）；最近 commit 以 `git log -1 --oneline` 为准
-- **会话状态：可继续**——评审按 `ADR-015` 批量后置；设备（`10CDAK0B71005KU`）在线，`TASK-032` 真机对照全部完成（今日页、完成态、新建页、图标/颜色落库）
+- **会话状态：可继续**——评审按 `ADR-015` 批量后置；设备（`10CDAK0B71005KU`）在线，`TASK-034` 四项交互已真机走通
 - **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`。当前没有 UI 自动化用例，界面只能装 APK 手动对照 `TASK-032` §6
 
 ## Completed This Session
@@ -33,11 +33,16 @@
 | `gradlew.bat assembleDebug` | **BUILD SUCCESSFUL** | 13s，APK 10,559,569 B |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 137、DAO 37、构建、`git diff --check`；首次运行被治理第 18 项拦下（`TASK-032` 未登记在待批审清单），补登记后复跑通过 |
 | 真机（iQOO Neo7 SE / Android 15） | **PASS**（范围有限） | 安装后对照：今日页与设计稿一致；打卡后满环 +「连续 1 天」徽章 + 叶片；新建页渲染一致。截图 `.gradle/shots/today.png`、`done2.png`、`create2.png`（不入库） |
+| 真机：统计页滚动 / 空白点击收导航栏 / 删除习惯 / 归档按月日分组 | **PASS** | 趋势卡滚到底完整可见；点击空白后 UI 树无导航节点；删除「T」经二次确认后列表回 3 条；「我的」显示「2026 年 11 月 → 11 月 6 日」两级，随后恢复。截图 `stats_bottom.png`/`bar_hidden2.png`/`delete_dialog.png`/`profile_grouped.png` |
 | 真机：修复版复装 + 新建「水滴 + 雾蓝」+ 打卡 + 归档 | **PASS** | 新建页无底部导航、按钮不遮挡；列表显示水滴图标；打卡圈为雾蓝 `#8FAFC4`；归档后列表恢复。截图 `create_final.png`/`today_after_create.png`/`water_done.png`/`after_archive.png`（`.gradle/shots/`，不入库） |
 
 ## Not Verified / Known Gaps
 - **今日页与新建页均已真机对照**（`F-002`/`F-003` 均为 `DEVICE_VERIFIED`）；未覆盖：滚动、平板宽度、减弱动效设置
 - **安装坑**：锁屏时 `adb install` 会 `INSTALL_FAILED_ABORTED: User rejected permissions`，先 `input keyevent KEYCODE_WAKEUP` + `wm dismiss-keyguard` 再装
+- **归档分组只有单月单日真机数据**：多月份/跨月排序只由 `ArchiveGroupsTest` 覆盖
+- **删除的级联只对无日志的临时习惯做过真机验证**：带历史日志的删除未在真机造数，级联由 schema 与 `verify-schema`/`verify-dao` 覆盖
+- **点空白处收导航栏**：交互可发现性低，且没有 UI 自动化；恢复靠再点一次或切 tab
+- 真机测试期间为造数据切换过 `Rread`/`Wa'l'k` 的完成状态，未逐条还原（测试习惯，非真实用户数据）
 - **习惯详情页未实现**：`orgins/习惯详情-html/Detail.dc.html` 有完整设计，但需要日志历史/热力图/编辑入口，未立任务
 - **编辑弹窗不能改图标/颜色**：`UpdateHabitUseCase` 只更新名称/目标/单位
 - **旧数据 `icon="star"`** 无对应图形，统一回退嫩芽；未做数据迁移（不需要 schema 变更的话也应在编辑页补选项）
@@ -52,6 +57,7 @@
 - **沙箱与 Gradle 缓存**：本机 `C:\Users\<user>\.gradle` 需要写锁文件，受限沙箱下 `gradlew` 会以 `FileNotFoundException ... .lck` 失败；那是环境拒绝，不是构建错误
 
 ## Next Safe Action
-1. 设备在线且 `TASK-032` 设备证据已补齐（`F-002`/`F-003` 均 `DEVICE_VERIFIED`）。下一步可做 `TASK-033`（习惯详情页，设计稿 `Detail.dc.html`）或 `TASK-030`（备份导出 + 权限清理）
+1. `TASK-034` 已四项真机走通（`F-020` 新增为 `DEVICE_VERIFIED`）。下一步可做 `TASK-033`（习惯详情页，设计稿 `Detail.dc.html`）或 `TASK-030`（备份导出 + 权限清理）
+2. 若继续打磨归档页：补多月份归档数据或给 `ArchiveGroupsTest` 增加跨年用例即可，不需要改 schema
 2. 视觉通过后：`project/tasks/TASK-033.md`（习惯详情页，设计稿 `orgins/习惯详情-html/Detail.dc.html`）或 `TASK-030`（备份导出 + 权限清理）
 3. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿；不要把 `TASK-032` 直接改成 `DONE`——它缺独立评审

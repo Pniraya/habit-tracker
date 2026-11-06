@@ -159,7 +159,7 @@ const insertReminder = db.prepare(
 
 ok("every expected DAO query was parsed out of the Kotlin sources", () => {
   const expected = {
-    HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore", "updateFields"]],
+    HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore", "updateFields", "deleteById"]],
     HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits"]],
     HabitScheduleDao: [
       scheduleQ,
@@ -314,14 +314,16 @@ equal(
   [readId + "@2026-01-05", readId + "@2026-01-06", waterId + "@2026-01-05"].sort(),
 );
 
-// --- cascade ---
-ok("deleting a habit cascades to schedules, logs and reminders", () => {
-  db.prepare("DELETE FROM habits WHERE id = ?").run(readId);
+// --- cascade (TASK-034: the delete action runs this exact DAO statement) ---
+ok("HabitDao.deleteById removes the habit and cascades to schedules, logs and reminders", () => {
+  const deleted = queryOne(habitQ.deleteById, { id: readId });
+  if (deleted !== 1) throw new Error("expected 1 deleted row, got " + deleted);
   const counts = ["habit_schedules", "habit_logs", "habit_reminders"].map(
     (table) => db.prepare("SELECT COUNT(*) AS c FROM " + table + " WHERE habit_id = ?").get(readId).c,
   );
   if (counts.some((count) => count !== 0)) throw new Error("orphan rows remain: " + JSON.stringify(counts));
 });
+equal("HabitDao.deleteById is a no-op for an unknown id", queryOne(habitQ.deleteById, { id: 999999 }), 0);
 
 } catch (error) {
   // A parse or bind failure must still produce a summary instead of a bare stack trace.
@@ -331,7 +333,7 @@ ok("deleting a habit cascades to schedules, logs and reminders", () => {
 
 // Deleting a scenario while keeping its registration would otherwise shrink coverage silently.
 // Bump this number in the same commit that adds a scenario.
-const MIN_CHECKS = 37;
+const MIN_CHECKS = 38;
 if (checks < MIN_CHECKS) {
   failed += 1;
   console.log("FAIL  coverage shrank: " + checks + " checks executed, at least " + MIN_CHECKS + " expected");

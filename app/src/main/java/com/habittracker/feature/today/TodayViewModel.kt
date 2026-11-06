@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.data.repository.RoomHabitRepository
 import com.habittracker.domain.usecase.ArchiveHabitUseCase
+import com.habittracker.domain.usecase.DeleteHabitUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import com.habittracker.domain.usecase.UpdateHabitUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,7 @@ class TodayViewModel(
     fun toggle(habitId: Long) = presenter.toggle(habitId)
     fun record(habitId: Long, value: Double) = presenter.record(habitId, value)
     fun archive(habitId: Long) = presenter.archive(habitId)
+    fun delete(habitId: Long) = presenter.delete(habitId)
     fun edit(habitId: Long, name: String, targetValue: Double, unit: String?) =
         presenter.edit(habitId, name, targetValue, unit)
     fun dismissError() = presenter.dismissError()
@@ -50,6 +52,7 @@ class TodayViewModel(
                     recordProgress = RecordHabitProgressUseCase(repository),
                     archiveHabit = ArchiveHabitUseCase(repository),
                     updateHabit = UpdateHabitUseCase(repository),
+                    deleteHabit = DeleteHabitUseCase(repository),
                     scope = scope,
                 )
                 @Suppress("UNCHECKED_CAST")

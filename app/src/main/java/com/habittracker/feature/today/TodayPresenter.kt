@@ -7,6 +7,7 @@ import com.habittracker.domain.model.Habit
 import com.habittracker.domain.model.HabitSchedule
 import com.habittracker.domain.repository.HabitRepository
 import com.habittracker.domain.usecase.ArchiveHabitUseCase
+import com.habittracker.domain.usecase.DeleteHabitUseCase
 import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
 import com.habittracker.domain.usecase.UpdateHabitUseCase
@@ -30,6 +31,9 @@ class TodayPresenter(
     private val archiveHabit: ArchiveHabitUseCase,
     private val updateHabit: UpdateHabitUseCase,
     private val scope: CoroutineScope,
+    // Defaults to the real use case so existing call sites (and tests) keep working; the
+    // ViewModel passes it explicitly for readability.
+    private val deleteHabit: DeleteHabitUseCase = DeleteHabitUseCase(repository),
     private val today: () -> LocalDate = { LocalDate.now() },
     private val now: () -> Long = { System.currentTimeMillis() },
 ) {
@@ -86,6 +90,22 @@ class TodayPresenter(
                     _state.value = snapshot(habits)
                 }
                 .onFailure { _lastError.value = it.message ?: "无法归档" }
+        }
+    }
+
+    /**
+     * Permanently deletes the habit and rebuilds the list, same local-first pattern as [archive].
+     * The UI asks for confirmation before calling this (DATABASE.md 9).
+     */
+    fun delete(habitId: Long) {
+        scope.launch {
+            runCatching { deleteHabit(habitId) }
+                .onSuccess {
+                    _lastError.value = null
+                    habits = habits.filterNot { it.id == habitId }
+                    _state.value = snapshot(habits)
+                }
+                .onFailure { _lastError.value = it.message ?: "无法删除" }
         }
     }
 

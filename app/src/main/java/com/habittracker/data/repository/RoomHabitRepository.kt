@@ -136,6 +136,11 @@ class RoomHabitRepository(private val database: HabitDatabase) : HabitRepository
         updatedAt = now,
     ) > 0
 
+    override suspend fun deleteHabit(habitId: Long) {
+        // DATABASE.md 9: child rows are removed by the foreign keys, so one statement is enough.
+        habitDao.deleteById(habitId)
+    }
+
     override suspend fun restoreHabit(habitId: Long, now: Long) {
         val changed = habitDao.restore(id = habitId, updatedAt = now)
         check(changed == 1) { "habit not found" }
