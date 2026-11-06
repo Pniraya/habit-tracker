@@ -8,7 +8,8 @@
 - 当前任务：`TASK-025`（`PARTIAL`，真机 instrumented 测试 spike；runner 可用，安装被设备拒绝）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
 - 当前 Git 分支：`main`（本地，无远程），`feat/seam-hardening` 已合并、保留未删；`main`（本地，无远程）@ `427e7cc`（`TASK-022` 已合入）；`feat/today-queries`、`feat/streak` 已合并、保留未删
 - 最近 commit：以 `git log -1 --oneline` 为准（交接记录与代码修复同一次提交时，写死哈希必然立刻过期）
-- **会话状态：可继续**——`TASK-022`、`TASK-024` 均已 `DONE` 合入 `main`；下一条从 `TASK-025` 开始（真机 instrumented 测试 spike）
+- **会话状态：可继续**——`TASK-022`、`TASK-024` 已 `DONE` 合入 `main`；`TASK-025` 已证明真机 instrumented 测试可用（待评审），下一步是用它补 Room 映射与 Compose 冒烟
+- **设备测试怎么跑**：手机**解锁** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`；解锁状态下安装会问一次「继续安装」
 
 ## Completed This Session
 - `TASK-021`（F-009 当前/最长连续天数）：`StreakRules` 纯函数一次正向遍历同时给出当前与最长；`GetStreakUseCase` 取全部计划版本 + 区间内 `COMPLETED` 日志；`TodayPresenter.streakText` 决定文案（`0/0` 不显示、`0/7` 显示「最长 7 天」、`3/7` 显示「连续 3 天 · 最长 7 天」）

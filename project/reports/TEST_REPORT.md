@@ -80,11 +80,13 @@
 | 2026-11-05 | 变异：`snapshot()` 退回逐习惯读 / 多做一次批量读 | **FAILED（各 2 项）**（预期） | 两条计数断言同时变红；还原后 86 项全绿 | TASK-022 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（第 1 轮评审修复后） | **OK (90 tests)** | 新增每习惯归属与 3 项 `fromLoaded` 行为；U2 变异改为编译失败、U4 变异 1 项红 | TASK-022 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（第 2 轮评审修复后） | **OK (91 tests)** | 删掉冗余钳位、补「昨天漏今天补 → 1」、归属用例加 `isCompleted` 断言 | TASK-022 |
+| 2026-11-05 | `gradlew.bat connectedDebugAndroidTest`（真机 instrumented） | **BUILD SUCCESSFUL**（3m09s 与 40s 各一次，1 test 通过） | 设备侧 runner 可用；中途一次失败为设备掉线（`device ... is not found`），非测试失败 | TASK-025 |
 | 2026-11-05 | `tools/run-unit-tests.ps1`（接缝补洞） | **OK (105 tests)** | 转换器 7（含闰日、非法日期）、差分 1（3000 组随机对拍）、往返 3、翻日 1、接线规则 1、午夜算术 1；变异实测 M1=3、M2=1、M3=11、M4=5、ME=2、MH=1、MH2=1 | TASK-024 |
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
+- **重要更新（`TASK-025`）**：`connectedDebugAndroidTest` 在真机上**可用**（`Tests 1/1 completed`，两次通过）。此前「本机无法跑 Android 侧测试」只对 Gradle 单元测试 worker 成立。约束有两条：安装需要**解锁**设备；运行期间需 `adb shell svc power stayon usb` 保持唤醒，否则 UTP 会报 `Android device ... is not found`。
 - **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，27 项，含 6 项批量查询场景）——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新。
 - **未覆盖（UI）**：Today 状态机 9 项、新建表单状态机 9 项 JVM 覆盖；Compose 渲染与交互未由 Robolectric 或设备自动化验证（手动真机走查记录见 `TASK-012` §14，非自动化）。
 - **未覆盖**：Room 的 Cursor/实体映射；TypeConverter 往返；`Flow` 失效通知；`withTransaction` 边界与并发写入；Room 由 `@Upsert`/`@Insert` **生成的** SQL（harness 验证的是同一冲突列上等价语句的语义与唯一索引存在，不能证明 Room 会选用该冲突列）。
