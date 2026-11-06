@@ -4,57 +4,57 @@
 
 ## Snapshot
 - 日期时间（含时区）：`2026-11-06`（Asia/Shanghai）
-- 当前阶段：`Gate 3`（今日页 / 新建页 / 统计页 / 习惯详情页均已按设计稿实现；看板与详情页已真机对照）
-- 当前任务：`TASK-033`（`IMPLEMENTED`：习惯详情页，154 项单测 + 真机走通，缺独立评审）；`TASK-032`/`TASK-034`/`TASK-031` 均已 `IMPLEMENTED` 合入待批量评审；下一条 `TASK-030`（MVP 收口：备份导出 + 权限清理）
+- 当前阶段：`Gate 3`（出口按外部评审重定义为：`TASK-026` 完成 + 窄口径里程碑评审 `R1` 通过）
+- 当前任务：`TASK-026`（`IMPLEMENTED`：设备侧 Room 契约测试 5 项，真机 6/6）；`TASK-027/028/029/031/032/033/034` 均 `IMPLEMENTED` 待批量评审；下一条 `R1` 评审，然后 `TASK-030a` 导出
 - 当前 Git 分支：`main`（本地，无远程）；最近 commit 以 `git log -1 --oneline` 为准
-- **会话状态：可继续**——评审按 `ADR-015` 批量后置；设备（`10CDAK0B71005KU`）在线，`TASK-033` 详情页四步交互已真机走通
-- **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`。当前没有 UI 自动化用例，界面只能装 APK 手动对照任务 §6
+- **会话状态：可继续**——外部评审 `project/reports/ADVICE-RESPONSE-2026-11-06.md` 已收到并采纳主线；设备（`10CDAK0B71005KU`）在线且数据已恢复
+- **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`；**跑前必须备份 DB**（见下）
 
 ## Completed This Session
-- `TASK-033`（习惯详情页，`orgins/习惯详情-html/Detail.dc.html`）：
-  - 新增纯规则 `feature/detail/HabitDetailRules.kt`：`DayState`（DONE/MISSED/NOT_DUE/FUTURE）、`week`（周一→周日，标记今天）、`fiveWeeks`（5 个周一对齐的行）、`stats`（累计/近 5 周完成率/本月次数）、`frequencyLabel`
-  - 新增 `HabitDetailPresenter`：从**第一个计划版本**开始读日志（保证连续与累计不被 5 周窗口截断），组合 `GetStreakUseCase.fromLoaded` 与规则；编辑走 `UpdateHabitUseCase` 后重载
-  - 新增 `HabitDetailScreen`：44dp 返回/编辑圆钮、128dp 杏橙连续卡（60sp 数字 + 72dp 叶片圆）、本周 7×40dp 圆点、近 5 周 5×7 网格与图例、三张 76dp 统计卡、计划行
-  - 导航：`AppRoutes.HABIT_DETAIL = "habit/{habitId}"` + `habitDetail(id)`，`AppRoot` 用 `navArgument(LongType)` 建 presenter；详情为全屏路由（不显示底部导航）
-  - 今日页行标题改为进入详情；勾选圈仍是打卡/数值录入（设计稿的语义）
-- 设计取舍（已写进 `TASK-033` §8）：
-  - 第三张统计卡改为「本月次数」（`duration_seconds` 从未写入，设计稿「每次平均 22 分钟」会是假数据）
-  - 计划行不含提醒时间（`F-012` 未实现，避免假控件）
-  - 5 周网格周一对齐（设计稿 35 格平铺在非周日会与表头错位）；未来日为浅色，不算失败
+- 收到外部评审（`ADVICE-RESPONSE-2026-11-06.md`，374 行），采纳其主线：先 `TASK-026`，再窄口径评审，再拆备份。
+- `TASK-026`（设备侧 Room 契约测试）：
+  - 新增 `app/src/androidTest/.../DatabaseContractTest.kt`：每用例独立临时文件 DB，使用与生产完全相同的 `DatabaseConstraints.callback()`
+  - 5 个用例：触发器在生产打开路径注册 + 重开后仍生效；Converter/实体往返（闰日、REAL 精度、可空 unit、枚举、UTC 切换）；Flow 失效；四表级联删除；`changeSchedule` 在关闭旧版本后抛错仍回滚
+  - 真机 `connectedDebugAndroidTest`：**6 tests / 0 failures**（40s）
+- 数据安全（外部评审 R1）**实测确认并处置**：
+  - 跑设备测试前备份 `databases/habit-tracker.db{,-wal,-shm}` 到 `.gradle/db-backup-20261106`
+  - 跑完 `pm list packages com.habittracker` **为空**——AGP 确实卸载了 App，数据被清空
+  - 重装 + `adb push` + `run-as cp` 恢复，今日页重新出现 `Rread`/`Wa'l'k`/`Wa't'er`
+- 代码事实核对（回应评审的「需确认」项）：
+  - `AndroidManifest.xml` 已经是 `allowBackup="false"`，无 `dataExtractionRules`（R1 的云备份风险已排除）
+  - `HabitDatabase` 没有 `fallbackToDestructiveMigration()`，`exportSchema = true`
+  - `verify-schema.mjs`/`verify-dao.mjs` 读的是 `app/schemas/.../1.json` + `DatabaseConstraints.kt` 真实文本，**不是手抄 DDL**（评审 B3 的漂移疑虑不成立）
+  - 无签名配置、无 `applicationIdSuffix`（R1 的 keystore 与「测试安装清数据」风险仍成立）
 
 ## Files Changed
-- 新增：`feature/detail/HabitDetailRules.kt`、`HabitDetailPresenter.kt`、`HabitDetailScreen.kt`、`test/.../HabitDetailRulesTest.kt`、`res/drawable/ic_arrow_back.xml`、`ic_edit.xml`、`ic_calendar.xml`、`project/tasks/TASK-033.md`
-- 修改：`navigation/AppRoutes.kt`、`AppRoot.kt`、`feature/today/TodayScreen.kt`、`FEATURE_MATRIX.md`（F-011 转 `DEVICE_VERIFIED`、脚注纠正）、`PROJECT_STATUS.md`、`README.md`、`TEST_REPORT.md`、本文件
+- 新增：`app/src/androidTest/java/com/habittracker/data/local/DatabaseContractTest.kt`、`project/reports/ADVICE-RESPONSE-2026-11-06.md`
+- 修改：`project/tasks/TASK-026.md`（重写为 `IMPLEMENTED`）、`PROJECT_STATUS.md`、`README.md`、`TEST_REPORT.md`、`FEATURE_MATRIX.md`（数据层契约脚注）、本文件
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (154 tests)** | 145 → 154：`HabitDetailRulesTest` 9 项 |
-| `gradlew.bat compileDebugKotlin` | **BUILD SUCCESSFUL** | 13s |
-| `gradlew.bat assembleDebug` | **BUILD SUCCESSFUL** | 安装包已装到真机 |
-| 真机：行点击进详情 → 打卡 → 重进详情 | **PASS** | 打卡前 `0/1`、`0%`；打卡后连续 1 天、本周 `1/1`、今天杏橙勾点、近 5 周 `100%`、累计/本月各 1 |
-| 真机：编辑铅笔 + 返回 | **PASS** | 弹窗「编辑习惯/名称/保存/取消」；返回今日页 |
+| `gradlew.bat assembleDebug assembleDebugAndroidTest` | **BUILD SUCCESSFUL** | 6s |
+| `gradlew.bat connectedDebugAndroidTest` | **PASS**（40s） | `Starting 6 tests` / `Finished 6 tests`；XML `tests="6" failures="0" errors="0"` |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 154、DAO 38、构建、`git diff --check` |
+| 数据备份/恢复 | **PASS** | 备份 3 个文件 → 测试后 App 被卸载 → 重装 + `run-as cp` → 今日页 3 个习惯恢复 |
 
 ## Not Verified / Known Gaps
-- **多周网格只有单测证据**：真机数据里每个习惯的计划都从今天生效，近 5 周实际只出现今天一格
-- **跨周/跨月边界**（周一夜里、月初）未在真机造数，仅单测覆盖
-- **详情页不可编辑历史记录**：`F-008` 的「修改某天记录」仍未实现
-- **编辑弹窗不能改图标/颜色**（沿用 `UpdateHabitUseCase` 的字段范围）
-- 安装坑：锁屏时 `adb install` 会 `INSTALL_FAILED_ABORTED: User rejected permissions`，先唤醒 + `dismiss-keyguard`
-- 真机测试期间切换过 `Rread`/`Wa'l'k`/`Wa't'er` 的完成状态（测试习惯，非真实数据）
-- 统计页周/年切换、图标替换仍是 `TASK-031` 的已知缺口
-- **叶片动画不读系统减弱动效设置**；平板上 390×844 画板外的布局未实测
+- **设备测试会卸载 App（已实测）**：每次设备测试前备份 DB；长期方案（`applicationIdSuffix` 或专用测试机）未定
+- **未覆盖迁移**：schema 仍 v1，无 `MigrationTestHelper` 模板；第一次 v2 前要建
+- **Cursor → 实体只抽查关键字段**，不是全量字段映射；并发写入未测
+- **UI 层仍无自动化**（外部评审 `N6`，≤8 用例，依赖本任务底座）
+- **评审债 7 项未还**：外部评审要求由**新上下文**做窄口径评审（偏差表 + 写路径/规则边界 + 变异抽查），不能用本会话自查
+- **真机数据仍是单日计划版本**：多周/跨月、跨年边界只有单测
+- 待用户拍板：归档层级语义、日切点（0 点 vs 4 点）、提醒是否进 MVP、恢复只做覆盖、第三张卡口径、SDK 许可复核
 
 ## Lessons Worth Keeping
-- **日志窗口要覆盖连续天数**：详情页画 5 周，但连续/累计必须从第一个计划版本算起；只按可见窗口读日志会把历史变成假「漏做」
-- **未来日不是漏做**：判定顺序必须 `FUTURE > NOT_DUE > DONE > MISSED`，否则周五看周六会显示失败
-- **完成率的分母是「应做天数」**：设计稿只写百分比，分母来自计划版本，不能用总天数
-- **测试期望先对日历**：两处失败都是「周五的周六应为 FUTURE」「5 周分母是整窗口」这类日历事实，不是实现错
-- 设计稿里的控件要有对应实现才画：提醒行、平均用时都因后端缺失被替换并记录，而不是摆假数据
+- **`connectedAndroidTest` 会卸载 App**：不是「可能」，是实测；跑前 `force-stop` + `run-as cat` 备份 `db/-wal/-shm`，跑后重装 + `push`/`cp` 恢复
+- **`withTransaction` 的回滚要挑「已经写了一步」的路径测**：`changeSchedule` 先关旧版本再抛错，才能证明回滚而不是证明「异常之前没写」
+- **触发器测试必须重开数据库**：只测首次打开漏掉「恢复/导入的库」这条真实路径
+- **验证工具读的是导出 schema 与真实源码**：评审质疑「SQL 是手抄副本」时，先看工具入口再改测试
 
 ## Next Safe Action
-1. **先看 `project/reports/ADVICE-REQUEST-2026-11-06.md`**：已把 8 项瓶颈（评审债、UI 无自动化、Room 运行时契约、日志窗口、设计/数据缺口、真机数据单薄、归档层级、环境）与 10 个开放问题整理成一页求教文档，等外部建议回来再定下一步优先级
-2. 若不等建议：实现 `TASK-030`（MVP 收口：备份导出 + 权限清理），先读 `TASK-030` §3 与 `DATABASE.md` 的备份格式
-2. 或继续小步打磨：详情页空态/多周数据造数、跨周边界用例
-3. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿；不要把 `TASK-033` 改成 `DONE`——它缺独立评审
+1. **`R1` 窄口径里程碑评审**：由不带实现上下文的新会话执行；按 `ADVICE-RESPONSE` Q1 的 4 步（偏差表、写路径/规则边界、变异抽查约 10 个、产出 1 份 review），把 7 个 `IMPLEMENTED` 一起转 `DONE` 或列阻塞项
+2. 与 `R1` 并行：`N3` 偏差 ADR + `project/DESIGN-DELTA.md` + 归档语义用户确认
+3. 之后：`N5` 提醒数据模型 ADR（先于备份格式）→ `TASK-030a` JSON 导出（只读）
+4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿；不要把 `TASK-026` 改成 `DONE`——它缺独立评审
