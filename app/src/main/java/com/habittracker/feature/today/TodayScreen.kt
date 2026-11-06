@@ -89,6 +89,7 @@ fun TodayScreen(
     onArchive: (Long) -> Unit,
     onDelete: (Long) -> Unit,
     onEdit: (Long, String, Double, String?) -> Unit,
+    onOpenDetail: (Long) -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -151,6 +152,7 @@ fun TodayScreen(
                         onArchive = { onArchive(habit.id) },
                         onDelete = { deleting = habit },
                         onEdit = { editing = habit },
+                        onOpenDetail = { onOpenDetail(habit.id) },
                     )
                 }
             }
@@ -307,6 +309,7 @@ private fun HabitRow(
     onArchive: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit,
+    onOpenDetail: () -> Unit,
 ) {
     var menuOpen by remember(habit.id) { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
@@ -330,12 +333,12 @@ private fun HabitRow(
                     if (habit.trackingType == TrackingType.BOOLEAN) onToggle() else onRecord()
                 },
             )
+            // The row body opens the detail page (design: the check circle is the only record
+            // action); the checkbox above still toggles/records without leaving the list.
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable(enabled = clickable) {
-                        if (habit.trackingType == TrackingType.BOOLEAN) onToggle() else onRecord()
-                    },
+                    .clickable(onClick = onOpenDetail),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(

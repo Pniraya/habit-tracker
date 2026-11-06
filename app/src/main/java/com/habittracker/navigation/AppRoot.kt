@@ -52,6 +52,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -63,8 +65,11 @@ import com.habittracker.core.designsystem.TrackGreen
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.data.repository.RoomHabitRepository
 import com.habittracker.domain.usecase.CreateHabitUseCase
+import com.habittracker.domain.usecase.UpdateHabitUseCase
 import com.habittracker.domain.usecase.RestoreHabitUseCase
 import com.habittracker.feature.create.CreateHabitPresenter
+import com.habittracker.feature.detail.HabitDetailPresenter
+import com.habittracker.feature.detail.HabitDetailScreen
 import com.habittracker.feature.create.CreateHabitScreen
 import com.habittracker.feature.profile.ProfilePresenter
 import com.habittracker.feature.profile.ProfileScreen
@@ -170,6 +175,7 @@ fun AppRoot() {
                     onArchive = todayViewModel::archive,
                     onDelete = todayViewModel::delete,
                     onEdit = todayViewModel::edit,
+                    onOpenDetail = { habitId -> navController.navigate(AppRoutes.habitDetail(habitId)) },
                     onDismissError = todayViewModel::dismissError,
                 )
             }
@@ -197,6 +203,24 @@ fun AppRoot() {
                     onSave = presenter::save,
                     onCancel = { navController.popBackStack() },
                 )
+            }
+            composable(
+                route = AppRoutes.HABIT_DETAIL,
+                arguments = listOf(navArgument("habitId") { type = NavType.LongType }),
+            ) { entry ->
+                val habitId = entry.arguments?.getLong("habitId") ?: -1L
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+                val presenter = remember(habitId) {
+                    val repository = RoomHabitRepository(HabitDatabase.getInstance(context))
+                    HabitDetailPresenter(
+                        habitId = habitId,
+                        repository = repository,
+                        updateHabit = UpdateHabitUseCase(repository),
+                        scope = scope,
+                    )
+                }
+                HabitDetailScreen(presenter = presenter, onBack = { navController.popBackStack() })
             }
             composable(AppDestination.Statistics.route) {
                 val context = LocalContext.current
