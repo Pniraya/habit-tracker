@@ -74,7 +74,9 @@ fun StatisticsScreen(presenter: StatisticsPresenter) {
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text("统计", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Ink)
-            PeriodSwitch()
+            // Week/year ranges are not implemented (ADR-017 §6). A tab that cannot be selected was
+            // worse than no control, so only the static range the page actually shows remains.
+            Text("本月", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Muted)
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SummaryCard(
@@ -160,34 +162,6 @@ fun StatisticsScreen(presenter: StatisticsPresenter) {
                         fontWeight = if (bar.isToday) FontWeight.Bold else FontWeight.Normal,
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PeriodSwitch() {
-    Row(
-        modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(Settle).padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        listOf("周", "月", "年").forEach { label ->
-            val selected = label == "月"
-            // 周/年 are drawn but not selectable yet: a tab that does nothing when tapped is a lie,
-            // so they are visibly dimmed instead of pretending to work (TASK-031 known gap).
-            val enabled = selected
-            Surface(
-                color = if (selected) CardWhite else Color.Transparent,
-                shape = RoundedCornerShape(999.dp),
-                shadowElevation = if (selected) 2.dp else 0.dp,
-            ) {
-                Text(
-                    text = label,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                    fontSize = 13.sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = (if (selected) Ink else Muted).copy(alpha = if (enabled) 1f else 0.35f),
-                )
             }
         }
     }

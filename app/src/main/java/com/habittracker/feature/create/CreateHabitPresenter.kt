@@ -3,6 +3,7 @@ package com.habittracker.feature.create
 import com.habittracker.core.designsystem.HabitVisuals
 import com.habittracker.data.local.entity.FrequencyType
 import com.habittracker.data.local.entity.TrackingType
+import com.habittracker.domain.calculation.DayCutoff
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.NewHabit
 import com.habittracker.domain.model.NewSchedule
@@ -25,7 +26,7 @@ class CreateHabitPresenter(
     // cover the onFailure path; production wires CreateHabitUseCase::invoke.
     private val createHabit: suspend (NewHabit, LocalDate, Long) -> Long,
     private val scope: CoroutineScope,
-    private val today: () -> LocalDate = { LocalDate.now() },
+    private val today: () -> LocalDate = { DayCutoff.today() },
     private val now: () -> Long = { System.currentTimeMillis() },
 ) {
 

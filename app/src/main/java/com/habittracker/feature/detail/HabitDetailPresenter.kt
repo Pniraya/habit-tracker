@@ -2,6 +2,7 @@ package com.habittracker.feature.detail
 
 import com.habittracker.data.local.entity.LogStatus
 import com.habittracker.data.local.entity.TrackingType
+import com.habittracker.domain.calculation.DayCutoff
 import com.habittracker.domain.model.Habit
 import com.habittracker.domain.repository.HabitRepository
 import com.habittracker.domain.usecase.GetStreakUseCase
@@ -36,7 +37,7 @@ class HabitDetailPresenter(
     private val repository: HabitRepository,
     private val updateHabit: UpdateHabitUseCase,
     private val scope: CoroutineScope,
-    private val today: () -> LocalDate = { LocalDate.now() },
+    private val today: () -> LocalDate = { DayCutoff.today() },
     private val now: () -> Long = { System.currentTimeMillis() },
 ) {
 

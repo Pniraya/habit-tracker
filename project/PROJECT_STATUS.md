@@ -5,12 +5,12 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-026`（`IMPLEMENTED`：设备侧 Room 契约测试 5 项，真机 6/6 通过，待批量评审）；`TASK-033`（习惯详情页）已 `IMPLEMENTED` 合入；`TASK-034`（统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组）已 `IMPLEMENTED` 合入；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条按外部评审（`ADVICE-RESPONSE-2026-11-06.md`）先做窄口径里程碑评审（7 个 `IMPLEMENTED` 一起），再把 `TASK-030` 拆成 `030a 导出`（先做）与 `030b 恢复`；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-035`（`IMPLEMENTED`：日切点改为 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件，159 项单测与真机自测通过，待批量评审）；`TASK-026`（设备侧 Room 契约测试，真机 6/6）已 `IMPLEMENTED` 合入；`TASK-033`（习惯详情页）已 `IMPLEMENTED` 合入；`TASK-034`（统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组）已 `IMPLEMENTED` 合入；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条按外部评审（`ADVICE-RESPONSE-2026-11-06.md`）先做窄口径里程碑评审（8 个 `IMPLEMENTED` 一起），再做 `N5` 提醒数据模型 ADR，然后把 `TASK-030` 拆成 `030a 导出`（先做）与 `030b 恢复`；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B；与 `README` 同口径）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 38/38 验证 DAO 的 SQL 语义、CAS 更新与级联删除（含 `deleteById`））
-- 最近验证测试：`PASS`（**154 项**单测 + **6 项设备侧 instrumented**，`connectedDebugAndroidTest`：触发器注册/重开、Converter 往返、Flow 失效、级联删除、事务回滚）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
+- 最近验证测试：`PASS`（**159 项**单测 + **6 项设备侧 instrumented**，`connectedDebugAndroidTest`：触发器注册/重开、Converter 往返、Flow 失效、级联删除、事务回滚）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查 + 15 个探针 0 失败；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
 - 最后核对时间：`2026-11-06`
 
@@ -18,7 +18,7 @@
 
 - [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：已按 `ADR-005~010` 修订
 - [x] `project/REQUIREMENTS.md`：TBD 第 1/5/6 项已关闭
-- [x] `project/decisions/ADR-001`~`ADR-015`：全部 `ACCEPTED`（`ADR-015` 评审批量后置，交付 MVP 期间生效）（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
+- [x] `project/decisions/ADR-001`~`ADR-017`：全部 `ACCEPTED`（`ADR-016` 日切点 04:00、`ADR-017` 设计偏差与归档语义）（`ADR-015` 评审批量后置，交付 MVP 期间生效）（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
 - [x] `project/FEATURE_MATRIX.md`：F-001/F-002/F-003/F-004/F-006/F-007/F-009/F-011/F-020 已 `DEVICE_VERIFIED`；F-005 `VERIFIED`（三种频率有单测，真机只建过 `DAILY`）；F-008 `PARTIAL`（撤销可，改历史记录未做）；F-010 `DEVICE_VERIFIED`（进度条/7 天完成率）；F-012~F-014 未开始；F-015 `VERIFIED`（无 `INTERNET` 权限与网络库，无自动化断言）；F-016~F-019 `OUT_OF_SCOPE`（`TASK-019` 校正）
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
 - [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（22 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`
@@ -29,6 +29,8 @@
 - [x] Domain 纯规则 + Repository + 计划版本写入器（`TASK-005`）+ UseCase 层（`TASK-008`），40 项单测通过
 - [x] DAO/Repository 运行时测试（`TASK-026`：`DatabaseContractTest` 5 项在真机通过——生产 `callback()` 的触发器注册与重开、Converter/实体往返、`withTransaction` 回滚、Flow 失效、四表级联；`gradlew test` 的单元测试 worker 仍被禁）
 - [x] 真机安装与三页导航验证（`TASK-012`/`TASK-016`）；模拟器不可用（无 WHPX），此项不再作为缺口
+- [x] 日期语义单一来源：`domain/calculation/DayCutoff`（04:00 逻辑日，`ADR-016`），今日/新建/详情/统计与前台跨日定时器全部接入
+- [x] 设计偏差登记：`project/DESIGN-DELTA.md`（7 项）+ `ADR-017`（归档为展示层、提醒延后、统计切换取消）
 
 ## 当前待办
 
@@ -59,6 +61,7 @@
 - `TASK-034`（统计页滚动 + 导航栏隐藏 + 删除 + 归档分组）：145 项单测与构建通过，真机四项走通；缺独立评审。已知缺口：归档分组只有单月单日真机数据、删除未对带日志习惯做真机级联验证
 - `TASK-033`（习惯详情页）：154 项单测与构建通过，真机进入详情/打卡后 1/1 与 100%/编辑弹窗/返回走通；缺独立评审。已知缺口：真机只有单日一个计划日，多周网格与「未计划日」仅有单测证据
 - `TASK-026`（设备侧 Room 契约测试）：5 个新用例 + SmokeTest 共 6 项真机通过；已知缺口：未覆盖迁移与 Cursor 全量映射。另实测确认 `connectedAndroidTest` 结束会卸载 App，跑前必须备份 DB
+- `TASK-035`（日切点 04:00 + 偏差登记）：159 项单测与构建通过，真机日期/打卡/统计不回归；已知缺口：04:00 真实跨日只能靠凌晨手测，当前仅 JVM 证据
 
 ## 在册例外（main 上的未完成任务）
 

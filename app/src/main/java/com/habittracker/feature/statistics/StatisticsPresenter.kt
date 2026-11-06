@@ -1,6 +1,7 @@
 package com.habittracker.feature.statistics
 
 import com.habittracker.data.local.entity.LogStatus
+import com.habittracker.domain.calculation.DayCutoff
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.DailyLog
 import com.habittracker.domain.model.Habit
@@ -44,7 +45,7 @@ data class StatisticsUiState(
 class StatisticsPresenter(
     private val repository: HabitRepository,
     private val scope: CoroutineScope,
-    private val today: () -> LocalDate = { LocalDate.now() },
+    private val today: () -> LocalDate = { DayCutoff.today() },
 ) {
 
     private val _state = MutableStateFlow(StatisticsUiState())

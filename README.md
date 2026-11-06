@@ -9,12 +9,12 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-026`（`IMPLEMENTED`：设备侧 Room 契约测试，真机 6/6 通过）；`TASK-033`（习惯详情页）已合入；下一条按外部评审建议做窄口径里程碑评审，再拆 `TASK-030a` 导出 |
+| 当前任务 | `TASK-035`（`IMPLEMENTED`：日切点 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件）；`TASK-026`（Room 契约测试）已合入；下一条做窄口径里程碑评审，再做 `N5` 提醒数据模型 ADR 与 `TASK-030a` 导出 |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
-| 最近测试 | `PASS` — **154** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
+| 最近测试 | `PASS` — **159** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
 | 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 38/38（`verify-dao.mjs`） |
-| ADR | `ADR-001`~`ADR-014` 全部 `ACCEPTED` |
+| ADR | `ADR-001`~`ADR-017` 全部 `ACCEPTED`（`ADR-016` 日切点 04:00、`ADR-017` 设计偏差登记） |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
 
 ## 2. 文档地图

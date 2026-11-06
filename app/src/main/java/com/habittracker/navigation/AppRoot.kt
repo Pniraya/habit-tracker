@@ -64,6 +64,7 @@ import com.habittracker.core.designsystem.TextTertiary
 import com.habittracker.core.designsystem.TrackGreen
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.data.repository.RoomHabitRepository
+import com.habittracker.domain.calculation.DayCutoff
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.UpdateHabitUseCase
 import com.habittracker.domain.usecase.RestoreHabitUseCase
@@ -149,18 +150,18 @@ fun AppRoot() {
                     lifecycleOwner.lifecycle.addObserver(observer)
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
-                // Staying in the foreground across 00:00 fires no lifecycle event, so wait for the
-                // next local midnight and rebuild then. A manual clock or timezone change while the
-                // screen stays on is still not covered (registered as a known gap, TASK-024).
+                // Staying in the foreground across the 04:00 cutoff fires no lifecycle event, so
+                // wait for the next day change and rebuild then (ADR-016). A manual clock or timezone
+                // change while the screen stays on is still not covered (registered as a known gap).
                 LaunchedEffect(todayViewModel) {
                     // Entering the destination can also be a date change (another tab was showing
                     // while midnight passed), and that produces no lifecycle event.
-                    if (todayViewModel.state.value.date != java.time.LocalDate.now()) {
+                    if (todayViewModel.state.value.date != DayCutoff.today()) {
                         todayViewModel.refresh()
                     }
                     while (true) {
                         kotlinx.coroutines.delay(
-                            TodayPresenter.millisUntilNextMidnight(java.time.LocalDateTime.now()) + 1_000L,
+                            TodayPresenter.millisUntilNextDay(java.time.LocalDateTime.now()) + 1_000L,
                         )
                         todayViewModel.refresh()
                     }

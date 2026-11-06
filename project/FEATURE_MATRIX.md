@@ -56,7 +56,8 @@
 - **F-005** 计划类型 — 代码：`domain/calculation/ScheduleRules.kt`、`entity/DataTypes.kt`、`CreateHabitScreen` 星期选择器；自动化：`ScheduleRulesTest`、`CreateHabitPresenterTest`（`NO_WEEKDAYS` 分支）；真机：仅建过 `DAILY` 习惯。
 - **F-006** BOOLEAN 记录 — 代码：`RecordHabitProgressUseCase.kt`、`LogStatusRules.kt`、`TodayScreen` 点击切换；自动化：`LogStatusRulesTest`、`RecordHabitProgressUseCaseTest`；真机：`project/reports/DEVICE_DUMP-2026-11-05.md`、`TASK-013` §10。
 - **F-007** NUMERIC 记录 — 代码：`RecordHabitProgressUseCase`、`TodayScreen.NumericInputDialog`、`TodayPresenter.progressText`/`prefillText`；自动化：`RecordHabitProgressUseCaseTest`、`TodayPresenterTest`（小数显示、预填、逗号归一化）；真机：`TASK-016`/`TASK-018` §10（`0.5 / 2000 ml`、对话框预填 `0.5`）。
-- **F-011**：月度热力图与本周柱状趋势由 `TASK-031` 实现并在真机对照；`TASK-033` 补齐每习惯的「本周 + 近 5 周」网格（详情页）。故三列均为已验证。限制：统计页的周/年切换未实现（标签显式变淡）。
+- **F-011**：月度热力图与本周柱状趋势由 `TASK-031` 实现并在真机对照；`TASK-033` 补齐每习惯的「本周 + 近 5 周」网格（详情页）。故三列均为已验证。限制：统计页的周/年切换未实现，`TASK-035` 已删除死控件，改为静态「本月」标签（`ADR-017` §6）。
+- **日期语义**：`TASK-035` 起所有「今天」来自 `DayCutoff`（04:00 逻辑日，`ADR-016`）；跨过 0 点的打卡仍属于前一天。
 - **F-012~F-014** 提醒、提醒恢复、备份 — 全量 grep（`AlarmManager`、`WorkManager`、`backup`、网络库）无相关实现；`ProfileScreen.kt` 已承载归档列表，但没有提醒或备份逻辑。故仍为 `NOT_STARTED`。
 - **F-008** 的「修改历史记录」仍未实现：`TASK-033` 详情页只读展示历史，编辑只在当前习惯字段上，故 `F-008` 实现列保持 `PARTIAL`。
 - **数据层契约（不占功能行）**：`TASK-026` 新增设备侧 `DatabaseContractTest` 5 项——生产 `DatabaseConstraints.callback()` 的 8 个触发器注册与「重开后仍生效」、实体/Converter 往返（闰日、REAL 精度、可空 unit、枚举、时区切换）、`observeActive()` 失效、四表级联删除、`changeSchedule` 失败回滚。真机 6/6（含 `SmokeTest`）通过；仍未覆盖迁移与 UI。
