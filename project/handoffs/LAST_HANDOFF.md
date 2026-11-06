@@ -34,6 +34,7 @@
 
 ## Not Verified / Known Gaps
 - **图标未做自适应/单色主题图标**：彩色位图直接作 legacy 图标，桌面缩放清晰度与白边表现待观察
+- **干净 clone 构建已验证**（`gradlew assembleDebug` 38s）；`%TEMP%` 克隆失败是本机 ACL 问题，已记录
 - **CI 未在 GitHub 实跑**（无远程）
 - **提交身份**：全部提交为 `Habit Tracker Baseline <baseline@localhost>`
 - **`assembleRelease`/lint 未运行**

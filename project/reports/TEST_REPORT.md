@@ -106,6 +106,7 @@
 | 2026-11-06 | 真机：详情页数据与编辑弹窗 | **PASS** | 打卡后重进详情：连续 1 天、本周 `1/1`、今天杏橙勾点、近 5 周 `100%`、累计/本月各 1；铅笔弹出「编辑习惯/名称/保存/取消」，两次返回回今日页 | TASK-033 |
 | 2026-11-06 | 真机（iQOO Neo7 SE / Android 15）：安装 + 今日页 / 全部完成态 / 新建页 / 图标颜色落库对照 | **PASS** | 首次安装 `INSTALL_FAILED_ABORTED: User rejected permissions`（锁屏），唤醒 + `dismiss-keyguard` 后成功；今日页与设计稿一致；打卡后满环 +「连续 1 天」徽章 + 叶片；新建页曾有底部导航遮挡按钮，修复后复装确认无导航、按钮不遮挡；新建「水滴 + 雾蓝」习惯后列表显示水滴图标、打卡圈为雾蓝，归档后列表恢复 | TASK-032 |
 | 2026-11-06 | 真机：日切改造后安装 + 今日页 + 统计页 | **PASS** | 今日页仍为 `11月6日 · 周五`、3 个习惯与打卡状态不变；统计页 UI 树只有「统计/本月/本周趋势」，`PeriodSwitch` 的「周/年」节点已消失 | TASK-035 |
+| 2026-11-06 | 干净克隆 `.gradle/clone-verify` 后 `gradlew assembleDebug` | **PASS**（38s） | 验证「别人 clone 后能构建」；在 `%TEMP%` 克隆首次失败是 `D:\cpp_tmp` 的 ACL 问题（`stableIds.txt` 打开失败 13），换工作区内路径通过 | TASK-038 |
 | 2026-11-06 | `gradlew.bat assembleDebug` + `aapt2 dump badging`（应用图标） | **PASS** | BUILD SUCCESSFUL 7s；`application-icon-120/160/240/320/480/640` 全指向 `res/mipmap-*/ic_launcher.png`；真机 `install -r` Success、`versionName=0.1.0`、今日页正常 | TASK-038 |
 | 2026-11-06 | `tools/run-unit-tests.ps1`（日切点 04:00） | **OK (159 tests)** | 154 → 159：`DayCutoffTest` 5（03:59:59/04:00 边界、毫秒助手、epochMillis 时区、闰日、01:00 剩 3h）；`TodayPresenterTest` 的 4 条定时器断言改为 04:00 口径（23:59:59→4h1s、00:00→4h、闰日 16h、年末 5h） | TASK-035 |
 

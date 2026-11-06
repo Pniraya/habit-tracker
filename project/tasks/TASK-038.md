@@ -64,6 +64,7 @@
 | `aapt2 dump badging app-debug.apk` | **PASS** | `application-icon-120/160/240/320/480/640` 均指向 mipmap `ic_launcher` |
 | `adb install -r` + 启动 | **PASS** | `Success`；`versionName=0.1.0`；今日页正常 |
 | `git grep` 密钥扫描 | **PASS** | 仅文档用词命中，无真实凭据；历史无 `keystore`/`local.properties` |
+| 干净目录 `git clone` + `gradlew assembleDebug` | **PASS**（38s） | 在 `.gradle/clone-verify` 克隆后构建成功。首次在 `%TEMP%` 克隆失败，错误为 `stableIds.txt: failed to open ... (13)`，是本机 `D:\cpp_tmp` 的 ACL 问题，不是仓库缺陷；换到工作区内路径即通过 |
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 159、DAO 38、构建、`git diff --check` |
 
 ## 11. Completion Review
