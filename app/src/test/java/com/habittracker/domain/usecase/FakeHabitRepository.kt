@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 
 /** In-memory repository for pure JVM use-case tests; mirrors the Room implementation's contract. */
-class FakeHabitRepository : HabitRepository {
+open class FakeHabitRepository : HabitRepository {
 
     private val habits = LinkedHashMap<Long, Habit>()
     private val schedules = LinkedHashMap<Long, MutableList<HabitSchedule>>()
@@ -36,6 +36,9 @@ class FakeHabitRepository : HabitRepository {
     }
 
     fun storedSchedule(habitId: Long): HabitSchedule? = schedules[habitId]?.lastOrNull()
+
+    /** Current rows, for a subclass whose Flow does not re-emit (see TodayPresenterTest). */
+    fun snapshotHabits(): List<Habit> = habits.values.toList()
 
     fun replaceSchedule(schedule: HabitSchedule) {
         schedules[schedule.habitId] = mutableListOf(schedule)

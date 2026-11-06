@@ -107,6 +107,7 @@ fun AppRoot() {
                     onToggle = todayViewModel::toggle,
                     onRecord = todayViewModel::record,
                     onCreate = { navController.navigate(AppRoutes.CREATE_HABIT) },
+                    onArchive = todayViewModel::archive,
                     onDismissError = todayViewModel::dismissError,
                 )
             }

@@ -14,8 +14,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -53,6 +57,7 @@ fun TodayScreen(
     onToggle: (Long) -> Unit,
     onRecord: (Long, Double) -> Unit,
     onCreate: () -> Unit,
+    onArchive: (Long) -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -96,6 +101,7 @@ fun TodayScreen(
                             habit = habit,
                             onToggle = { onToggle(habit.id) },
                             onRecord = { numericTarget = habit },
+                            onArchive = { onArchive(habit.id) },
                         )
                     }
                 }
@@ -157,7 +163,8 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
 }
 
 @Composable
-private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Unit) {
+private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Unit, onArchive: () -> Unit) {
+    var menuOpen by remember(habit.id) { mutableStateOf(false) }
     val clickable = habit.isScheduledToday
     Card(
         modifier = Modifier
@@ -192,6 +199,22 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Un
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
+            // Archive needs a home before the habit can leave the list; it is the only destructive
+            // action here, so it stays behind a menu instead of a swipe nobody can discover.
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "更多操作")
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("归档") },
+                        onClick = {
+                            menuOpen = false
+                            onArchive()
+                        },
+                    )
+                }
+            }
         }
     }
 }
@@ -199,6 +222,6 @@ private fun HabitRow(habit: TodayHabit, onToggle: () -> Unit, onRecord: () -> Un
 private fun subtitle(habit: TodayHabit): String = when {
     habit.isRestingToday -> "今天不在计划内"
     habit.trackingType == TrackingType.NUMERIC -> TodayPresenter.progressText(habit.actualValue, habit.targetValue, habit.unit)
-    habit.isCompleted -> "今天已完成"
+    habit.isCompleted -> TodayPresenter.undoHint(true) ?: "今天已完成"
     else -> "点一下标记完成"
 }
