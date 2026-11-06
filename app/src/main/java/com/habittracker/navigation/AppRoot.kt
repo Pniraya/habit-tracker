@@ -1,10 +1,21 @@
 package com.habittracker.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +34,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,12 +79,25 @@ fun AppRoot() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val topLevel = AppDestination.entries.any { it.route == currentRoute }
+
+    // Tap anywhere that is not an interactive child to slide the bar away; the bar also
+    // reappears when a top-level tab is (re)entered, so navigation is never lost.
+    var barVisible by remember { mutableStateOf(true) }
+    LaunchedEffect(currentRoute) { barVisible = true }
+    val toggleInteraction = remember { MutableInteractionSource() }
 
     Scaffold(
         bottomBar = {
             // orgins/新建习惯-html is a full-screen page with no navigation bar; showing an
             // unselected bar there also stole the height the 开始养成 button needs.
-            if (AppDestination.entries.any { it.route == currentRoute }) {
+            AnimatedVisibility(
+                visible = topLevel && barVisible,
+                enter = slideInVertically(initialOffsetY = { it }) +
+                    expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) +
+                    shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(tween(200)),
+            ) {
                 HabitBottomBar(
                     currentRoute = currentRoute,
                     onSelect = { destination ->
@@ -85,10 +111,20 @@ fun AppRoot() {
             }
         },
     ) { innerPadding ->
+        // The clickable lives on the parent, so taps on cards/buttons are consumed by children
+        // first and only the empty background toggles the bar.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .clickable(interactionSource = toggleInteraction, indication = null) {
+                    if (topLevel) barVisible = !barVisible
+                },
+        ) {
         NavHost(
             navController = navController,
             startDestination = AppDestination.Today.route,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.fillMaxSize(),
         ) {
             composable(AppDestination.Today.route) {
                 val context = LocalContext.current
@@ -132,6 +168,7 @@ fun AppRoot() {
                     onRecord = todayViewModel::record,
                     onCreate = { navController.navigate(AppRoutes.CREATE_HABIT) },
                     onArchive = todayViewModel::archive,
+                    onDelete = todayViewModel::delete,
                     onEdit = todayViewModel::edit,
                     onDismissError = todayViewModel::dismissError,
                 )
@@ -186,6 +223,7 @@ fun AppRoot() {
                 ProfileScreen(presenter)
             }
         }
+        } // Box
     }
 }
 

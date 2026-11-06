@@ -1,6 +1,8 @@
 package com.habittracker.feature.statistics
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,8 +58,15 @@ private val BarToday = Color(0xFF5B8C6A)
 @Composable
 fun StatisticsScreen(presenter: StatisticsPresenter) {
     val state by presenter.state.collectAsState()
+    // The page is taller than a 390x844 artboard once the heat map and the trend card are both
+    // present; without scrolling the trend chart was clipped and looked like it sat behind the
+    // navigation bar.
     Column(
-        modifier = Modifier.fillMaxSize().background(PageBackground).padding(horizontal = 20.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PageBackground)
+            .verticalScroll(rememberScrollState())
+            .padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 14.dp),

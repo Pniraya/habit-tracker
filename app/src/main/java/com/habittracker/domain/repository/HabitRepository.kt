@@ -43,6 +43,12 @@ interface HabitRepository {
 
     suspend fun restoreHabit(habitId: Long, now: Long)
 
+    /**
+     * Permanent delete: the habit row plus its schedules, logs and reminders go away through
+     * ON DELETE CASCADE (DATABASE.md 9). Callers must have confirmed with the user first.
+     */
+    suspend fun deleteHabit(habitId: Long)
+
     /** Closes the open version and opens a new one in a single transaction (DATABASE.md 4.2). */
     suspend fun changeSchedule(
         habitId: Long,

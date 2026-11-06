@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.habittracker.R
 import com.habittracker.core.designsystem.BadgeText
 import com.habittracker.core.designsystem.CardSurface
+import com.habittracker.core.designsystem.DangerRed
 import com.habittracker.core.designsystem.CheckCircle
 import com.habittracker.core.designsystem.FallingLeaves
 import com.habittracker.core.designsystem.HabitIconTile
@@ -86,12 +87,14 @@ fun TodayScreen(
     onRecord: (Long, Double) -> Unit,
     onCreate: () -> Unit,
     onArchive: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
     onEdit: (Long, String, Double, String?) -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var numericTarget by remember { mutableStateOf<TodayHabit?>(null) }
     var editing by remember { mutableStateOf<TodayHabit?>(null) }
+    var deleting by remember { mutableStateOf<TodayHabit?>(null) }
 
     val scheduled = state.habits.filter { it.isScheduledToday }
     val doneCount = scheduled.count { it.isCompleted }
@@ -146,6 +149,7 @@ fun TodayScreen(
                         onToggle = { onToggle(habit.id) },
                         onRecord = { numericTarget = habit },
                         onArchive = { onArchive(habit.id) },
+                        onDelete = { deleting = habit },
                         onEdit = { editing = habit },
                     )
                 }
@@ -176,6 +180,18 @@ fun TodayScreen(
 
         // 全部完成: leaves drift down instead of a dialog (mockup: 叶片轻轻飘落，不弹窗打扰).
         FallingLeaves(active = allDone, modifier = Modifier.fillMaxSize())
+    }
+
+    val deleteTarget = deleting
+    if (deleteTarget != null) {
+        DeleteHabitDialog(
+            habit = deleteTarget,
+            onDismiss = { deleting = null },
+            onConfirm = {
+                onDelete(deleteTarget.id)
+                deleting = null
+            },
+        )
     }
 
     val editTarget = editing
@@ -289,6 +305,7 @@ private fun HabitRow(
     onToggle: () -> Unit,
     onRecord: () -> Unit,
     onArchive: () -> Unit,
+    onDelete: () -> Unit,
     onEdit: () -> Unit,
 ) {
     var menuOpen by remember(habit.id) { mutableStateOf(false) }
@@ -361,6 +378,15 @@ private fun HabitRow(
                             onArchive()
                         },
                     )
+                    // Permanent delete is the destructive twin of archive (DATABASE.md 9): it is
+                    // behind the same menu and still asks for confirmation.
+                    DropdownMenuItem(
+                        text = { Text("删除", color = DangerRed) },
+                        onClick = {
+                            menuOpen = false
+                            onDelete()
+                        },
+                    )
                 }
             }
             HabitIconTile(icon = habit.icon)
@@ -413,6 +439,28 @@ private fun NumericInputDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfi
             TextButton(onClick = { if (parsed != null) onConfirm(parsed) }, enabled = parsed != null) {
                 Text("记录", fontWeight = FontWeight.Bold)
             }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+    )
+}
+
+@Composable
+private fun DeleteHabitDialog(habit: TodayHabit, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = CardSurface,
+        title = { Text("删除「" + habit.name + "」？", fontWeight = FontWeight.Bold) },
+        text = {
+            Text(
+                text = "该习惯的所有计划与打卡记录会一并删除，无法恢复。只想收起它的话，用「归档」即可。",
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                color = TextTertiary,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text("删除", color = DangerRed, fontWeight = FontWeight.Bold) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
     )

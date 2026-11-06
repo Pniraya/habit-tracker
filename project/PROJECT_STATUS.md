@@ -5,12 +5,12 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-032`（`IMPLEMENTED`：今日页与新建页按设计稿重建，构建/单测通过，无设备未做真机视觉走查，待批量评审）；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入 `main`；下一条 `TASK-030`（MVP 收口：备份导出 + 权限清理）；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-034`（`IMPLEMENTED`：统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组，真机走通，待批量评审）；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条 `TASK-030`（MVP 收口：备份导出 + 权限清理）；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B；与 `README` 同口径）
-- 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 37/37 验证 DAO 的 SQL 语义、CAS 更新与级联删除）
-- 最近验证测试：`PASS`（**137 项**，`tools/run-unit-tests.ps1`；`TASK-032` +13：`HabitVisualsTest` 11、`CreateHabitPresenterTest` +2）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
+- 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 38/38 验证 DAO 的 SQL 语义、CAS 更新与级联删除（含 `deleteById`））
+- 最近验证测试：`PASS`（**145 项**，`tools/run-unit-tests.ps1`；`TASK-034` +8：`ArchiveGroupsTest` 5、`DeleteHabitUseCaseTest` 3）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查 + 15 个探针 0 失败；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
 - 最后核对时间：`2026-11-06`
 
@@ -55,7 +55,8 @@
 - `TASK-028`（归档恢复入口）：真机自测通过（建 → 归档 → 我的页 → 恢复 → 今日页），缺独立评审
 - `TASK-029`（编辑习惯 + 统计）：真机自测通过，缺独立评审
 - `TASK-031`（统计页按设计稿重建）：真机自测通过（打卡前后两张截图），缺独立评审。**已知缺口**：周/年切换未实现（标签显式变淡）、图标仍为实心图标
-- `TASK-032`（今日页 + 新建页按设计稿重建）：构建与 137 项单测通过；真机对照今日页/全部完成态/新建页通过，图标颜色落库已在设备确认；缺独立评审。已知缺口：习惯详情页、每日提醒开关未做
+- `TASK-032`（今日页 + 新建页按设计稿重建）：构建与单测通过；真机对照今日页/全部完成态/新建页通过，图标颜色落库已在设备确认；缺独立评审
+- `TASK-034`（统计页滚动 + 导航栏隐藏 + 删除 + 归档分组）：145 项单测与构建通过，真机四项走通；缺独立评审。已知缺口：归档分组只有单月单日真机数据、删除未对带日志习惯做真机级联验证
 
 ## 在册例外（main 上的未完成任务）
 

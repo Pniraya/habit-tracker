@@ -44,6 +44,14 @@ interface HabitDao {
     suspend fun restore(id: Long, updatedAt: Long): Int
 
     /**
+     * Permanent delete (DATABASE.md 9). One statement, so the row and its cascading children are
+     * removed atomically; the confirmation dialog lives in the UI because the document requires a
+     * second confirmation before this runs.
+     */
+    @Query("DELETE FROM habits WHERE id = :id")
+    suspend fun deleteById(id: Long): Int
+
+    /**
      * Edits the editable fields only (TASK-029). `tracking_type` is deliberately absent: switching
      * a habit between BOOLEAN and NUMERIC would reinterpret every historical log. The past logs keep
      * their own `target_snapshot`, which is why this statement never touches `habit_logs`.
