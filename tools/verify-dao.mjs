@@ -159,7 +159,7 @@ const insertReminder = db.prepare(
 
 ok("every expected DAO query was parsed out of the Kotlin sources", () => {
   const expected = {
-    HabitDao: [habitQ, ["findById", "observeActive", "findAll", "archive", "restore"]],
+    HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore"]],
     HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits"]],
     HabitScheduleDao: [
       scheduleQ,
@@ -205,7 +205,14 @@ equal("HabitDao.observeActive hides archived rows", query(habitQ.observeActive, 
 equal("HabitDao.archive reports one changed row", queryOne(habitQ.archive, { id: waterId, archivedAt: 30, archivedOn: "2026-01-10", updatedAt: 30 }), 1);
 equal("HabitDao.archive is a compare-and-set (second call changes nothing)", queryOne(habitQ.archive, { id: waterId, archivedAt: 31, archivedOn: "2026-01-11", updatedAt: 31 }), 0);
 equal("HabitDao.observeActive after archive", query(habitQ.observeActive, {}).length, 1);
+// TASK-028: the profile page lists exactly the archived rows, newest archive first.
+equal("HabitDao.observeArchived lists only the archived habit", query(habitQ.observeArchived, {}).map((h) => h.id), [waterId]);
+
 equal("HabitDao.findById returns the archived habit", query(habitQ.findById, { id: waterId })[0].archived_on, "2026-01-10");
+// Restore last: it un-archives the row, so every assertion above needs it to still be archived.
+equal("HabitDao.restore reports one changed row", queryOne(habitQ.restore, { id: waterId, updatedAt: 40 }), 1);
+equal("HabitDao.observeArchived is empty after restore", query(habitQ.observeArchived, {}).length, 0);
+equal("HabitDao.observeActive sees the restored habit again", query(habitQ.observeActive, {}).length, 2);
 
 function queryOne(sql, params) {
   const bound = bind(sql, params);
@@ -314,7 +321,7 @@ ok("deleting a habit cascades to schedules, logs and reminders", () => {
 
 // Deleting a scenario while keeping its registration would otherwise shrink coverage silently.
 // Bump this number in the same commit that adds a scenario.
-const MIN_CHECKS = 27;
+const MIN_CHECKS = 31;
 if (checks < MIN_CHECKS) {
   failed += 1;
   console.log("FAIL  coverage shrank: " + checks + " checks executed, at least " + MIN_CHECKS + " expected");

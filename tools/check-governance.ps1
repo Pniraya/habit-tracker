@@ -358,7 +358,8 @@ if (Test-Path $registerPath) {
     $registerMatch = [regex]::Match($statusText, '## 待批审清单[^\n]*\n(?<body>[\s\S]*?)(\n## |\z)')
     if ($registerMatch.Success) {
         $registerBody = $registerMatch.Groups['body'].Value
-        $registerIds = @([regex]::Matches($registerBody, 'TASK-\d{3}') | ForEach-Object { $_.Value } | Select-Object -Unique)
+        # Only bullet entries count: a task mentioned inside another entry's prose ("split into TASK-029") is not a registration.
+        $registerIds = @([regex]::Matches($registerBody, '(?m)^-\s+`(TASK-\d{3})`') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
     }
 }
 $taskStates = @{}
@@ -385,7 +386,7 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
 }
 foreach ($id in $registerIds) {
     if (-not $taskStates.ContainsKey($id)) { $reviewProblems += ($id + ' is listed in the batched-review register but has no task file') }
-    elseif ($taskStates[$id] -eq 'DONE') { $reviewProblems += ($id + ' is DONE but still listed in the batched-review register') }
+    elseif ($taskStates[$id] -ne 'IMPLEMENTED') { $reviewProblems += ($id + ' is listed in the batched-review register but is ' + $taskStates[$id] + ', not IMPLEMENTED') }
 }
 if ($reviewProblems.Count -eq 0) { Add-Pass 'done tasks have review evidence' ('DONE tasks carry independent APPROVE records; ' + $registerIds.Count + ' task(s) await the batched review') }
 else { Add-Fail 'done tasks have review evidence' ($reviewProblems -join '; ') }

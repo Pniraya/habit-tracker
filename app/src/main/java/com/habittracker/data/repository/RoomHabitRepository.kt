@@ -63,6 +63,9 @@ class RoomHabitRepository(private val database: HabitDatabase) : HabitRepository
     override fun observeActiveHabits(): Flow<List<Habit>> =
         habitDao.observeActive().map { habits -> habits.map(HabitEntity::toDomain) }
 
+    override fun observeArchivedHabits(): Flow<List<Habit>> =
+        habitDao.observeArchived().map { habits -> habits.map(HabitEntity::toDomain) }
+
     override suspend fun getHabit(habitId: Long): Habit? = habitDao.findById(habitId)?.toDomain()
 
     override suspend fun activeSchedule(habitId: Long, date: LocalDate): HabitSchedule? {

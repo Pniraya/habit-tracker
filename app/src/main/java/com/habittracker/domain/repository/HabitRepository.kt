@@ -26,6 +26,9 @@ interface HabitRepository {
 
     fun observeActiveHabits(): Flow<List<Habit>>
 
+    /** Archived habits, so an accidental archive can be undone from the profile page. */
+    fun observeArchivedHabits(): Flow<List<Habit>>
+
     suspend fun getHabit(habitId: Long): Habit?
 
     /** Archive keeps every child row and never rewrites habit_reminders.enabled (ADR-008). */
