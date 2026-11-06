@@ -81,7 +81,7 @@
 3. 检查 `git diff --check` 和完整 diff；
 4. 检查是否引入未批准依赖、权限、功能或无关文件；
 5. 将实际命令、退出状态和失败摘要写入任务记录/测试报告；
-6. 运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，确认 `README.md`、`PROJECT_STATUS.md`、`TEST_REPORT.md`、`RELEASE_REPORT.md`、`LAST_HANDOFF.md` 与本任务结论一致（阶段、当前任务、ADR 状态、最近验证结果）；拟合入 `main` 的 `DONE` 任务还必须有独立 Reviewer 的 `APPROVE` 记录。
+6. 运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，确认 `README.md`、`PROJECT_STATUS.md`、`TEST_REPORT.md`、`RELEASE_REPORT.md`、`LAST_HANDOFF.md` 与本任务结论一致（阶段、当前任务、ADR 状态、最近验证结果）；拟合入 `main` 的 `DONE` 任务还必须有独立 Reviewer 的 `APPROVE` 记录。按 `ADR-015`，实现与自测已完成但尚未评审的任务可标 `IMPLEMENTED` 并合入 `main`，前提是 `verify-all` 通过且已登记在 `PROJECT_STATUS.md` 的「待批审清单」；`IMPLEMENTED` 不是完成态，不得当作 `DONE` 汇报。
 
 只有验收标准全部满足，且验证结果有证据时，才能标记 `DONE`。如果环境不支持执行测试，标记 `BLOCKED` 或 `PARTIAL`，明确未验证项，不得写“测试通过”。
 
@@ -105,7 +105,7 @@
 
 ## 7. Git 与提交规则
 
-- `main` 是**稳定分支**：只有构建通过、适用测试通过、任务验收完成并有 `project/reviews/REVIEW-TASK-xxx.md` 中独立 Reviewer 的 `APPROVE` 记录的改动才能合入。
+- `main` 是**稳定分支**：只有构建通过、适用测试通过、任务验收完成并有 `project/reviews/REVIEW-TASK-xxx.md` 中独立 Reviewer 的 `APPROVE` 记录的改动才能合入。**`ADR-015` 例外**：`IMPLEMENTED` 状态（实现完成、待批审）的改动可在 `verify-all` 全绿且已登记于「待批审清单」时合入，评审于里程碑处批量补齐。
 - 未完成（`PARTIAL`/`BLOCKED`）的任务默认留在 `feat/<short-name>` 分支；确因环境限制必须留在 `main` 时，必须在 `project/PROJECT_STATUS.md` 的「在册例外」逐条登记，否则治理检查失败。
 - 单个任务优先使用 `feat/<short-name>` 或 `fix/<short-name>` 分支；`main` 始终保持可构建。
 - 开始任务前检查工作区；不擅自 stash、reset、checkout 覆盖用户改动。
@@ -181,6 +181,8 @@ AI 对文件的修改权限按三级划分（依据 ADR-004）：
 - `Reviewer`：独立核对 Diff、架构一致性、测试证据与**文档同步性**，按 `project/REVIEW_CHECKLIST.md` 逐项给出 `APPROVE` / `REJECT`，并写入 `project/reviews/REVIEW-TASK-xxx.md`。记录必须注明所审查的 commit、独立性和命令输出或文件链接。建议在 Developer 完成后用新会话执行，避免自评过宽。
 
 验证顺序不可颠倒：编译器 → 单元/集成测试 → 静态检查 → Diff 审查 → 独立评审。任何 AI 的“看起来没问题”都不能替代测试结果；未经验证的代码不得合并到 `main`。
+
+按 `ADR-015`，独立评审的**时点**可后置到里程碑（批量评审），但顺序不可省：批量评审仍须在任务转 `DONE` 之前完成，未评审的任务只能停留在 `IMPLEMENTED`。
 
 ## 13. Git 事件与操作
 
