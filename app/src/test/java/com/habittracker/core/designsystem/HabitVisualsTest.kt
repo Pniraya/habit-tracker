@@ -78,6 +78,23 @@ class HabitVisualsTest {
     }
 
     @Test
+    fun theBuiltInPickerOffersElevenDistinctLineIcons() {
+        // Two rows of six in the create form: 11 built-ins + the gallery tile.
+        assertEquals(11, HabitVisuals.ICONS.size)
+        assertEquals(HabitVisuals.ICONS.size, HabitVisuals.ICONS.toSet().size)
+        listOf(
+            HabitVisuals.ICON_SUN,
+            HabitVisuals.ICON_COFFEE,
+            HabitVisuals.ICON_DUMBBELL,
+            HabitVisuals.ICON_PEN,
+            HabitVisuals.ICON_MUSIC,
+        ).forEach { icon ->
+            assertTrue(icon in HabitVisuals.ICONS)
+            assertEquals(icon, HabitVisuals.iconKey(icon))
+        }
+    }
+
+    @Test
     fun aCustomIconKeepsItsFileNameAndIsNotReplacedByTheSprout() {
         val icon = HabitVisuals.CUSTOM_PREFIX + "a1b2c3.png"
         assertTrue(HabitVisuals.isCustom(icon))

@@ -12,6 +12,11 @@ object HabitVisuals {
     const val ICON_BREATHE: String = "breathe"
     const val ICON_MOON: String = "moon"
     const val ICON_HEART: String = "heart"
+    const val ICON_SUN: String = "sun"
+    const val ICON_COFFEE: String = "coffee"
+    const val ICON_DUMBBELL: String = "dumbbell"
+    const val ICON_PEN: String = "pen"
+    const val ICON_MUSIC: String = "music"
 
     /** Prefix of an icon picked from the user's gallery; the rest is a file name in filesDir/icons. */
     const val CUSTOM_PREFIX: String = "custom:"
@@ -21,7 +26,10 @@ object HabitVisuals {
     const val COLOR_BLUE: String = "#8FAFC4"
 
     /** Selectable icons, in the order the design file lays them out. */
-    val ICONS: List<String> = listOf(ICON_SPROUT, ICON_WATER, ICON_BOOK, ICON_BREATHE, ICON_MOON, ICON_HEART)
+    val ICONS: List<String> = listOf(
+        ICON_SPROUT, ICON_WATER, ICON_BOOK, ICON_BREATHE, ICON_MOON, ICON_HEART,
+        ICON_SUN, ICON_COFFEE, ICON_DUMBBELL, ICON_PEN, ICON_MUSIC,
+    )
 
     /** Selectable colours, in the order the design file lays them out. */
     val COLORS: List<String> = listOf(COLOR_MOSS, COLOR_APRICOT, COLOR_BLUE)

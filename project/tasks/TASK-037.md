@@ -18,7 +18,8 @@
 - 新增 `core/storage/CustomIcons`：`PickVisualMedia` 返回的 content URI → 解码 → 中心裁方 → 缩到 256px → PNG 存 `filesDir/icons/<uuid>.png` → 返回 `custom:<uuid>.png`；`file()` 解析路径。
 - `HabitIcon`：`custom:` 值优先按文件渲染（圆形裁切、不做 tint），文件丢失回退嫩芽。
 - 创建页：图标行新增「+」入口 → 系统 Photo Picker；选中后格子内直接预览，并以选中态描边。
-- 单测：`HabitVisualsTest` 新增 2 项（自定义值保留、畸形值不能越出目录）。
+- 内置图标扩到 11 个（新增 `sun`/`coffee`/`dumbbell`/`pen`/`music`，与原有 6 个同一套 24dp 单色线条风格），选择器改为两行 6+6，第 12 格为相册入口。
+- 单测：`HabitVisualsTest` 新增 3 项（自定义值保留、畸形值不能越出目录、11 个内置图标互不重复）。
 
 ## 4. Out of Scope
 - 用户素材包（B 方案）：需要用户提供 PNG/SVG 与「单色线条 vs 彩色原图」决定，另立任务。
@@ -36,12 +37,13 @@
 - [x] 数据库存 `custom:<uuid>.png`，文件在 `filesDir/icons/`
 - [x] 无存储权限；使用系统 Photo Picker
 - [x] 畸形/丢失的自定义值回退嫩芽，不崩溃
-- [x] 单测 161 项通过（159 + 2）
+- [x] 11 个内置单色线条图标，两行网格等宽排列（6 + 6，含相册入口）
+- [x] 单测 162 项通过（159 + 3）
 - [x] 真机走通「选图 → 保存 → 列表显示」
 
 ## 7. Tests
-- `tools/run-unit-tests.ps1`：**161 项通过**
-- `HabitVisualsTest` 新增：`aCustomIconKeepsItsFileNameAndIsNotReplacedByTheSprout`、`aMalformedCustomIconCannotEscapeTheIconsDirectory`
+- `tools/run-unit-tests.ps1`：**162 项通过**
+- `HabitVisualsTest` 新增：`aCustomIconKeepsItsFileNameAndIsNotReplacedByTheSprout`、`aMalformedCustomIconCannotEscapeTheIconsDirectory`、`theBuiltInPickerOffersElevenDistinctLineIcons`
 - 真机（iQOO Neo7 SE）：Photo Picker 选中图 → 图标格显示该图 → 命名保存 → 今日页第 4 行显示圆形自定义图
 - 数据库核对：`habits.icon = 'custom:952fcb26-c4d5-4258-9fc0-43bbb32887e5.png'`；`files/icons/` 下 115,959 B 的 PNG
 
@@ -57,12 +59,14 @@
 - 2026-11-06：先写 `HabitVisuals` 的纯解析与 2 项测试，再写 `CustomIcons` 存储与 `HabitIcon` 渲染，最后接创建页 Photo Picker。
 - 2026-11-06：首次编译失败于 `asImageBitmap` 的包函数调用（其实是扩展函数），改为 import + 扩展调用后通过。
 - 2026-11-06：真机上 `adb push` 一张图触发 MediaScanner，Photo Picker 可选中；保存后列表显示自定义图。
+- 2026-11-06：按用户「单色线条」决定补 5 个内置线条图标（`sun`/`coffee`/`dumbbell`/`pen`/`music`），选择器改两行 6+6；顺手补了表单底部间距（图标多一行后最后一张卡会贴住保存按钮）。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
 | `gradlew.bat compileDebugKotlin` | **BUILD SUCCESSFUL** | 首次 `asImageBitmap` 报 unresolved，修正后 5s |
-| `tools/run-unit-tests.ps1` | **OK (161 tests)** | 159 → 161：自定义值保留 + 路径逃逸拒绝 |
+| `tools/run-unit-tests.ps1` | **OK (162 tests)** | 159 → 162：自定义值保留、路径逃逸拒绝、11 个内置图标去重 |
+| 真机：新建页图标网格 | **PASS** | 11 个线条图标 + 相册格，两行等宽；滚动到底后频率卡与保存按钮不再贴住 |
 | 真机：Photo Picker → 保存 → 今日页 | **PASS** | 截图 `picked.png`（图标格预览）、`custom_created.png`（行内圆形图） |
 | 真机数据库/文件核对 | **PASS** | `icon='custom:952fcb26-...png'`；`files/icons/952fcb26-...png` 115,959 B |
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 161、DAO 38、构建、`git diff --check` |

@@ -18,24 +18,30 @@
   - 新增 `core/storage/CustomIcons`：系统 Photo Picker → 解码 → 中心裁方 → 256px PNG → `filesDir/icons/<uuid>.png` → 返回 `custom:<file>`；无存储权限、无新依赖
   - `HabitIcon`：自定义值圆形渲染（不 tint），文件丢失回退嫩芽
   - 创建页图标行第 7 格「+」→ Photo Picker；选中后预览 + 描边
-  - 单测 +2（自定义值保留、路径逃逸拒绝）
-- 用户提供素材包的 B 方案仍未做（需要文件与「单色线条 vs 彩色原图」决定）
+  - 单测 +3（自定义值保留、路径逃逸拒绝、11 个内置图标去重）
+  - 内置图标扩到 11 个单色线条（`sun`/`coffee`/`dumbbell`/`pen`/`music`），选择器两行 6+6
+  - 顺带修了新建页底部间距（多一行图标后最后一张卡贴住保存按钮）
+- `TASK-038` 补自适应图标：`mipmap-anydpi-v26` 绿底 `#63CA92` + 72dp 前景，真机应用信息页无白边；单色主题图标未做
+- 用户提供素材包的 B 方案仍未做（素材未给，但内置线条图标已扩到 11 个）
 
 ## Files Changed
-- 新增：`app/src/main/java/com/habittracker/core/storage/CustomIcons.kt`、`.mailmap`
-- 修改：`HabitVisuals.kt`、`Ui.kt`、`CreateHabitScreen.kt`、`HabitVisualsTest.kt`、`project/tasks/TASK-037.md`、`PROJECT_STATUS.md`、`FEATURE_MATRIX.md`、`TEST_REPORT.md`、`README.md`、本文件
+- 新增：`app/src/main/java/com/habittracker/core/storage/CustomIcons.kt`、`.mailmap`、`res/drawable/ic_habit_{sun,coffee,dumbbell,pen,music}.xml`、`res/mipmap-anydpi-v26/ic_launcher{,_round}.xml`、`res/mipmap-*/ic_launcher_foreground.png`、`res/values/colors.xml`
+- 修改：`HabitVisuals.kt`、`Ui.kt`、`CreateHabitScreen.kt`、`HabitVisualsTest.kt`、`AndroidManifest.xml`?（未改，仍是 `@mipmap/ic_launcher`）、`project/tasks/TASK-037.md`、`project/tasks/TASK-038.md`、`PROJECT_STATUS.md`、`FEATURE_MATRIX.md`、`TEST_REPORT.md`、`README.md`、本文件
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
 | `gradlew.bat compileDebugKotlin` | **BUILD SUCCESSFUL** | 首次 `asImageBitmap` 报 unresolved，改为扩展调用后 5s |
-| `tools/run-unit-tests.ps1` | **OK (161 tests)** | 159 → 161：`aCustomIconKeepsItsFileNameAndIsNotReplacedByTheSprout`、`aMalformedCustomIconCannotEscapeTheIconsDirectory` |
+| `tools/run-unit-tests.ps1` | **OK (162 tests)** | 159 → 162：自定义值保留、路径逃逸拒绝、11 个内置图标去重 |
+| `aapt2 dump badging`（自适应） | **PASS** | `application-icon-*` 全指向 `res/mipmap-anydpi-v26/ic_launcher.xml` |
+| 真机新建页图标网格 + 应用信息页图标 | **PASS** | 11 个线条图标 + 相册格两行等宽；应用图标绿底无白边 |
 | 真机：Photo Picker → 预览 → 保存 → 今日页 | **PASS** | 图标格显示所选图并描边；保存后第 4 行圆形自定义图 |
 | 真机数据库/文件核对 | **PASS** | `habits.icon='custom:952fcb26-c4d5-4258-9fc0-43bbb32887e5.png'`；`files/icons/` 下 115,959 B |
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 161、DAO 38、构建、`git diff --check` |
 
 ## Not Verified / Known Gaps
-- **图标未做自适应/单色主题图标**：彩色位图直接作 legacy 图标，桌面缩放清晰度与白边表现待观察
+- **单色主题图标（monochrome）未做**：需要专门的单色蒙版素材
+- **素材包 B 方案**：用户已选「单色线条」，但我用自绘的 5 个线条图标补足到 11 个；若用户另有指定图标文件，需要替换
 - **CI 未在 GitHub 实跑**（无远程）
 - **`assembleRelease`/lint 未运行**
 - **10 个 `IMPLEMENTED` 评审债**（`027/028/029/031/032/033/034/035/036/038` + `037`），必须由新上下文做 `R1`

@@ -6,7 +6,7 @@
 - 日期时间：`2026-11-06`
 - 分支 / commit：`feat/custom-icons`（`TASK-037`，基线 `main` @ `7948654`；最终合入 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 161 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；设备侧 `connectedDebugAndroidTest` `PASS`（6 项：5 项 Room 契约 + SmokeTest）；真机 `PASS`（自定义图标：Photo Picker → 预览 → 保存 → 行内圆形图）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 162 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；设备侧 `connectedDebugAndroidTest` `PASS`（6 项：5 项 Room 契约 + SmokeTest）；真机 `PASS`（自定义图标：Photo Picker → 预览 → 保存 → 行内圆形图；11 个线条图标两行网格；自适应图标绿底无白边）
 
 ## Runs
 
@@ -110,7 +110,11 @@
 | 2026-11-06 | `gradlew.bat assembleDebug` + `aapt2 dump badging`（应用图标） | **PASS** | BUILD SUCCESSFUL 7s；`application-icon-120/160/240/320/480/640` 全指向 `res/mipmap-*/ic_launcher.png`；真机 `install -r` Success、`versionName=0.1.0`、今日页正常 | TASK-038 |
 | 2026-11-06 | `tools/run-unit-tests.ps1`（日切点 04:00） | **OK (159 tests)** | 154 → 159：`DayCutoffTest` 5（03:59:59/04:00 边界、毫秒助手、epochMillis 时区、闰日、01:00 剩 3h）；`TodayPresenterTest` 的 4 条定时器断言改为 04:00 口径（23:59:59→4h1s、00:00→4h、闰日 16h、年末 5h） | TASK-035 |
 | 2026-11-06 | 真机：自定义图标 Photo Picker → 保存 → 列表 | **PASS** | 选图后图标格预览；保存后今日页第 4 行显示圆形自定义图；`habits.icon='custom:952fcb26-...png'`，`files/icons/` 下 115,959 B | TASK-037 |
-| 2026-11-06 | `tools/run-unit-tests.ps1`（自定义图标） | **OK (161 tests)** | 159 → 161：`aCustomIconKeepsItsFileNameAndIsNotReplacedByTheSprout`、`aMalformedCustomIconCannotEscapeTheIconsDirectory` | TASK-037 |
+| 2026-11-06 | `tools/run-unit-tests.ps1`（自定义图标 + 内置线条图标） | **OK (162 tests)** | 159 → 162：自定义值保留、路径逃逸拒绝、11 个内置图标去重 | TASK-037 |
+| 2026-11-06 | 真机：新建页 11 图标网格 / 滚动到底 | **PASS** | 两行 6+6（末格相册入口）等宽；频率卡与保存按钮之间补了间距 | TASK-037 |
+| 2026-11-06 | `aapt2 dump badging`（自适应图标） | **PASS** | `application-icon-120/160/240/320/480/640/65534` 全指向 `res/mipmap-anydpi-v26/ic_launcher.xml` | TASK-038 |
+| 2026-11-06 | 真机应用信息页图标（放大 4× 检查） | **PASS** | 绿底 + 完整插画，无白边；源图白边已裁掉 | TASK-038 |
+| 2026-11-06 | `tools/verify-all.ps1`（自定义图标 + 自适应图标） | **VERIFY ALL PASS** | 治理 22/22、单测 162、DAO 38、`assembleDebug`、`git diff --check`（首次失败于 `CreateHabitScreen.kt` EOF 多一空行，已修） | TASK-037/038 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。

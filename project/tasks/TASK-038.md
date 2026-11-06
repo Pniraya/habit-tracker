@@ -15,6 +15,7 @@
 
 ## 3. Scope
 - 应用图标：从源图生成 mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi 五档 `ic_launcher.png`；Manifest 增加 `android:icon` 与 `android:roundIcon`。
+- 自适应图标（2026-11-06 补）：`mipmap-anydpi-v26/ic_launcher{,_round}.xml`，背景 `#63CA92`（取自源图）、前景为 72dp 居中图（每档 108dp 图层）；white-margin 裁掉后再缩放，避免白边。legacy PNG 保留作 < 26 回退。
 - 仓库卫生：新增 `.gitattributes`（换行规范化、`gradlew` 强制 LF、二进制文件标记）；`git update-index --chmod=+x gradlew`；`.gitignore` 补 `.claude/settings.local.json`。
 - 社区文件：`SECURITY.md`（GitHub 私有漏洞报告）、`CONTRIBUTING.md`（欢迎 Issue、暂不接受 PR 并说明原因）。
 - README：加 4 张截图（裁掉状态栏）、通用构建命令（`assembleDebug`/`testDebugUnitTest`/`installDebug`）、隐私与 AI 说明、图标来源。
@@ -22,7 +23,7 @@
 
 ## 4. Out of Scope
 - 未适配 Android 13 主题图标（monochrome 层）；源图是彩色插画，单色层需要另一份素材。
-- 未做自适应图标（`mipmap-anydpi-v26`）：源图自带圆角绿底，直接作为 legacy 图标由启动器裁切，视觉可接受；后续可用「绿底 + 前景」重做。
+- ~~未做自适应图标~~ → 已补（`mipmap-anydpi-v26` + 绿底 + 72dp 前景）。
 - 英文 README、CODE_OF_CONDUCT、Issue/PR 模板（可选）。
 - 推送远程、改提交身份、发布 Release。
 
@@ -31,7 +32,8 @@
 - 修改：`AndroidManifest.xml`、`README.md`、`.gitignore`、`gradlew`（可执行位）、`PROJECT_STATUS.md`、`TEST_REPORT.md`、`LAST_HANDOFF.md`
 
 ## 6. Acceptance Criteria
-- [x] `aapt2 dump badging` 显示 5 档 `application-icon-*` 全部指向 `res/mipmap-*/ic_launcher.png`
+- [x] `aapt2 dump badging` 显示 5 档 `application-icon-*` 全部指向 `res/mipmap-*/ic_launcher.png`（补自适应后指向 `res/mipmap-anydpi-v26/ic_launcher.xml`）
+- [x] 自适应图标：`application-icon-*` 指向 anydpi-v26，真机应用信息页显示绿底 + 完整插画，无白边
 - [x] 安装后应用仍启动（今日页正常）
 - [x] 截图裁掉状态栏（时间、通知图标不入库）
 - [x] 当前文件与历史均无密钥；无 `local.properties`/`*.jks`/`*.apk` 被跟踪
@@ -47,7 +49,7 @@
 - `tools/verify-all.ps1`：见证据表
 
 ## 8. Risks and Decisions
-- **图标是位图**：缩小到 48dp 时细节会糊；若启动器显示效果差，下一步改为「纯绿底 + 前景图」自适应图标（需要重新排版素材）。
+- **图标是位图**：缩小到 48dp 时细节会糊；已改为「纯绿底 + 前景图」自适应图标（前景 72dp 居中，遮罩只裁掉四角绿边）。
 - **源图含白色贴纸描边**：作为 legacy 图标时，部分启动器会再加一层圆角遮罩，边缘可能出现双层白边；安装后未见明显异常，记录待观察。
 - **不引入 `flutter_launcher_icons` 之类的工具**：一次性缩图用 `System.Drawing` 完成，不新增依赖。
 - **不受支持的备选**：把 1254 原图直接放进 `res/drawable` 会让 APK 多 1.2 MB，且无任何好处。
@@ -56,6 +58,7 @@
 - 2026-11-06：从 1254×1254 源图生成 5 档 PNG（48/72/96/144/192），Manifest 接入；`aapt2` 与真机安装确认。
 - 2026-11-06：截图用 `System.Drawing` 裁掉顶部 130px 状态栏后放入 `docs/images/`。
 - 2026-11-06：补 `.gitattributes`、`gradlew` 可执行位、`.gitignore`、`SECURITY.md`、`CONTRIBUTING.md`，并按指南重写 README 的构建/隐私/发布章节。
+- 2026-11-06：按用户「你选」补自适应图标；System.Drawing 扫描非白像素求 bbox → 裁白边 → 每档生成 108dp 透明图层（72dp 居中图）→ `mipmap-anydpi-v26` + `colors.xml`；`aapt2` 确认全部指向 anydpi-v26，真机应用信息页无白边。单色主题图标（monochrome）仍未做，需要专门的单色蒙版素材。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
@@ -65,6 +68,8 @@
 | `adb install -r` + 启动 | **PASS** | `Success`；`versionName=0.1.0`；今日页正常 |
 | `git grep` 密钥扫描 | **PASS** | 仅文档用词命中，无真实凭据；历史无 `keystore`/`local.properties` |
 | 干净目录 `git clone` + `gradlew assembleDebug` | **PASS**（38s） | 在 `.gradle/clone-verify` 克隆后构建成功。首次在 `%TEMP%` 克隆失败，错误为 `stableIds.txt: failed to open ... (13)`，是本机 `D:\cpp_tmp` 的 ACL 问题，不是仓库缺陷；换到工作区内路径即通过 |
+| `aapt2 dump badging`（自适应后） | **PASS** | `application-icon-120/160/240/320/480/640/65534` 全指向 `res/mipmap-anydpi-v26/ic_launcher.xml` |
+| 真机应用信息页图标 | **PASS** | 绿底 + 完整插画（蝴蝶结、日历可见），无白边；放大 4× 检查边缘干净 |
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 159、DAO 38、构建、`git diff --check` |
 
 ## 11. Completion Review
@@ -73,7 +78,9 @@
 - [ ] 独立 Reviewer `APPROVE`（`ADR-015` 批量评审）
 
 ## 12. Handoff
-- 待用户决定：是否要自适应/单色主题图标；提交身份；公开或私有；是否接受 PR。
+- 自适应图标已补；单色主题图标仍待素材。
+- 用户已定：私有仓库优先；提交身份 `xuy65787@gmail.com`（仓库局部 + `.mailmap`）。
+- 待用户决定：是否接受 PR。
 - 推送后按指南 B3/C 检查文件树、About、Topics、Community Standards。
 
 ## 13. Independent Review

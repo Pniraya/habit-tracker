@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -165,66 +166,31 @@ fun CreateHabitScreen(
             }
 
             FormCard(title = "图标") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    HabitVisuals.ICONS.forEach { icon ->
-                        val selected = HabitVisuals.iconKey(form.icon) == icon
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (selected) accent.copy(alpha = 0.18f) else SurfaceTint)
-                                .then(
-                                    if (selected) {
-                                        Modifier.border(2.dp, accent, RoundedCornerShape(14.dp))
-                                    } else {
-                                        Modifier
-                                    },
-                                )
-                                .clickable { onIconChange(icon) }
-                                .semantics { contentDescription = "图标 " + icon },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            HabitIcon(
-                                icon = icon,
-                                size = 22.dp,
-                                tint = if (selected) accent else TextTertiary,
-                            )
-                        }
-                    }
-                    val customSelected = HabitVisuals.isCustom(form.icon)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(if (customSelected) accent.copy(alpha = 0.18f) else SurfaceTint)
-                            .then(
-                                if (customSelected) {
-                                    Modifier.border(2.dp, accent, RoundedCornerShape(14.dp))
-                                } else {
-                                    Modifier
-                                },
-                            )
-                            .clickable {
-                                pickCustomIcon.launch(
-                                    androidx.activity.result.PickVisualMediaRequest(
-                                        androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
-                                    ),
+                // 11 built-ins plus the gallery tile fill two rows of six, so the grid stays even.
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HabitVisuals.ICONS.chunked(6).forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { icon ->
+                                IconChoice(
+                                    icon = icon,
+                                    selected = HabitVisuals.iconKey(form.icon) == icon,
+                                    accent = accent,
+                                    onClick = { onIconChange(icon) },
                                 )
                             }
-                            .semantics { contentDescription = "选择自定义图标" },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (customSelected) {
-                            HabitIcon(icon = form.icon, size = 22.dp)
-                        } else {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_plus),
-                                contentDescription = null,
-                                tint = TextTertiary,
-                                modifier = Modifier.size(16.dp),
-                            )
+                            if (row.size < 6) {
+                                CustomIconChoice(
+                                    icon = form.icon,
+                                    accent = accent,
+                                    onClick = {
+                                        pickCustomIcon.launch(
+                                            androidx.activity.result.PickVisualMediaRequest(
+                                                androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
+                                            ),
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -306,13 +272,16 @@ fun CreateHabitScreen(
             if (form.error != null) {
                 Text(form.error, fontSize = 13.sp, color = Color(0xFFB5523B))
             }
+
+            // Breathing room so the last card can scroll clear of the fixed save button.
+            Spacer(Modifier.height(8.dp))
         }
 
         PillButton(
             text = if (form.isSaving) "保存中…" else "开始养成",
             enabled = !form.isSaving,
             onClick = onSave,
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp),
         )
     }
 }
@@ -357,5 +326,59 @@ private fun BeigeField(
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+/** One square in the icon grid; shared by the second row’s gallery tile. */
+@Composable
+private fun RowScope.IconChoice(
+    icon: String,
+    selected: Boolean,
+    accent: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .height(46.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) accent.copy(alpha = 0.18f) else SurfaceTint)
+            .then(
+                if (selected) Modifier.border(2.dp, accent, RoundedCornerShape(14.dp)) else Modifier,
+            )
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = "图标 " + icon },
+        contentAlignment = Alignment.Center,
+    ) {
+        HabitIcon(icon = icon, size = 22.dp, tint = if (selected) accent else TextTertiary)
+    }
+}
+
+/** The gallery tile: shows the picked picture, or a plus when nothing custom is selected. */
+@Composable
+private fun RowScope.CustomIconChoice(icon: String, accent: Color, onClick: () -> Unit) {
+    val selected = HabitVisuals.isCustom(icon)
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .height(46.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) accent.copy(alpha = 0.18f) else SurfaceTint)
+            .then(
+                if (selected) Modifier.border(2.dp, accent, RoundedCornerShape(14.dp)) else Modifier,
+            )
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = "选择自定义图标" },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            HabitIcon(icon = icon, size = 22.dp)
+        } else {
+            Icon(
+                painter = painterResource(R.drawable.ic_plus),
+                contentDescription = null,
+                tint = TextTertiary,
+                modifier = Modifier.size(16.dp),
+            )
+        }
     }
 }

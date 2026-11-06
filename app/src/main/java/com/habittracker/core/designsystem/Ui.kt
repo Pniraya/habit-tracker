@@ -218,6 +218,11 @@ private fun drawableFor(key: String): Int = when (key) {
     HabitVisuals.ICON_BREATHE -> R.drawable.ic_habit_breathe
     HabitVisuals.ICON_MOON -> R.drawable.ic_habit_moon
     HabitVisuals.ICON_HEART -> R.drawable.ic_habit_heart
+    HabitVisuals.ICON_SUN -> R.drawable.ic_habit_sun
+    HabitVisuals.ICON_COFFEE -> R.drawable.ic_habit_coffee
+    HabitVisuals.ICON_DUMBBELL -> R.drawable.ic_habit_dumbbell
+    HabitVisuals.ICON_PEN -> R.drawable.ic_habit_pen
+    HabitVisuals.ICON_MUSIC -> R.drawable.ic_habit_music
     else -> R.drawable.ic_habit_sprout
 }
 
@@ -226,6 +231,9 @@ private fun tintFor(key: String): Color = when (key) {
     HabitVisuals.ICON_WATER, HabitVisuals.ICON_BREATHE -> Color(0xFF4F7A94)
     HabitVisuals.ICON_BOOK, HabitVisuals.ICON_MOON -> Color(0xFFA35A10)
     HabitVisuals.ICON_HEART -> Color(0xFFB5523B)
+    HabitVisuals.ICON_SUN -> Color(0xFFB5741B)
+    HabitVisuals.ICON_COFFEE, HabitVisuals.ICON_DUMBBELL -> Color(0xFF8A5A3B)
+    HabitVisuals.ICON_PEN, HabitVisuals.ICON_MUSIC -> Color(0xFF6C5F8C)
     else -> Color(0xFF4A7A59)
 }
 
