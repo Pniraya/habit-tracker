@@ -69,16 +69,20 @@ fun AppRoot() {
 
     Scaffold(
         bottomBar = {
-            HabitBottomBar(
-                currentRoute = currentRoute,
-                onSelect = { destination ->
-                    navController.navigate(destination.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-            )
+            // orgins/新建习惯-html is a full-screen page with no navigation bar; showing an
+            // unselected bar there also stole the height the 开始养成 button needs.
+            if (AppDestination.entries.any { it.route == currentRoute }) {
+                HabitBottomBar(
+                    currentRoute = currentRoute,
+                    onSelect = { destination ->
+                        navController.navigate(destination.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
         },
     ) { innerPadding ->
         NavHost(

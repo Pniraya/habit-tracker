@@ -9,7 +9,7 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-032`（`IMPLEMENTED`：今日页与新建页按设计稿重建，构建/单测通过，无设备未做视觉走查）；下一条 `TASK-030`（MVP 收口：备份 + 权限清理） |
+| 当前任务 | `TASK-032`（`IMPLEMENTED`：今日页与新建页按设计稿重建，构建/单测通过，真机渲染已对照，图标颜色落库待复验）；下一条 `TASK-030`（MVP 收口：备份 + 权限清理） |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
 | 最近测试 | `PASS` — **137** 项单测（`tools/run-unit-tests.ps1`）+ 1 项真机 instrumented（`connectedDebugAndroidTest`，当时有设备）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
