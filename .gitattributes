@@ -1,0 +1,10 @@
+# Normalise line endings so a Linux/macOS checkout (and CI) can run the wrapper.
+* text=auto
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.jar binary
+*.apk binary
