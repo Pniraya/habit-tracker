@@ -18,7 +18,7 @@
 
 - [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：已按 `ADR-005~010` 修订
 - [x] `project/REQUIREMENTS.md`：TBD 第 1/5/6 项已关闭
-- [x] `project/decisions/ADR-001`~`ADR-014`：全部 `ACCEPTED`（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
+- [x] `project/decisions/ADR-001`~`ADR-015`：全部 `ACCEPTED`（`ADR-015` 评审批量后置，交付 MVP 期间生效）（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
 - [x] `project/FEATURE_MATRIX.md`：F-001/F-002/F-006/F-007 已 `DEVICE_VERIFIED`；F-003/F-004 `IN_PROGRESS`（编辑与归档界面未做）；F-005 `VERIFIED`（三种频率有单测，真机只建过 `DAILY`）；F-009 `DEVICE_VERIFIED`（连续 1 天已真机确认，多段与最长靠单测）；F-008、F-010~F-014 未开始；F-015 `VERIFIED`（无 `INTERNET` 权限与网络库，无自动化断言）；F-016~F-019 `OUT_OF_SCOPE`（`TASK-019` 校正）
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
 - [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（22 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`
@@ -46,6 +46,12 @@
 - 仍存在的设计缺口：`habits` 的 BOOLEAN 约束未在 SQL 表达；数值型“撤销”UI 语义未定；恢复默认策略未定。
 - DAO/Repository 仍无运行时测试：SQL 层由 `verify-schema.mjs` / `verify-dao.mjs` 覆盖，**Room 回调与实体映射**尚无设备侧用例（`TASK-026` 接手）。注意 `DatabaseConstraints.callback()` 是否真的在 `Room` 打开时注册，目前**没有任何测试覆盖**。
 - `ADR-011` 已接受并落地；触发器是等价实现而非字面 `CHECK`，若将来改用预建库方案需新 ADR。
+
+## 待批审清单（ADR-015）
+
+> `IMPLEMENTED` 任务（实现完成、未经独立评审）必须在此逐条登记；转 `DONE` 后从此处移除。`check-governance.ps1` 第 18 项双向校验。
+
+- 暂无（`ADR-015` 生效时的起点；新任务开始后在此登记）
 
 ## 在册例外（main 上的未完成任务）
 

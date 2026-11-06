@@ -85,6 +85,8 @@
 | 2026-11-05 | `tools/run-unit-tests.ps1`（接缝补洞） | **OK (105 tests)** | 转换器 7（含闰日、非法日期）、差分 1（3000 组随机对拍）、往返 3、翻日 1、接线规则 1、午夜算术 1；变异实测 M1=3、M2=1、M3=11、M4=5、ME=2、MH=1、MH2=1 | TASK-024 |
 | 2026-11-05 | 真机：小数显示、对话框预填与中文校验提示 | **通过** | 列表 `0.5 / 2000 ml`；对话框预填 `0.5`；缺单位提示 `数值习惯需要填写单位` | TASK-018 |
 | 2026-11-05 | `gradlew.bat connectedDebugAndroidTest`（唤醒 + `stayon usb` 后，第 3 次） | **PASS**（`BUILD SUCCESSFUL`，40s；另有 3m09s 一次） | `Tests 1/1 completed (0 skipped) (0 failed)`，XML `tests="1" failures="0"`；设备侧 runner 可用。由 Reviewer 独立复跑一次（43s）同形通过 | TASK-025 |
+| 2026-11-05 | 探针 A：`TASK-999` 标 `IMPLEMENTED` 但未登记待批审清单 | **FAILED（预期）** | `TASK-999 is IMPLEMENTED but missing from the batched-review register`。**首次运行未变红**——新代码里 `$Matches[1]` 被后续 `-match` 覆盖，导致所有任务被 `continue` 跳过；修复后变红 | ADR-015 |
+| 2026-11-05 | 探针 B：待批审清单写上不存在的 `TASK-999` | **FAILED（预期）** | `TASK-999 is listed in the batched-review register but has no task file`；还原后 22/22 绿 | ADR-015 |
 | 2026-11-05 | 变异：`SmokeTest` 断言改 `startsWith("com.nonexistent")` | **FAILED（预期）** | 1 项 `AssertionError`（`SmokeTest.kt:19`），`BUILD FAILED`；还原后复跑通过 → 断言有判别力。但只证明「安装 + runner attach」，不能当回归哨兵 | TASK-025 |
 
 ## Known Test Gaps

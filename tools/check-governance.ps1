@@ -344,13 +344,38 @@ else {
     else { Add-Fail 'reviewer checklist' ('missing sections: ' + ($missingSections -join ', ')) }
 }
 
-# 18. DONE tasks created after ADR-013 must retain an independent APPROVE record before main merge.
+# 18. Completion evidence (ADR-013, extended by ADR-015).
+#     - DONE: requires an INDEPENDENT + APPROVE record, unchanged.
+#     - IMPLEMENTED (implementation done, not yet reviewed): must appear in the batched-review
+#       register in PROJECT_STATUS.md, because that status is allowed on main.
+#     - The register may not go stale: no DONE task, no unknown task, may be listed there.
 $reviewProblems = @()
+$registerPath = 'project/PROJECT_STATUS.md'
+$registerIds = @()
+$registerBody = ''
+if (Test-Path $registerPath) {
+    $statusText = Get-Content -Raw -Path $registerPath
+    $registerMatch = [regex]::Match($statusText, '## 待批审清单[^\n]*\n(?<body>[\s\S]*?)(\n## |\z)')
+    if ($registerMatch.Success) {
+        $registerBody = $registerMatch.Groups['body'].Value
+        $registerIds = @([regex]::Matches($registerBody, 'TASK-\d{3}') | ForEach-Object { $_.Value } | Select-Object -Unique)
+    }
+}
+$taskStates = @{}
 foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     if ($f.BaseName -notmatch '^TASK-(\d{3})$') { continue }
-    if ([int]$Matches[1] -lt 7) { continue }
+    $taskId = $f.BaseName
+    # Capture the number now: later -match calls overwrite $Matches (this was a real bug, caught by probe A).
+    $taskNumber = [int]$Matches[1]
     $taskText = Get-Content -Raw -Path $f.FullName
-    if ($taskText -notmatch ('- 状态：\s*' + [regex]::Escape($tick) + 'DONE' + [regex]::Escape($tick))) { continue }
+    $isDone = $taskText -match ('- 状态：\s*' + [regex]::Escape($tick) + 'DONE' + [regex]::Escape($tick))
+    $isImplemented = $taskText -match ('- 状态：\s*' + [regex]::Escape($tick) + 'IMPLEMENTED' + [regex]::Escape($tick))
+    $taskStates[$taskId] = if ($isDone) { 'DONE' } elseif ($isImplemented) { 'IMPLEMENTED' } else { 'OTHER' }
+    if ($taskNumber -lt 7) { continue }
+    if ($isImplemented -and ($registerIds -notcontains $taskId)) {
+        $reviewProblems += ($taskId + ' is IMPLEMENTED but missing from the batched-review register')
+    }
+    if (-not $isDone) { continue }
     $reviewPath = Join-Path 'project/reviews' ('REVIEW-' + $f.BaseName + '.md')
     if (-not (Test-Path $reviewPath)) { $reviewProblems += ($f.BaseName + ' has no review record'); continue }
     $reviewText = Get-Content -Raw -Path $reviewPath
@@ -358,7 +383,11 @@ foreach ($f in @(Get-ChildItem 'project/tasks' -Filter 'TASK-*.md')) {
     if ($reviewText -notmatch ('- 独立性：\s*\*{0,2}\s*' + [regex]::Escape($tick) + 'INDEPENDENT' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not marked INDEPENDENT') }
     if ($reviewText -notmatch ('- 结论：\s*\*{0,2}\s*' + [regex]::Escape($tick) + 'APPROVE' + [regex]::Escape($tick))) { $reviewProblems += ($f.BaseName + ' review is not APPROVE') }
 }
-if ($reviewProblems.Count -eq 0) { Add-Pass 'done tasks have review evidence' 'all post-ADR-013 DONE tasks have independent APPROVE records' }
+foreach ($id in $registerIds) {
+    if (-not $taskStates.ContainsKey($id)) { $reviewProblems += ($id + ' is listed in the batched-review register but has no task file') }
+    elseif ($taskStates[$id] -eq 'DONE') { $reviewProblems += ($id + ' is DONE but still listed in the batched-review register') }
+}
+if ($reviewProblems.Count -eq 0) { Add-Pass 'done tasks have review evidence' ('DONE tasks carry independent APPROVE records; ' + $registerIds.Count + ' task(s) await the batched review') }
 else { Add-Fail 'done tasks have review evidence' ($reviewProblems -join '; ') }
 
 # 21. Tasks created after ADR-014 must record a verify-all run (TASK-009 onward).
