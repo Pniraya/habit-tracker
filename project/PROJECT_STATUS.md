@@ -37,6 +37,7 @@
 
 1. 补 `UseCase` 层（`RecordHabitProgressUseCase` 等）与 `DataStore`。
 2. ~~为 Room 事务/DAO 补集成测试~~ → `TASK-026` 已交付（`DatabaseContractTest` 5 项真机通过）；剩余：UI 自动化（外部评审 `N6`，≤8 用例）与迁移测试底座。
+3. `TASK-037`（自定义习惯图标）：**等待用户提供图标素材/风格决定**；相册自选方案不需要素材，可先做。
 3. 接真机或装模拟器完成 `TASK-003` 的设备验证，再关闭 Gate 1。
 4. 为 TASK-007 取得独立 Reviewer 的 `APPROVE` 记录后合入 `main`；其后每任务结束运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，保持六份状态文档同步。
 

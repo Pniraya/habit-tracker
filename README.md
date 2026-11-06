@@ -4,7 +4,7 @@
 
 > 仓库已包含可构建的 Android 工程（`:app`）、Room schema v1 与 Domain/Repository 层。所有状态只反映真实执行结果：没有证据的项一律写 `NOT_RUN`/`PARTIAL`。
 >
-> **发布状态：未发布（WIP）。** 尚未选定开源许可证（默认保留所有权利），也没有远程仓库。8 个任务处于 `IMPLEMENTED`（实现+真机自测完成、缺独立评审），按 `ADR-015` 尚未转 `DONE`。
+> **发布状态：未发布（WIP）。** 采用 MIT 许可证（`LICENSE`），但尚无远程仓库；多个任务处于 `IMPLEMENTED`（实现+真机自测完成、缺独立评审），按 `ADR-015` 尚未转 `DONE`。
 
 ## 1. 当前状态
 
@@ -93,13 +93,14 @@ pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 1. `R1` 窄口径评审：把 8 个 `IMPLEMENTED` 一起过一遍（偏差表 + 写路径/规则边界 + 变异抽查），转 `DONE` 或列阻塞项。
 2. `N5` 提醒数据模型 ADR（先于备份格式定稿）。
 3. `TASK-030a` JSON 导出（只读）→ `030b` 覆盖恢复（依赖 `TASK-026`）。
-4. UI 自动化 ≤8 用例、迁移测试底座、`assembleRelease` + lint 进 CI。
+4. `TASK-037` 自定义习惯图标（等待用户提供素材；相册自选方案不需要素材）。
+5. UI 自动化 ≤8 用例、迁移测试底座、`assembleRelease` + lint 进 CI。
 
 细节见 `project/ROADMAP.md`、`project/PROJECT_STATUS.md` 与 `project/handoffs/LAST_HANDOFF.md`。
 
 ## 7. 开源/发布前检查
 
-- 许可证：**未选定**（见上），公开前必须由仓库所有者决定。
+- 许可证：**MIT**（`LICENSE`）。若仓库所有者要改为 Apache-2.0 或专有许可，替换 `LICENSE` 并同步本节与 `README` 第 1 节的发布状态即可。
 - 远程：当前无 `origin`，首次推送由所有者执行；本仓库不自动推送。
 - CI：`.github/workflows/android.yml` 在 Ubuntu 上跑 `assembleDebug` + 单测 + schema/DAO 校验（本机受限的 Gradle 测试 worker 在 GitHub Runner 上不受限）。
 - 敏感信息：`.gitignore` 覆盖 `local.properties`、`*.jks`、`*.keystore`、`*.apk`、`.gradle/`；仓库内无真实用户数据（真机数据库仅存在设备与本地 `.gradle/`）。
