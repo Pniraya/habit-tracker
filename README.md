@@ -2,6 +2,13 @@
 
 本地优先的 Android 习惯追踪器。Kotlin + Jetpack Compose + Material 3 + Room，单 Gradle module（`:app`），目标 Android 15（API 35），minSdk 26。
 
+<p>
+  <img src="docs/images/today.png" width="200" alt="今日页">
+  <img src="docs/images/stats.png" width="200" alt="统计页">
+  <img src="docs/images/detail.png" width="200" alt="习惯详情">
+  <img src="docs/images/create.png" width="200" alt="新建习惯">
+</p>
+
 > 仓库已包含可构建的 Android 工程（`:app`）、Room schema v1 与 Domain/Repository 层。所有状态只反映真实执行结果：没有证据的项一律写 `NOT_RUN`/`PARTIAL`。
 >
 > **发布状态：未发布（WIP）。** 采用 MIT 许可证（`LICENSE`），但尚无远程仓库；多个任务处于 `IMPLEMENTED`（实现+真机自测完成、缺独立评审），按 `ADR-015` 尚未转 `DONE`。
@@ -11,7 +18,7 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-036`（`IMPLEMENTED`：日切点 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件）；`TASK-026`（Room 契约测试）已合入；下一条做窄口径里程碑评审，再做 `N5` 提醒数据模型 ADR 与 `TASK-030a` 导出 |
+| 当前任务 | `TASK-038`（`IMPLEMENTED`：日切点 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件）；`TASK-026`（Room 契约测试）已合入；下一条做窄口径里程碑评审，再做 `N5` 提醒数据模型 ADR 与 `TASK-030a` 导出 |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
 | 最近测试 | `PASS` — **159** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
@@ -53,9 +60,12 @@
 ## 4. 快速命令
 
 ```powershell
-# 前置：JDK 17 与 Android SDK（platform 35 / build-tools 35.0.0），ANDROID_HOME 与 JAVA_HOME 指向它们
-# 若用自带脚本，可设置 HABIT_ENV_SCRIPT=<path-to-env.ps1>，工具会优先使用已设置的环境变量
+# 通用做法（任何机器，需 JDK 17 + Android SDK platform 35 / build-tools 35.0.0）
+./gradlew assembleDebug
+./gradlew testDebugUnitTest      # JVM 单测；正常环境下 Gradle 测试 worker 可用
+./gradlew installDebug           # 连接设备并开启 USB 调试
 
+# 作者本机（Windows sandbox：Gradle 测试 worker 被禁，所以另有一个直接跑 JUnit 的入口）
 pwsh -NoProfile -File tools/verify-all.ps1       # 收尾统一入口：治理检查 + 单测 + 构建 + 空白检查
 gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
 pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：159 项通过（绕过本机被禁的 Gradle 测试 worker）
@@ -98,7 +108,16 @@ pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 
 细节见 `project/ROADMAP.md`、`project/PROJECT_STATUS.md` 与 `project/handoffs/LAST_HANDOFF.md`。
 
-## 7. 开源/发布前检查
+## 7. 隐私与 AI 说明
+
+- **数据存哪**：只在本机 Room 数据库（`habit-tracker.db`），无账号、无服务器、无云同步。
+- **网络**：`AndroidManifest.xml` 没有 `INTERNET` 权限，依赖列表里没有网络库。
+- **权限**：`POST_NOTIFICATIONS`（提醒，尚未上线）与 `RECEIVE_BOOT_COMPLETED`（重启后恢复提醒，尚未上线）；不申请存储权限，导入导出走系统文件选择器。
+- **卸载即丢失**：`allowBackup="false"`；备份导出（`TASK-030`）完成前，卸载或清除数据会丢失全部记录。
+- **AI 辅助**：本项目在 AI 编码代理协助下开发，治理文档（`AGENTS.md`、任务记录、评审记录、测试报告）按「只写实际执行结果」的规则维护。
+- **图标**：`docs/images/icon.png` 与 `res/mipmap-*/ic_launcher.png` 由仓库所有者提供，随本项目一并使用。
+
+## 8. 开源/发布前检查
 
 - 许可证：**MIT**（`LICENSE`）。若仓库所有者要改为 Apache-2.0 或专有许可，替换 `LICENSE` 并同步本节与 `README` 第 1 节的发布状态即可。
 - 远程：当前无 `origin`，首次推送由所有者执行；本仓库不自动推送。

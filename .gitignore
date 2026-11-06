@@ -36,3 +36,6 @@ Thumbs.db
 
 # Local input material (not a governance artifact, not a baseline)
 temp.md
+
+# Local AI-tool configuration
+.claude/settings.local.json
