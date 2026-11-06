@@ -3,58 +3,53 @@
 > 每次 AI 会话结束前更新。记录事实，不写愿望或推测。
 
 ## Snapshot
-- 日期时间（含时区）：`2026-11-05`
-- 当前阶段：`Gate 3`（Today + 新建习惯两页接真实数据；连续天数已上线并真机确认）
-- 当前任务：`TASK-031`（`IMPLEMENTED`：统计页按设计稿重建，真机走通）；下一条 `TASK-030`（MVP 收口：备份 + 权限清理）；`TASK-024`（接缝补洞）已 `DONE` 合入 `main`（第 4 轮 `APPROVE`）；`TASK-022` 已 `DONE` 合入 `main`（第 3 轮 `APPROVE`）；`TASK-021`（`F-009` 连续天数）已 `DONE` 合入 `main`；`TASK-012`~`TASK-021` 全部 `DONE`
-- 当前 Git 分支：`feat/androidtest-spike`（`TASK-025`，未合入）；`main` @ `74c3f06`（本地，无远程；`TASK-024` 已合入）；`feat/seam-hardening`、`feat/today-queries`、`feat/streak` 均已合并、保留未删
-- 最近 commit：以 `git log -1 --oneline` 为准（交接记录与代码修复同一次提交时，写死哈希必然立刻过期）
-- **会话状态：可继续**——评审按 `ADR-015` 批量后置；`TASK-027`~`TASK-029` 以 `IMPLEMENTED` 合入，均未评审。MVP 主路径已闭环（建/改/打卡/撤销/归档/恢复/统计）；下一步 `TASK-030` 收口
-- **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`。首轮需人工授权 USB 安装（授权是粘性的，之后不再逐次确认——Reviewer 本轮从零安装未出现任何确认弹窗）；不保持唤醒会报 `Android device ... is not found` 并 `Finished 0 tests`
+- 日期时间（含时区）：`2026-11-06`（Asia/Shanghai）
+- 当前阶段：`Gate 3`（今日页 / 新建页 / 统计页均已按设计稿重建；无设备，重建后的界面未真机复验）
+- 当前任务：`TASK-032`（`IMPLEMENTED`：今日页与新建页按设计稿重建，构建 + 137 项单测通过，缺真机视觉走查与独立评审）；`TASK-031`（统计页）同样 `IMPLEMENTED` 待批量评审；下一条功能任务仍为 `TASK-030`（MVP 收口：备份导出 + 权限清理）
+- 当前 Git 分支：`main`（本地，无远程）；最近 commit 以 `git log -1 --oneline` 为准
+- **会话状态：可继续**——评审按 `ADR-015` 批量后置；**本机当前无设备**（`adb devices` 空），任何「真机走查」在接上手机前都只能记 `NOT_RUN`
+- **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`。当前没有 UI 自动化用例，界面只能装 APK 手动对照 `TASK-032` §6
 
 ## Completed This Session
-- `TASK-021`（F-009 当前/最长连续天数）：`StreakRules` 纯函数一次正向遍历同时给出当前与最长；`GetStreakUseCase` 取全部计划版本 + 区间内 `COMPLETED` 日志；`TodayPresenter.streakText` 决定文案（`0/0` 不显示、`0/7` 显示「最长 7 天」、`3/7` 显示「连续 3 天 · 最长 7 天」）
-- 语义决策：非计划日不计数也不打断；**今天未完成不算断**（依据 `REQUIREMENTS` 93「过去已到期的计划日」才是失败），已写入任务 §8 并由评审确认符合规格
-- 评审第 1 轮 `REJECT`（`5707e43`）三条阻断：矩阵/状态仍写 F-009 未开始、删 `COMPLETED` 过滤全绿、只取最新计划版本全绿。第 2 轮 `APPROVE`（`3104352`，0 阻断，7 组自造变异全打红正确断言，另用独立模型穷举 34.4 万例验证 `current = run` 等价）
-- 评审带来的实际改进：两个循环合并为一次正向遍历（today 规则不再重复）；`FakeHabitRepository` 改为保存计划历史（此前只存一条，`changeSchedule` 直接覆盖，所以「只取最新版本」这种缺陷测不出来）
-- 评审非阻断建议全部落地：§10 计数 81→83→84 修正、矩阵重复的 F-009 条目合并、真机限定脚注移入脚注块、N+1 立 `TASK-022`（此前只在聊天里说「已备案」，仓库查不到，属不可核对的声称）
-- 中断恢复：第 2 轮评审进程因网络中断死亡，工作区遗留变异 `from = today`；已 `git checkout --` 还原并复跑测试确认，然后另起新评审进程
+- `TASK-032`（`Main.dc.html` + `New.dc.html` 视觉重建）：
+  - 新增设计系统 `core/designsystem/Ui.kt`：`SoftCard`（24/20 圆角 + 暖色阴影）、`ProgressRing`（96dp，描边 = 尺寸 × 12/120，完成时半透明光晕弧）、`StreakBadge`、`CheckCircle`（44dp 触点 / 40dp 圆点）、`HabitIconTile`（36dp 暖白圆）、`PillButton`、`ChoicePill`、`FallingLeaves`（6 片叶，6s 循环，相位错开）
+  - 新增 `HabitVisuals`（纯 Kotlin，无 Compose 依赖）：`parseColor`、`ringSweep`、`todayMessage`、`bestStreak`、`badgeText`、`iconKey`/`colorKey` 回退
+  - 新增 13 个 `res/drawable` 矢量，`pathData` 直接取自设计稿 SVG（不用 `material-icons-extended`）
+  - `TodayScreen` 重写：日期行 + 「今天」32sp、进度卡、连续徽章、66dp 习惯行、56dp 绿色 FAB、全部完成叶片层；编辑/归档菜单收成 18dp 的安静「更多」按钮（设计稿无此入口，功能不能丢，写在 §8）
+  - `AppRoot` 底部导航改为 `Surface` + 自定义 `Row`（84dp、28dp 上圆角、选中绿色胶囊），并补 `navigationBars` 内边距（targetSdk 35 强制 edge-to-edge）
+  - `CreateHabitScreen` 重写为卡片表单；`CreateHabitForm`/`CreateHabitPresenter` 新增 `icon`/`color` 与 `onIconChange`/`onColorChange`，`draft()` 不再写死默认值
+- 语义决策：标题徽章的数字取「今日计划内习惯的最大当前连续」（`bestStreak`），0 时隐藏——设计稿只有一个数字，而连续天数按习惯计算（`F-009`），不编造全局连续
+- 明确不做的假控件：设计稿的「每日提醒」开关（`F-012` 未实现）；设计稿的「习惯详情」页（`Detail.dc.html`）另立任务
 
 ## Files Changed
-`TASK-021`（已合入 `main`）：
-- 新增：`domain/calculation/StreakRules.kt`、`domain/usecase/GetStreakUseCase.kt`、`StreakRulesTest.kt`（9 项）、`project/tasks/TASK-021.md`、`project/tasks/TASK-022.md`、`project/reviews/REVIEW-TASK-021.md`
-- 修改：`HabitRepository.kt`、`RoomHabitRepository.kt`（`scheduleVersions`、`logsInRange`）、`FakeHabitRepository.kt`（计划历史）、`TodayPresenter.kt`/`TodayScreen.kt`/`TodayUiState.kt`/`TodayViewModel.kt`、`TodayPresenterTest.kt`（+4 项）、`FEATURE_MATRIX.md`、`PROJECT_STATUS.md`、`README.md`、`TEST_REPORT.md`、本文件
+- 新增：`core/designsystem/Ui.kt`、`core/designsystem/HabitVisuals.kt`、`res/drawable/ic_habit_*.xml`（6）、`ic_check/ic_leaf/ic_close/ic_plus`、`ic_tab_today/ic_tab_stats/ic_tab_profile`、`test/.../HabitVisualsTest.kt`、`project/tasks/TASK-032.md`
+- 修改：`TodayScreen.kt`、`CreateHabitScreen.kt`、`CreateHabitForm.kt`、`CreateHabitPresenter.kt`、`AppRoot.kt`、`AppDestination.kt`（图标改为 `@DrawableRes`）、`Color.kt`、`CreateHabitPresenterTest.kt`、`FEATURE_MATRIX.md`、`PROJECT_STATUS.md`、`README.md`、`TEST_REPORT.md`、本文件
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (105 tests)** | `TASK-021` +13；`TASK-022` +5；`TASK-024` +14（转换器 7、差分 1、往返 3、翻日 1、接线规则 1、午夜算术 1） |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | `TASK-021` 合入时一次（`f959f02`）、`TASK-022` 实现时一次（`b73e03b`）；治理 22/22、DAO 27、构建 ~21-27s、`diff --check` 干净 |
-| `pwsh -NoProfile -File tools/check-governance.ps1` | **22 / 22 passed，0 警告** | 第 1 轮评审的 1 条 warning（引用未创建的 `TASK-025`）已补建任务消除 |
-| 变异 M1 `due()` 恒真 | **FAILED（2 项）** | `aDayThatWasNeverDue…`、`aScheduleChange…` |
-| 变异 M2 去「今天不算断」 | **FAILED（2 项）** | 首次跑未生效（正则未匹配），已重跑并如实记录 |
-| 变异 M3 presenter 写 0 | **FAILED（1 项）** | 行内连续断言 |
-| 变异 M4 删 `COMPLETED` 过滤 | **FAILED（1 项）** | 补测试后；补之前 81 项全绿（缺陷） |
-| 变异 M6 只取最新计划版本 | **FAILED（1 项）** | 补测试后；补之前全绿（缺陷） |
-| 真机（`iQOO Neo7 SE`，Android 15） | **通过（范围有限）** | 三个已完成习惯显示 `连续 1 天`；进行中的数值习惯不显示。多段历史/最长/计划变更**未在真机造数**，仅单测覆盖 |
+| `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **OK (137 tests)** | 124 → 137：`HabitVisualsTest` 11、`CreateHabitPresenterTest` +2（图标/颜色落库） |
+| `gradlew.bat compileDebugKotlin` | **BUILD SUCCESSFUL** | 首次编译 1m17s；出现一次增量缓存告警后回退全量编译，非失败 |
+| `gradlew.bat assembleDebug` | **BUILD SUCCESSFUL** | 13s，APK 10,559,569 B |
+| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 137、DAO 37、构建、`git diff --check`；首次运行被治理第 18 项拦下（`TASK-032` 未登记在待批审清单），补登记后复跑通过 |
+| `adb devices` | **空列表** | 无设备、无模拟器镜像：真机视觉对照 `NOT_RUN`，不得写成「已验证」 |
 
 ## Not Verified / Known Gaps
-- **UI 无自动化测试**：Compose 渲染与交互仅靠真机手动走查（截图在 `.gradle/shots/`，不入库）
-- **连续天数的真机证据弱**：只有「今天完成 → 1 天」文字叙述，`project/reports` 下无 dump/截图（`F-006`/`F-007` 有 `DEVICE_DUMP`）
-- **N+1 已改为整表 4 次查询**（`TASK-022`，待评审）：但批量读仍取「全局最早版本 → 今天」的全部日志行，只减少往返、不减少行数（20 习惯 × 3 年 ≈ 2 万行/次），留待统计页一并收敛
-- **主线程计算**：批量读仍是挂起调用，其后的逐习惯「逐日推进」是纯计算，跑在 `Dispatchers.Main.immediate` 上；最坏情况约 2 万次迭代，未实测耗时
-- Room 的 Cursor 映射、Converter、Flow 通知、`withTransaction` 边界：**无自动化验证**，但通道已经有了（设备侧 `connectedDebugAndroidTest` 可用，`TASK-025`）；缺的是用例，`TASK-026` 接手。`DatabaseConstraints.callback()` 是否真的在 Room 打开时注册，目前零覆盖
-- 表单由 `remember` 持有，旋转丢输入
-- 统计页、我的页仍为占位；`POST_NOTIFICATIONS` 与 `RECEIVE_BOOT_COMPLETED` 已声明但无代码，属遗留声明待清理
+- **重建后的今日页 / 新建页未在真机看过**：环、阴影、叶片动画、图标线性度、导航胶囊位置全部只有代码与构建证据；`FEATURE_MATRIX` 已把 `F-002`/`F-003` 的真机列降为 `IN_PROGRESS`
+- **习惯详情页未实现**：`orgins/习惯详情-html/Detail.dc.html` 有完整设计，但需要日志历史/热力图/编辑入口，未立任务
+- **编辑弹窗不能改图标/颜色**：`UpdateHabitUseCase` 只更新名称/目标/单位
+- **旧数据 `icon="star"`** 无对应图形，统一回退嫩芽；未做数据迁移（不需要 schema 变更的话也应在编辑页补选项）
+- **叶片动画不读系统减弱动效设置**：设计稿有 `prefers-reduced-motion` 分支，Android 侧需读 `ANIMATOR_DURATION_SCALE`
+- 平板上 390×844 画板外的弹性布局未实测；`FallingLeaves` 在列表滚动时的绘制开销未测
+- 统计页 `TASK-031` 的周/年切换、图标替换仍为已知缺口（见 `PROJECT_STATUS.md` 待批审清单）
 
 ## Lessons Worth Keeping
-- **变异测试的价值在「改坏代码看测试会不会红」**：M4/M6 两个全绿变异证明功能错了而 83 项测试没反应。别只写测试，要验证测试会失败。
-- **探针/变异脚本必须自己验证自己改了东西**：M2 第一次未生效却报「通过」，是假证据。
-- **改文档要一次改完**：两轮 `REJECT` 都是文档不同步（改了 A 忘了 B），不是逻辑错误。
-- **声称必须可核对**：「N+1 已备案」在仓库查不到任何记录，评审直接指出。要么建任务，要么别说。
-- **子进程变异可能留下脏工作区**：评审死亡时留下 `from = today`，直接提交会合入缺陷。恢复后必须复跑测试确认。
+- **选择器必须用「保存后的对象」断言**：`draft()` 写死默认值时，选择器能点、界面能变，但数据库收不到——只测 presenter 的 UI 状态抓不到这类断链
+- **设计稿里的控件要有对应实现才画**：提醒开关、详情页入口都没有后端，宁可明确记 `Out of Scope`，也不摆假控件
+- **`NavigationBar` 表达不了设计稿的圆角与胶囊尺寸**：Material 组件的样式参数有边界，超出就自己画
+- **沙箱与 Gradle 缓存**：本机 `C:\Users\<user>\.gradle` 需要写锁文件，受限沙箱下 `gradlew` 会以 `FileNotFoundException ... .lck` 失败；那是环境拒绝，不是构建错误
 
 ## Next Safe Action
-1. **`TASK-025` 已做完，只剩复审**：真机通道已打通（`Tests 1/1 completed`，两次通过，详见 `TEST_REPORT`）；拿到第 3 轮 `APPROVE` 后置 `DONE` 并合入 `main`——**不要重跑 spike**，那已经验证过了
-2. 之后功能顺序：`F-010`/`F-011` 统计页与热力图 → `F-012`/`F-013` 提醒 → `F-014` 备份恢复 → 图标/颜色选择器 → 习惯编辑与删除
-3. 遗留重构（未立任务）：`CreateHabitPresenter` 构造参数为函数类型，评审建议改为「保留 `CreateHabitUseCase` 形参 + `FakeHabitRepository.createFailure`」
-4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿，再读 `TASK-026`（设备侧 Room 契约测试，核心是「删掉 `addCallback` 必须让测试变红」）；其后是 `TASK-023`（统计页）。
+1. 接上手机（解锁 + `adb shell svc power stayon usb`）→ `gradlew.bat assembleDebug` → 安装 → 按 `TASK-032` §6 逐项对照今日页/新建页，再决定是否需要调数值
+2. 视觉通过后：`project/tasks/TASK-033.md`（习惯详情页，设计稿 `orgins/习惯详情-html/Detail.dc.html`）或 `TASK-030`（备份导出 + 权限清理）
+3. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿；不要把 `TASK-032` 直接改成 `DONE`——它缺独立评审

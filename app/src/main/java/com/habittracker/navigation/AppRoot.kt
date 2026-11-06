@@ -1,52 +1,65 @@
 package com.habittracker.navigation
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.habittracker.feature.profile.ProfilePresenter
-import com.habittracker.feature.profile.ProfileScreen
-import com.habittracker.feature.statistics.StatisticsPresenter
-import com.habittracker.feature.statistics.StatisticsScreen
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import com.habittracker.core.designsystem.CardSurface
+import com.habittracker.core.designsystem.NavPill
+import com.habittracker.core.designsystem.TextTertiary
+import com.habittracker.core.designsystem.TrackGreen
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.data.repository.RoomHabitRepository
 import com.habittracker.domain.usecase.CreateHabitUseCase
 import com.habittracker.domain.usecase.RestoreHabitUseCase
 import com.habittracker.feature.create.CreateHabitPresenter
 import com.habittracker.feature.create.CreateHabitScreen
+import com.habittracker.feature.profile.ProfilePresenter
+import com.habittracker.feature.profile.ProfileScreen
+import com.habittracker.feature.statistics.StatisticsPresenter
+import com.habittracker.feature.statistics.StatisticsScreen
 import com.habittracker.feature.today.TodayPresenter
 import com.habittracker.feature.today.TodayScreen
 import com.habittracker.feature.today.TodayViewModel
-
-private val NavSelected = Color(0xFF3F6B4D)
-private val NavPill = Color(0xFFE4EDE6)
-private val NavMuted = Color(0xFF6F6A61)
 
 @Composable
 fun AppRoot() {
@@ -56,34 +69,16 @@ fun AppRoot() {
 
     Scaffold(
         bottomBar = {
-            // Palette from orgins/统计-html: a white bar with a soft green pill behind the
-            // selected item, instead of Material's default tinted surface.
-            NavigationBar(
-                containerColor = Color(0xFFFFFFFF),
-                tonalElevation = 0.dp,
-            ) {
-                AppDestination.entries.forEach { destination ->
-                    NavigationBarItem(
-                        selected = currentRoute == destination.route,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = NavSelected,
-                            selectedTextColor = NavSelected,
-                            indicatorColor = NavPill,
-                            unselectedIconColor = NavMuted,
-                            unselectedTextColor = NavMuted,
-                        ),
-                    )
-                }
-            }
+            HabitBottomBar(
+                currentRoute = currentRoute,
+                onSelect = { destination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+            )
         },
     ) { innerPadding ->
         NavHost(
@@ -156,6 +151,8 @@ fun AppRoot() {
                     onUnitChange = presenter::onUnitChange,
                     onFrequencyChange = presenter::onFrequencyChange,
                     onWeekdayToggle = presenter::onWeekdayToggle,
+                    onIconChange = presenter::onIconChange,
+                    onColorChange = presenter::onColorChange,
                     onSave = presenter::save,
                     onCancel = { navController.popBackStack() },
                 )
@@ -183,6 +180,57 @@ fun AppRoot() {
                     )
                 }
                 ProfileScreen(presenter)
+            }
+        }
+    }
+}
+
+/**
+ * Bottom bar from orgins/: white sheet with 28dp top corners, one soft green pill behind the
+ * selected destination. Material's NavigationBar cannot express the pill width/height and the
+ * upward shadow of the mockup, so the bar is drawn explicitly.
+ */
+@Composable
+private fun HabitBottomBar(currentRoute: String?, onSelect: (AppDestination) -> Unit) {
+    Surface(
+        color = CardSurface,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shadowElevation = 8.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .fillMaxWidth()
+                .height(84.dp)
+                .padding(start = 24.dp, end = 24.dp, top = 10.dp, bottom = 22.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            AppDestination.entries.forEach { destination ->
+                val selected = currentRoute == destination.route
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (selected) NavPill else Color.Transparent)
+                        .clickable { onSelect(destination) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(destination.icon),
+                        contentDescription = destination.label,
+                        tint = if (selected) TrackGreen else TextTertiary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Text(
+                        text = destination.label,
+                        fontSize = 12.sp,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (selected) TrackGreen else TextTertiary,
+                    )
+                }
             }
         }
     }

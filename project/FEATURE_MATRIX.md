@@ -14,8 +14,8 @@
 | ID | 功能 | 需求/设计 | 实现状态 | 自动化验证 | 真机验证 |
 |---|---|---|---|---|---|
 | F-001 | Android 工程骨架 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
-| F-002 | 今日页与导航 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
-| F-003 | 创建/编辑习惯 | 已定义 | VERIFIED | VERIFIED | DEVICE_VERIFIED |
+| F-002 | 今日页与导航 | 已定义 | DEVICE_VERIFIED | VERIFIED | IN_PROGRESS |
+| F-003 | 创建/编辑习惯 | 已定义 | VERIFIED | VERIFIED | IN_PROGRESS |
 | F-004 | 归档/恢复习惯 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
 | F-005 | DAILY/WEEKDAYS/CUSTOM 计划 | 已定义 | VERIFIED | VERIFIED | NOT_STARTED |
 | F-006 | BOOLEAN 日记录 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
@@ -35,7 +35,8 @@
 
 ### 脚注（状态为部分完成的行）
 
-- **F-003**：创建（`TASK-012`/`TASK-016`/`TASK-018`）与编辑（`TASK-029`：`updateFields` + 编辑弹窗 + 历史快照不被改写）均已实现；编辑的**真机**只验证了弹窗与保存路径，未逐项造多习惯历史数据，故真机列仍按「创建部分」的历史证据记录。
+- **F-002**：`TASK-032` 按 `orgins/首页 · 今日-html` 重建今日页与底部导航（进度环、连续徽章、66dp 行、绿色 FAB、白底 28dp 圆角导航）。构建与 137 项单测通过；**本机无设备**，重建后的界面未在真机复验，故真机列由 `DEVICE_VERIFIED` 降为 `IN_PROGRESS`（原证据针对重建前的界面）。
+- **F-003**：创建（`TASK-012`/`TASK-016`/`TASK-018`）与编辑（`TASK-029`：`updateFields` + 编辑弹窗 + 历史快照不被改写）均已实现；`TASK-032` 按 `orgins/新建习惯-html` 重建创建页并新增图标/颜色选择（写入 `habits.icon`/`habits.color`）。同样因无设备，真机列由 `DEVICE_VERIFIED` 降为 `IN_PROGRESS`；编辑的**真机**此前只验证了弹窗与保存路径，未逐项造多习惯历史数据。
 - **F-010**：只做了**最近 7 天完成率**（`TASK-029`，真机 `0 / 1 · 0%`）。周/月/年切换与热力图（`F-011`）未做，因此实现列为 `IN_PROGRESS`，不是 `VERIFIED` 的完整功能。
 - **F-004**：`TASK-027` 补齐归档入口（今日页 `⋮ → 归档`），`TASK-028` 补齐恢复入口（我的页「恢复」）。真机走通「建 → 归档 → 我的页 → 恢复 → 今日页」，故为 `DEVICE_VERIFIED`。
 - **F-008**：布尔习惯点两次即撤销（`TASK-027`，真机未逐项走查撤销这一步，只验证了归档）；数值习惯要重新输入 0 才算撤销；修改历史某天的记录仍未实现。故 `PARTIAL`。
@@ -48,7 +49,7 @@
 - **F-001** 工程骨架 — 代码：`MainActivity.kt`、`core/designsystem/*`；自动化：`assembleDebug` 通过；真机：`DEVICE_DUMP-2026-11-05.md` 记录了安装 APK 与启动（**仅安装/启动，未逐页巡检**）。
 - **F-009** 连续天数 — 代码：`domain/calculation/StreakRules.kt`、`domain/usecase/GetStreakUseCase.kt`、`TodayPresenter.streakText`；自动化：`StreakRulesTest`（8 项）、`TodayPresenterTest`（行内连续天数、IN_PROGRESS 不计入、多计划版本）；真机：三个已完成习惯显示 `连续 1 天`（`TASK-021` §10）。
 - **F-002** 今日页与导航 — 代码：`feature/today/TodayScreen.kt`、`TodayPresenter.kt`、`TodayViewModel.kt`、`navigation/AppRoot.kt`；自动化：`TodayPresenterTest`、`AppRoutesTest`；真机：`TASK-013`/`TASK-016`/`TASK-018` §10（空态、非空列表、FAB 均截图确认）。
-- **F-003** 创建习惯 — 代码：`feature/create/CreateHabitScreen.kt`、`CreateHabitPresenter.kt`、`CreateHabitUseCase.kt`；自动化：`CreateHabitPresenterTest`（12 项）、`CreateAndArchiveHabitUseCaseTest`；真机：`TASK-012`/`TASK-016`/`TASK-018` §10（建布尔习惯、建数值习惯 `nu 2000 ml`）。编辑习惯无代码。
+- **F-003** 创建习惯 — 代码：`feature/create/CreateHabitScreen.kt`、`CreateHabitPresenter.kt`、`CreateHabitUseCase.kt`；自动化：`CreateHabitPresenterTest`（14 项）、`CreateAndArchiveHabitUseCaseTest`；真机：`TASK-012`/`TASK-016`/`TASK-018` §10（建布尔习惯、建数值习惯 `nu 2000 ml`），**`TASK-032` 重建后的界面未复验**。
 - **F-004** 归档/恢复 — 代码：`domain/usecase/ArchiveHabitUseCase.kt`、`RoomHabitRepository.restoreHabit`；自动化：`CreateAndArchiveHabitUseCaseTest`；真机：无（无界面入口）。
 - **F-005** 计划类型 — 代码：`domain/calculation/ScheduleRules.kt`、`entity/DataTypes.kt`、`CreateHabitScreen` 星期选择器；自动化：`ScheduleRulesTest`、`CreateHabitPresenterTest`（`NO_WEEKDAYS` 分支）；真机：仅建过 `DAILY` 习惯。
 - **F-006** BOOLEAN 记录 — 代码：`RecordHabitProgressUseCase.kt`、`LogStatusRules.kt`、`TodayScreen` 点击切换；自动化：`LogStatusRulesTest`、`RecordHabitProgressUseCaseTest`；真机：`project/reports/DEVICE_DUMP-2026-11-05.md`、`TASK-013` §10。

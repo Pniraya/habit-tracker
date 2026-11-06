@@ -3,10 +3,10 @@
 > 只记录实际执行的命令和结果。没有执行就写 `NOT_RUN`。
 
 ## Latest Run
-- 日期时间：`2026-11-05`
-- 分支 / commit：`feat/adr-015` → `feat/mvp-archive`（`TASK-027`，基线 `main` @ `0c3f03a`；最终合入 commit 以 `git log -1` 为准）
+- 日期时间：`2026-11-06`
+- 分支 / commit：`main`（`TASK-032`，基线 `main` @ `e2c585a`；最终合入 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 115 项 + DAO SQL 31 项 + `assembleDebug` 约 20-28s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 137 项 + DAO SQL 37 项 + `assembleDebug` 13s + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；真机视觉对照 `NOT_RUN`（无设备）
 
 ## Runs
 
@@ -95,6 +95,8 @@
 | 2026-11-05 | 探针 A：虚构任务 `TASK-9XX` 标 `IMPLEMENTED` 但未登记待批审清单 | **FAILED（预期）** | `TASK-9XX is IMPLEMENTED but missing from the batched-review register`。**首次运行未变红**——新代码里 `$Matches[1]` 被后续 `-match` 覆盖，导致所有任务被 `continue` 跳过；修复后变红 | ADR-015 |
 | 2026-11-05 | 探针 B：待批审清单写上不存在的 `TASK-9XX` | **FAILED（预期）** | `TASK-9XX is listed in the batched-review register but has no task file`；还原后 22/22 绿 | ADR-015 |
 | 2026-11-05 | 变异：`SmokeTest` 断言改 `startsWith("com.nonexistent")` | **FAILED（预期）** | 1 项 `AssertionError`（`SmokeTest.kt:19`），`BUILD FAILED`；还原后复跑通过 → 断言有判别力。但只证明「安装 + runner attach」，不能当回归哨兵 | TASK-025 |
+| 2026-11-06 | `tools/run-unit-tests.ps1`（今日页/新建页重建） | **OK (137 tests)** | 124 → 137：`HabitVisualsTest` 11（颜色解析与回退、环比例与越界钳制、文案、徽章口径、图标回退）、`CreateHabitPresenterTest` +2（图标/颜色落库、新表单默认值） | TASK-032 |
+| 2026-11-06 | `pwsh -NoProfile -File tools/verify-all.ps1`（今日页/新建页重建） | **VERIFY ALL PASS** | 治理 22/22、单测 137、DAO 37、`assembleDebug` 13s、`git diff --check` 干净；`adb devices` 空 → 真机视觉 `NOT_RUN` | TASK-032 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
