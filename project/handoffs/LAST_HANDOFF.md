@@ -7,7 +7,7 @@
 - 当前阶段：`Gate 3`（今日页 / 新建页 / 统计页均已按设计稿重建；无设备，重建后的界面未真机复验）
 - 当前任务：`TASK-032`（`IMPLEMENTED`：今日页与新建页按设计稿重建，构建 + 137 项单测通过，缺真机视觉走查与独立评审）；`TASK-031`（统计页）同样 `IMPLEMENTED` 待批量评审；下一条功能任务仍为 `TASK-030`（MVP 收口：备份导出 + 权限清理）
 - 当前 Git 分支：`main`（本地，无远程）；最近 commit 以 `git log -1 --oneline` 为准
-- **会话状态：可继续**——评审按 `ADR-015` 批量后置；设备曾接入并完成今日页/完成态/新建页截图对照，**复装修复版时掉线**（`adb devices` 由 `offline` 变为空），剩余设备项见下方 Not Verified
+- **会话状态：可继续**——评审按 `ADR-015` 批量后置；设备（`10CDAK0B71005KU`）在线，`TASK-032` 真机对照全部完成（今日页、完成态、新建页、图标/颜色落库）
 - **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`。当前没有 UI 自动化用例，界面只能装 APK 手动对照 `TASK-032` §6
 
 ## Completed This Session
@@ -33,10 +33,10 @@
 | `gradlew.bat assembleDebug` | **BUILD SUCCESSFUL** | 13s，APK 10,559,569 B |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 137、DAO 37、构建、`git diff --check`；首次运行被治理第 18 项拦下（`TASK-032` 未登记在待批审清单），补登记后复跑通过 |
 | 真机（iQOO Neo7 SE / Android 15） | **PASS**（范围有限） | 安装后对照：今日页与设计稿一致；打卡后满环 +「连续 1 天」徽章 + 叶片；新建页渲染一致。截图 `.gradle/shots/today.png`、`done2.png`、`create2.png`（不入库） |
-| `adb devices`（复装时） | **掉线** | 由 `offline` 变为空列表；修复版复装、图标/颜色落库复验与 `create3.png` 未完成，不得写成已验证 |
+| 真机：修复版复装 + 新建「水滴 + 雾蓝」+ 打卡 + 归档 | **PASS** | 新建页无底部导航、按钮不遮挡；列表显示水滴图标；打卡圈为雾蓝 `#8FAFC4`；归档后列表恢复。截图 `create_final.png`/`today_after_create.png`/`water_done.png`/`after_archive.png`（`.gradle/shots/`，不入库） |
 
 ## Not Verified / Known Gaps
-- **今日页已真机对照**（`F-002` 恢复 `DEVICE_VERIFIED`）；**新建页只验证了修复前的渲染**，修复版（隐藏底部导航 + 占位文案）未复装，且「选图标/颜色 → 保存 → 列表显示」未在设备走通，`F-003` 真机列仍为 `IN_PROGRESS`
+- **今日页与新建页均已真机对照**（`F-002`/`F-003` 均为 `DEVICE_VERIFIED`）；未覆盖：滚动、平板宽度、减弱动效设置
 - **安装坑**：锁屏时 `adb install` 会 `INSTALL_FAILED_ABORTED: User rejected permissions`，先 `input keyevent KEYCODE_WAKEUP` + `wm dismiss-keyguard` 再装
 - **习惯详情页未实现**：`orgins/习惯详情-html/Detail.dc.html` 有完整设计，但需要日志历史/热力图/编辑入口，未立任务
 - **编辑弹窗不能改图标/颜色**：`UpdateHabitUseCase` 只更新名称/目标/单位
@@ -52,6 +52,6 @@
 - **沙箱与 Gradle 缓存**：本机 `C:\Users\<user>\.gradle` 需要写锁文件，受限沙箱下 `gradlew` 会以 `FileNotFoundException ... .lck` 失败；那是环境拒绝，不是构建错误
 
 ## Next Safe Action
-1. 重连手机（解锁 + `adb shell svc power stayon usb`）→ 安装当前 APK → 打开新建页确认底部导航已隐藏、按钮不再遮挡 → 选水滴图标 + 雾蓝颜色 → 保存 → 确认今日列表显示水滴图标，打卡后勾选圈为雾蓝 → 补齐 `TASK-032` §10 的设备证据，再把 `F-003` 真机列改回 `DEVICE_VERIFIED`
+1. 设备在线且 `TASK-032` 设备证据已补齐（`F-002`/`F-003` 均 `DEVICE_VERIFIED`）。下一步可做 `TASK-033`（习惯详情页，设计稿 `Detail.dc.html`）或 `TASK-030`（备份导出 + 权限清理）
 2. 视觉通过后：`project/tasks/TASK-033.md`（习惯详情页，设计稿 `orgins/习惯详情-html/Detail.dc.html`）或 `TASK-030`（备份导出 + 权限清理）
 3. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿；不要把 `TASK-032` 直接改成 `DONE`——它缺独立评审
