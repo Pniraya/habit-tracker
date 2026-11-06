@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|
 | F-001 | Android 工程骨架 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-002 | 今日页与导航 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
-| F-003 | 创建/编辑习惯 | 已定义 | VERIFIED | VERIFIED | IN_PROGRESS |
+| F-003 | 创建/编辑习惯 | 已定义 | VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-004 | 归档/恢复习惯 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
 | F-005 | DAILY/WEEKDAYS/CUSTOM 计划 | 已定义 | VERIFIED | VERIFIED | NOT_STARTED |
 | F-006 | BOOLEAN 日记录 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
@@ -36,7 +36,7 @@
 ### 脚注（状态为部分完成的行）
 
 - **F-002**：`TASK-032` 按 `orgins/首页 · 今日-html` 重建今日页与底部导航（进度环、连续徽章、66dp 行、绿色 FAB、白底 28dp 圆角导航）。137 项单测与构建通过；iQOO Neo7 SE（Android 15）上安装后对照通过：列表、点勾后满环 +「今天也做到了」+「连续 1 天」徽章 + 叶片飘落、导航胶囊。真机列恢复为 `DEVICE_VERIFIED`（范围：渲染与打卡状态切换，不含滚动/平板）。
-- **F-003**：创建（`TASK-012`/`TASK-016`/`TASK-018`）与编辑（`TASK-029`：`updateFields` + 编辑弹窗 + 历史快照不被改写）均已实现；`TASK-032` 按 `orgins/新建习惯-html` 重建创建页并新增图标/颜色选择（写入 `habits.icon`/`habits.color`）。真机已确认创建页渲染，并暴露「底部导航压住开始养成」的缺陷（已修复）；但修复后的复装与「选图标/颜色 → 保存 → 列表显示」的设备复验因设备掉线未完成，故真机列保持 `IN_PROGRESS`。
+- **F-003**：创建（`TASK-012`/`TASK-016`/`TASK-018`）与编辑（`TASK-029`：`updateFields` + 编辑弹窗 + 历史快照不被改写）均已实现；`TASK-032` 按 `orgins/新建习惯-html` 重建创建页并新增图标/颜色选择（写入 `habits.icon`/`habits.color`）。真机已确认：修复版创建页无底部导航、按钮不遮挡；「选水滴图标 + 雾蓝 → 保存 → 列表显示水滴图标 → 打卡后勾选圈为雾蓝」走通，`icon`/`color` 落库获设备证据；归档后列表恢复。真机列恢复为 `DEVICE_VERIFIED`。
 - **F-010**：只做了**最近 7 天完成率**（`TASK-029`，真机 `0 / 1 · 0%`）。周/月/年切换与热力图（`F-011`）未做，因此实现列为 `IN_PROGRESS`，不是 `VERIFIED` 的完整功能。
 - **F-004**：`TASK-027` 补齐归档入口（今日页 `⋮ → 归档`），`TASK-028` 补齐恢复入口（我的页「恢复」）。真机走通「建 → 归档 → 我的页 → 恢复 → 今日页」，故为 `DEVICE_VERIFIED`。
 - **F-008**：布尔习惯点两次即撤销（`TASK-027`，真机未逐项走查撤销这一步，只验证了归档）；数值习惯要重新输入 0 才算撤销；修改历史某天的记录仍未实现。故 `PARTIAL`。

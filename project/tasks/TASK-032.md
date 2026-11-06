@@ -47,7 +47,7 @@
 ## 7. Tests
 - 单元测试：`HabitVisualsTest` 11 项（颜色解析/回退、环比例、文案、徽章口径、图标回退）；`CreateHabitPresenterTest` +2（图标颜色落库、新表单默认值）
 - 构建/静态检查：`compileDebugKotlin`、`assembleDebug`、`tools/run-unit-tests.ps1`、`tools/verify-all.ps1`
-- 真机验证（iQOO Neo7 SE / Android 15，1080×2400 / 480dpi）：**今日页与全部完成态通过**（`today.png`/`done2.png`）；**新建页渲染通过**（`create2.png`），并暴露底部导航遮挡按钮的缺陷，已修复。修复后的复装因设备掉线未完成，**图标/颜色落库的设备复验未做**
+- 真机验证（iQOO Neo7 SE / Android 15，1080×2400 / 480dpi）：**全部通过**。今日页（`today.png`）、全部完成态（`done2.png`）、新建页修复版（`create_final.png`，无底部导航、按钮不遮挡）逐项对照设计稿；新建「水滴 + 雾蓝」习惯后列表显示水滴图标（`today_after_create.png`），打卡后勾选圈为雾蓝（`water_done.png`），证明 `icon`/`color` 真实落库；归档测试习惯后列表恢复（`after_archive.png`）
 
 ## 8. Risks and Decisions
 - **无真机**：布局在 390×844 画板外（平板/大屏）按弹性宽度展开，圆环 96dp、条形高度固定，未实测。
@@ -65,7 +65,8 @@
 - 2026-11-06：设计稿的「每日提醒」开关与「习惯详情」页没有对应实现，明确写在 §4，不用假控件凑齐画面。
 - 2026-11-06：设备接入后安装并截图。首次 `adb install` 报 `INSTALL_FAILED_ABORTED: User rejected permissions`（锁屏时 vivo 自动拒绝安装）；`input keyevent KEYCODE_WAKEUP` + `wm dismiss-keyguard` 后安装成功。
 - 2026-11-06：真机截图暴露缺陷——新建页仍显示底部导航，「开始养成」压住频率卡。改为仅在三个顶层路由显示导航栏；同时给名称输入框加占位文案「例如：晨跑」。
-- 2026-11-06：复装时设备从 `adb devices` 掉线（`offline` → 消失），修复后的新建页截图与图标/颜色落库复验**未完成**，如实记入 §7。
+- 2026-11-06：设备恢复在线（`10CDAK0B71005KU`）后复装修复版：新建页底部导航已隐藏、「开始养成」落在底部且不遮挡频率卡；名称占位文案生效。
+- 2026-11-06：真机上新建「水滴 + 雾蓝」习惯 → 列表显示水滴图标；打卡后勾选圈为雾蓝 `#8FAFC4`；归档后列表恢复为 2 条。`icon`/`color` 落库与渲染均获设备证据。
 
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
@@ -73,7 +74,7 @@
 | `pwsh -NoProfile -File tools/run-unit-tests.ps1` | **PASS** | `OK (137 tests)`：124 → 137（`HabitVisualsTest` 11、`CreateHabitPresenterTest` +2） |
 | `gradlew.bat assembleDebug` | **PASS** | `BUILD SUCCESSFUL`，13s，APK 10,559,569 B |
 | 真机：安装 + 今日页 / 全部完成态 / 新建页对照 | **PASS**（范围有限） | 今日页与设计稿一致；点勾选后满环 + 「今天也做到了」+「连续 1 天」徽章 + 叶片；新建页渲染一致。截图在 `.gradle/shots/`（不入库） |
-| 真机：修复后复装 | `NOT_RUN` | 设备掉线（`adb devices` 为空），修复后的新建页与图标/颜色落库复验未做 |
+| 真机：修复版复装 + 新建页 + 图标/颜色落库 | **PASS** | 修复版无底部导航遮挡；新建「水滴 + 雾蓝」后列表显示水滴图标、打卡圈为雾蓝；归档后恢复。截图 `create_final.png`/`today_after_create.png`/`water_done.png`/`after_archive.png`（`.gradle/shots/`，不入库） |
 | `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 见下（治理 + 单测 + 构建 + `git diff --check`） |
 
 ## 11. Completion Review
