@@ -42,4 +42,21 @@ interface HabitDao {
             " WHERE id = :id",
     )
     suspend fun restore(id: Long, updatedAt: Long): Int
+
+    /**
+     * Edits the editable fields only (TASK-029). `tracking_type` is deliberately absent: switching
+     * a habit between BOOLEAN and NUMERIC would reinterpret every historical log. The past logs keep
+     * their own `target_snapshot`, which is why this statement never touches `habit_logs`.
+     */
+    @Query(
+        "UPDATE habits SET name = :name, target_value = :targetValue, unit = :unit," +
+            " updated_at = :updatedAt WHERE id = :id AND archived_on IS NULL",
+    )
+    suspend fun updateFields(
+        id: Long,
+        name: String,
+        targetValue: Double,
+        unit: String?,
+        updatedAt: Long,
+    ): Int
 }

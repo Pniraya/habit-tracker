@@ -23,6 +23,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.habittracker.feature.profile.ProfilePresenter
 import com.habittracker.feature.profile.ProfileScreen
+import com.habittracker.feature.statistics.StatisticsPresenter
 import com.habittracker.feature.statistics.StatisticsScreen
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -110,6 +111,7 @@ fun AppRoot() {
                     onRecord = todayViewModel::record,
                     onCreate = { navController.navigate(AppRoutes.CREATE_HABIT) },
                     onArchive = todayViewModel::archive,
+                    onEdit = todayViewModel::edit,
                     onDismissError = todayViewModel::dismissError,
                 )
             }
@@ -136,7 +138,17 @@ fun AppRoot() {
                     onCancel = { navController.popBackStack() },
                 )
             }
-            composable(AppDestination.Statistics.route) { StatisticsScreen() }
+            composable(AppDestination.Statistics.route) {
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+                val presenter = remember {
+                    StatisticsPresenter(
+                        repository = RoomHabitRepository(HabitDatabase.getInstance(context)),
+                        scope = scope,
+                    )
+                }
+                StatisticsScreen(presenter)
+            }
             composable(AppDestination.Profile.route) {
                 val context = LocalContext.current
                 val scope = rememberCoroutineScope()

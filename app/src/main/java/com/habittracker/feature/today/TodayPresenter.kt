@@ -9,6 +9,7 @@ import com.habittracker.domain.repository.HabitRepository
 import com.habittracker.domain.usecase.ArchiveHabitUseCase
 import com.habittracker.domain.usecase.GetStreakUseCase
 import com.habittracker.domain.usecase.RecordHabitProgressUseCase
+import com.habittracker.domain.usecase.UpdateHabitUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,7 @@ class TodayPresenter(
     private val repository: HabitRepository,
     private val recordProgress: RecordHabitProgressUseCase,
     private val archiveHabit: ArchiveHabitUseCase,
+    private val updateHabit: UpdateHabitUseCase,
     private val scope: CoroutineScope,
     private val today: () -> LocalDate = { LocalDate.now() },
     private val now: () -> Long = { System.currentTimeMillis() },
@@ -84,6 +86,19 @@ class TodayPresenter(
                     _state.value = snapshot(habits)
                 }
                 .onFailure { _lastError.value = it.message ?: "无法归档" }
+        }
+    }
+
+    /** Edits the fields the dialog exposes; validation lives in `UpdateHabitUseCase`. */
+    fun edit(habitId: Long, name: String, targetValue: Double, unit: String?) {
+        scope.launch {
+            runCatching { updateHabit(habitId, name, targetValue, unit, now()) }
+                .onSuccess {
+                    _lastError.value = null
+                    habits = habits.map { if (it.id == habitId) it.copy(name = name.trim(), targetValue = targetValue, unit = unit) else it }
+                    _state.value = snapshot(habits)
+                }
+                .onFailure { _lastError.value = it.message ?: "无法保存" }
         }
     }
 

@@ -9,11 +9,11 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-028`（`IMPLEMENTED`：归档恢复入口，真机走通）；下一条 `TASK-029`（编辑习惯 + 最小统计） |
+| 当前任务 | `TASK-029`（`IMPLEMENTED`：编辑习惯 + 最近 7 天统计，真机走通）；下一条 `TASK-030`（MVP 收口） |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-05，20s，APK 9.67 MB（10,137,249 B） |
-| 最近测试 | `PASS` — **115** 项单测（`tools/run-unit-tests.ps1`）+ 1 项真机 instrumented（`connectedDebugAndroidTest`）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用，但设备侧 runner 可用 |
-| 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 31/31（`verify-dao.mjs`） |
+| 最近测试 | `PASS` — **122** 项单测（`tools/run-unit-tests.ps1`）+ 1 项真机 instrumented（`connectedDebugAndroidTest`）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用，但设备侧 runner 可用 |
+| 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 37/37（`verify-dao.mjs`） |
 | ADR | `ADR-001`~`ADR-014` 全部 `ACCEPTED` |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
 
@@ -59,7 +59,7 @@ pwsh -NoProfile -File tools/verify-all.ps1       # 收尾统一入口：治理�
 gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
 pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：40 项通过（绕过 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
-node tools/verify-dao.mjs                        # 已验证：31/31（DAO 的 SQL 语义，不含 Room 映射）
+node tools/verify-dao.mjs                        # 已验证：37/37（DAO 的 SQL 语义，不含 Room 映射）
 adb devices                                      # 真机需手动连接（USB 调试已可用）；模拟器不可用：无 WHPX/Hyper-V
 pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply
 pwsh -NoProfile -File tools/check-governance.ps1

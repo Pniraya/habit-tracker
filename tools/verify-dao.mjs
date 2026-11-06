@@ -159,7 +159,7 @@ const insertReminder = db.prepare(
 
 ok("every expected DAO query was parsed out of the Kotlin sources", () => {
   const expected = {
-    HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore"]],
+    HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore", "updateFields"]],
     HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits"]],
     HabitScheduleDao: [
       scheduleQ,
@@ -291,6 +291,16 @@ equal(
   0,
 );
 insertLog.run(waterId, "2026-01-05", 500, 2000, "IN_PROGRESS", null, null, 150, 150);
+
+// TASK-029: editing a habit must not rewrite history. The log above stores target_snapshot = 2000;
+// after the habit target changes to 1500 the snapshot has to stay 2000, or past completion rates
+// would silently change.
+equal("HabitDao.updateFields reports one changed row", queryOne(habitQ.updateFields, { id: waterId, name: "Water (big)", targetValue: 1500, unit: "ml", updatedAt: 160 }), 1);
+equal("HabitDao.updateFields changes the habit target", query(habitQ.findById, { id: waterId })[0].target_value, 1500);
+equal("HabitDao.updateFields changes the habit name", query(habitQ.findById, { id: waterId })[0].name, "Water (big)");
+equal("HabitDao.updateFields leaves the log snapshot alone", db.prepare("SELECT target_snapshot FROM habit_logs WHERE habit_id = ? AND log_date = ?").get(waterId, "2026-01-05").target_snapshot, 2000);
+equal("HabitDao.updateFields refuses an archived habit", (queryOne(habitQ.archive, { id: waterId, archivedAt: 170, archivedOn: "2026-01-31", updatedAt: 170 }) === 1) && queryOne(habitQ.updateFields, { id: waterId, name: "x", targetValue: 1, unit: null, updatedAt: 180 }) === 0, true);
+equal("HabitDao.updateFields is a no-op for an unknown id", queryOne(habitQ.updateFields, { id: 999999, name: "x", targetValue: 1, unit: null, updatedAt: 190 }), 0);
 equal(
   "HabitLogDao.findForDate spans habits and keeps only that date",
   query(logQ.findForDate, { habitIds: [readId, waterId], date: "2026-01-05" }).length,
@@ -321,7 +331,7 @@ ok("deleting a habit cascades to schedules, logs and reminders", () => {
 
 // Deleting a scenario while keeping its registration would otherwise shrink coverage silently.
 // Bump this number in the same commit that adds a scenario.
-const MIN_CHECKS = 31;
+const MIN_CHECKS = 37;
 if (checks < MIN_CHECKS) {
   failed += 1;
   console.log("FAIL  coverage shrank: " + checks + " checks executed, at least " + MIN_CHECKS + " expected");
