@@ -4,57 +4,57 @@
 
 ## Snapshot
 - 日期时间（含时区）：`2026-11-06`（Asia/Shanghai）
-- 当前阶段：`Gate 3`（出口按外部评审重定义为：`TASK-026` 完成 + 窄口径里程碑评审 `R1` 通过）
-- 当前任务：`TASK-026`（`IMPLEMENTED`：设备侧 Room 契约测试 5 项，真机 6/6）；`TASK-027/028/029/031/032/033/034` 均 `IMPLEMENTED` 待批量评审；下一条 `R1` 评审，然后 `TASK-030a` 导出
+- 当前阶段：`Gate 3`（出口 = `TASK-026` + 窄口径评审 `R1`；两者均未完成评审）
+- 当前任务：`TASK-035`（`IMPLEMENTED`：日切点 04:00、设计偏差 ADR/追踪表、移除统计页死控件，159 项单测 + 真机自测）；8 个 `IMPLEMENTED` 待批量评审
 - 当前 Git 分支：`main`（本地，无远程）；最近 commit 以 `git log -1 --oneline` 为准
-- **会话状态：可继续**——外部评审 `project/reports/ADVICE-RESPONSE-2026-11-06.md` 已收到并采纳主线；设备（`10CDAK0B71005KU`）在线且数据已恢复
-- **设备测试怎么跑**：手机**唤醒** + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`；**跑前必须备份 DB**（见下）
+- **会话状态：可继续**——设备（`10CDAK0B71005KU`）在线，数据完好（`TASK-026` 跑完被卸载后已从备份恢复）
+- **设备测试怎么跑**：唤醒 + `adb shell svc power stayon usb` + `gradlew.bat connectedDebugAndroidTest`；**跑前必须备份 DB**（AGP 结束会卸载 App）
 
 ## Completed This Session
-- 收到外部评审（`ADVICE-RESPONSE-2026-11-06.md`，374 行），采纳其主线：先 `TASK-026`，再窄口径评审，再拆备份。
-- `TASK-026`（设备侧 Room 契约测试）：
-  - 新增 `app/src/androidTest/.../DatabaseContractTest.kt`：每用例独立临时文件 DB，使用与生产完全相同的 `DatabaseConstraints.callback()`
-  - 5 个用例：触发器在生产打开路径注册 + 重开后仍生效；Converter/实体往返（闰日、REAL 精度、可空 unit、枚举、UTC 切换）；Flow 失效；四表级联删除；`changeSchedule` 在关闭旧版本后抛错仍回滚
-  - 真机 `connectedDebugAndroidTest`：**6 tests / 0 failures**（40s）
-- 数据安全（外部评审 R1）**实测确认并处置**：
-  - 跑设备测试前备份 `databases/habit-tracker.db{,-wal,-shm}` 到 `.gradle/db-backup-20261106`
-  - 跑完 `pm list packages com.habittracker` **为空**——AGP 确实卸载了 App，数据被清空
-  - 重装 + `adb push` + `run-as cp` 恢复，今日页重新出现 `Rread`/`Wa'l'k`/`Wa't'er`
-- 代码事实核对（回应评审的「需确认」项）：
-  - `AndroidManifest.xml` 已经是 `allowBackup="false"`，无 `dataExtractionRules`（R1 的云备份风险已排除）
-  - `HabitDatabase` 没有 `fallbackToDestructiveMigration()`，`exportSchema = true`
-  - `verify-schema.mjs`/`verify-dao.mjs` 读的是 `app/schemas/.../1.json` + `DatabaseConstraints.kt` 真实文本，**不是手抄 DDL**（评审 B3 的漂移疑虑不成立）
-  - 无签名配置、无 `applicationIdSuffix`（R1 的 keystore 与「测试安装清数据」风险仍成立）
+- 收到并归档外部评审 `ADVICE-RESPONSE-2026-11-06.md`（374 行），采纳主线：先 `TASK-026` → 窄口径评审 → 备份拆分。
+- `TASK-026`（设备侧 Room 契约测试）：`DatabaseContractTest` 5 项，真机 6/6；并实测确认「跑完 App 被卸载」→ 备份/恢复流程走通。
+- 用户拍板：**日切点为凌晨 04:00**；其余「你看着办」→ 落成 `ADR-017` 与 `DESIGN-DELTA.md`：
+  - 归档保持展示层树（`archived_on` 单一来源），不建物理月/日父表
+  - 提醒进 MVP，排在备份之后；提醒数据模型 ADR 先于备份格式
+  - 第三张卡保留「本月次数」；编辑不改图标/颜色/类型
+  - 统计周/年切换延后，死控件已删除（改为静态「本月」）
+- `TASK-035`（日切改造）：
+  - `domain/calculation/DayCutoff`：`logicalDate / today / logicalDateOf / millisUntilNextCutoff`（Zone 感知）
+  - 今日/新建/详情/统计四个 Presenter 的 `today` 默认值与 `AppRoot` 跨日定时器全部改走 `DayCutoff`
+  - `TodayPresenter.millisUntilNextMidnight` → `millisUntilNextDay`（04:00 口径），4 条断言改写
+  - 新增 `DayCutoffTest` 5 项；单测 154 → **159**
+  - 删除统计页 `PeriodSwitch`（周/月/年死控件）
 
 ## Files Changed
-- 新增：`app/src/androidTest/java/com/habittracker/data/local/DatabaseContractTest.kt`、`project/reports/ADVICE-RESPONSE-2026-11-06.md`
-- 修改：`project/tasks/TASK-026.md`（重写为 `IMPLEMENTED`）、`PROJECT_STATUS.md`、`README.md`、`TEST_REPORT.md`、`FEATURE_MATRIX.md`（数据层契约脚注）、本文件
+- 新增：`domain/calculation/DayCutoff.kt`、`test/.../DayCutoffTest.kt`、`project/decisions/ADR-016-day-cutoff-four-am.md`、`ADR-017-v1-design-deltas.md`、`project/DESIGN-DELTA.md`、`project/tasks/TASK-035.md`、`app/src/androidTest/.../DatabaseContractTest.kt`、`project/reports/ADVICE-RESPONSE-2026-11-06.md`
+- 修改：四个 Presenter、`AppRoot.kt`、`StatisticsScreen.kt`、`TodayPresenterTest.kt`、`TASK-026.md`、`PROJECT_STATUS.md`、`README.md`、`TEST_REPORT.md`、`FEATURE_MATRIX.md`、本文件
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `gradlew.bat assembleDebug assembleDebugAndroidTest` | **BUILD SUCCESSFUL** | 6s |
-| `gradlew.bat connectedDebugAndroidTest` | **PASS**（40s） | `Starting 6 tests` / `Finished 6 tests`；XML `tests="6" failures="0" errors="0"` |
-| `pwsh -NoProfile -File tools/verify-all.ps1` | **VERIFY ALL PASS**（exit 0） | 治理 22/22、单测 154、DAO 38、构建、`git diff --check` |
-| 数据备份/恢复 | **PASS** | 备份 3 个文件 → 测试后 App 被卸载 → 重装 + `run-as cp` → 今日页 3 个习惯恢复 |
+| `gradlew.bat assembleDebug assembleDebugAndroidTest` | **BUILD SUCCESSFUL** | `TASK-026` 测试 APK |
+| `gradlew.bat connectedDebugAndroidTest` | **PASS**（40s） | 6 tests / 0 failures；跑完 App 被卸载，已恢复数据 |
+| `tools/run-unit-tests.ps1` | **OK (159 tests)** | 154 + `DayCutoffTest` 5；定时器断言改为 04:00 |
+| 真机：日切改造后今日页 + 统计页 | **PASS** | `11月6日 · 周五`、3 个习惯不变；统计页无「周/年」节点 |
+| `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 159、DAO 38、构建、`git diff --check` |
 
 ## Not Verified / Known Gaps
-- **设备测试会卸载 App（已实测）**：每次设备测试前备份 DB；长期方案（`applicationIdSuffix` 或专用测试机）未定
-- **未覆盖迁移**：schema 仍 v1，无 `MigrationTestHelper` 模板；第一次 v2 前要建
-- **Cursor → 实体只抽查关键字段**，不是全量字段映射；并发写入未测
-- **UI 层仍无自动化**（外部评审 `N6`，≤8 用例，依赖本任务底座）
-- **评审债 7 项未还**：外部评审要求由**新上下文**做窄口径评审（偏差表 + 写路径/规则边界 + 变异抽查），不能用本会话自查
-- **真机数据仍是单日计划版本**：多周/跨月、跨年边界只有单测
-- 待用户拍板：归档层级语义、日切点（0 点 vs 4 点）、提醒是否进 MVP、恢复只做覆盖、第三张卡口径、SDK 许可复核
+- **04:00 真实跨日未在真机验证**：需要凌晨手测或 root 改时钟；当前只有 5 项 JVM 测试
+- **设备测试会卸载 App**：跑前备份；长期方案（`applicationIdSuffix`/专用测试机）未定
+- **迁移测试未建**：schema 仍 v1，`MigrationTestHelper` 留到第一次 v2
+- **UI 自动化仍为零**（评审 `N6`，≤8 用例，依赖 `TASK-026` 底座）
+- **评审债 8 项**：必须由新上下文做 `R1`，本会话自查不算
+- 真机数据仍是单日计划版本：多周/跨月/跨年边界只有单测
+- 待办：`N5` 提醒数据模型 ADR → `TASK-030a` JSON 导出 → `030b` 覆盖恢复
 
 ## Lessons Worth Keeping
-- **`connectedAndroidTest` 会卸载 App**：不是「可能」，是实测；跑前 `force-stop` + `run-as cat` 备份 `db/-wal/-shm`，跑后重装 + `push`/`cp` 恢复
-- **`withTransaction` 的回滚要挑「已经写了一步」的路径测**：`changeSchedule` 先关旧版本再抛错，才能证明回滚而不是证明「异常之前没写」
-- **触发器测试必须重开数据库**：只测首次打开漏掉「恢复/导入的库」这条真实路径
-- **验证工具读的是导出 schema 与真实源码**：评审质疑「SQL 是手抄副本」时，先看工具入口再改测试
+- **「今天」必须只有一个来源**：四个 Presenter 各自 `LocalDate.now()` 时，日切改一处就会漏三处；`DayCutoff` 收口后只改一处
+- **测试先写边界**：04:00 的 23:59:59/00:00/01:00 三组断言比「跑一遍界面」更早抓住改口径时的遗漏
+- **死控件直接删**：变淡的「周/年」仍会让用户点，删掉后统计页语义更清楚（`ADR-017`）
+- **`connectedAndroidTest` 会卸载 App**：备份 `db/-wal/-shm` 是硬前置，不是建议
 
 ## Next Safe Action
-1. **`R1` 窄口径里程碑评审**：由不带实现上下文的新会话执行；按 `ADVICE-RESPONSE` Q1 的 4 步（偏差表、写路径/规则边界、变异抽查约 10 个、产出 1 份 review），把 7 个 `IMPLEMENTED` 一起转 `DONE` 或列阻塞项
-2. 与 `R1` 并行：`N3` 偏差 ADR + `project/DESIGN-DELTA.md` + 归档语义用户确认
-3. 之后：`N5` 提醒数据模型 ADR（先于备份格式）→ `TASK-030a` JSON 导出（只读）
-4. 恢复开工前先跑 `tools/verify-all.ps1` 确认 `main` 仍绿；不要把 `TASK-026` 改成 `DONE`——它缺独立评审
+1. **`R1` 窄口径里程碑评审**（新上下文）：偏差表 + 写路径/规则边界 + 约 10 个变异抽查，覆盖 8 个 `IMPLEMENTED`（`TASK-027/028/029/031/032/033/034/035`，外加 `TASK-026`）
+2. **`N5` 提醒数据模型 ADR**（是否 schema v2；先于备份格式）
+3. **`TASK-030a` JSON 导出**（只读、低风险）→ `030b` 覆盖恢复（依赖 `TASK-026`）
+4. 恢复开工前先跑 `tools/verify-all.ps1`；不要把任何 `IMPLEMENTED` 改成 `DONE`——缺独立评审

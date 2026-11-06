@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-06`
-- 分支 / commit：`feat/room-contract-tests`（`TASK-026`，基线 `main` @ `6876de8`；最终合入 commit 以 `git log -1` 为准）
+- 分支 / commit：`feat/day-cutoff`（`TASK-035`，基线 `main` @ `e732b0c`；最终合入 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 154 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；设备侧 `connectedDebugAndroidTest` `PASS`（6 项：5 项 Room 契约 + SmokeTest）；真机 `PASS`（跑完 App 被卸载，从备份恢复 3 个习惯）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 159 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；设备侧 `connectedDebugAndroidTest` `PASS`（6 项：5 项 Room 契约 + SmokeTest）；真机 `PASS`（日切改造后今日页日期/打卡/统计页标签不回归）
 
 ## Runs
 
@@ -105,12 +105,15 @@
 | 2026-11-06 | 真机：今日页行点击 → 详情 → 返回 | **PASS** | 行标题进详情（顶部返回/标题/编辑），打卡前 `0/1`、`0%`；勾选圈仍直接打卡 | TASK-033 |
 | 2026-11-06 | 真机：详情页数据与编辑弹窗 | **PASS** | 打卡后重进详情：连续 1 天、本周 `1/1`、今天杏橙勾点、近 5 周 `100%`、累计/本月各 1；铅笔弹出「编辑习惯/名称/保存/取消」，两次返回回今日页 | TASK-033 |
 | 2026-11-06 | 真机（iQOO Neo7 SE / Android 15）：安装 + 今日页 / 全部完成态 / 新建页 / 图标颜色落库对照 | **PASS** | 首次安装 `INSTALL_FAILED_ABORTED: User rejected permissions`（锁屏），唤醒 + `dismiss-keyguard` 后成功；今日页与设计稿一致；打卡后满环 +「连续 1 天」徽章 + 叶片；新建页曾有底部导航遮挡按钮，修复后复装确认无导航、按钮不遮挡；新建「水滴 + 雾蓝」习惯后列表显示水滴图标、打卡圈为雾蓝，归档后列表恢复 | TASK-032 |
+| 2026-11-06 | 真机：日切改造后安装 + 今日页 + 统计页 | **PASS** | 今日页仍为 `11月6日 · 周五`、3 个习惯与打卡状态不变；统计页 UI 树只有「统计/本月/本周趋势」，`PeriodSwitch` 的「周/年」节点已消失 | TASK-035 |
+| 2026-11-06 | `tools/run-unit-tests.ps1`（日切点 04:00） | **OK (159 tests)** | 154 → 159：`DayCutoffTest` 5（03:59:59/04:00 边界、毫秒助手、epochMillis 时区、闰日、01:00 剩 3h）；`TodayPresenterTest` 的 4 条定时器断言改为 04:00 口径（23:59:59→4h1s、00:00→4h、闰日 16h、年末 5h） | TASK-035 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
 - **重要更新（`TASK-025`）**：`connectedDebugAndroidTest` 在真机上**可用**（`Tests 1/1 completed`，两次通过）。此前「本机无法跑 Android 侧测试」只对 Gradle 单元测试 worker 成立。约束有两条：安装需要**解锁**设备；运行期间需 `adb shell svc power stayon usb` 保持唤醒，否则 UTP 会报 `Android device ... is not found`。
 - **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，31 项，含 6 项批量查询场景与归档/恢复 4 项）——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新。
 - **未覆盖（UI）**：Today 状态机 9 项、新建表单状态机 9 项 JVM 覆盖；Compose 渲染与交互未由 Robolectric 或设备自动化验证（手动真机走查记录见 `TASK-012` §14，非自动化）。
-- **未覆盖**：Room 的 Cursor/实体映射；TypeConverter 往返；`Flow` 失效通知；`withTransaction` 边界与并发写入；Room 由 `@Upsert`/`@Insert` **生成的** SQL（harness 验证的是同一冲突列上等价语句的语义与唯一索引存在，不能证明 Room 会选用该冲突列）。
+- **部分已覆盖（`TASK-026`，设备侧）**：触发器在生产 `callback()` 路径上的注册与重开、实体/Converter 往返（闰日/REAL 精度/可空 unit/枚举/时区）、`observeActive()` 失效、四表级联、`changeSchedule` 回滚。**仍未覆盖**：迁移（schema 仍 v1）、Cursor 到实体的全量字段映射（只抽查关键字段）、并发写入、Room 由 `@Upsert`/`@Insert` **生成的** SQL 与唯一索引选择。
 - 无模拟器（`HypervisorPresent=False`，无 WHPX/Hyper-V）；真机验证为手动走查，非自动化：`TASK-012`（建习惯/打卡/落库）与 `TASK-016`（小数输入 `0.5` 落库）。设备侧行级证据见 `project/reports/DEVICE_DUMP-2026-11-05.md`。
+- **日切点 04:00（`TASK-035`）**：边界由 5 项 `DayCutoffTest` 覆盖；真机只能在凌晨手动确认一次真实跨日，当前真机证据仅为「日间不回归」。
 - 数值型“撤销”语义、恢复默认策略仍未定（见 `project/reports/BASELINE_REVIEW.md`）。

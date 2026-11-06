@@ -1,6 +1,7 @@
 package com.habittracker.feature.today
 
 import com.habittracker.data.local.entity.TrackingType
+import com.habittracker.domain.calculation.DayCutoff
 import com.habittracker.domain.calculation.ScheduleRules
 import com.habittracker.domain.model.DailyLog
 import com.habittracker.domain.model.Habit
@@ -34,7 +35,7 @@ class TodayPresenter(
     // Defaults to the real use case so existing call sites (and tests) keep working; the
     // ViewModel passes it explicitly for readability.
     private val deleteHabit: DeleteHabitUseCase = DeleteHabitUseCase(repository),
-    private val today: () -> LocalDate = { LocalDate.now() },
+    private val today: () -> LocalDate = { DayCutoff.today() },
     private val now: () -> Long = { System.currentTimeMillis() },
 ) {
 
@@ -211,12 +212,11 @@ class TodayPresenter(
         fun refreshesOn(event: String): Boolean = event == "ON_RESUME"
 
         /**
-         * Milliseconds until the next local midnight after [now]. Extracted from the composable so
-         * the arithmetic is testable: a timer that fires a day late is otherwise invisible to every
-         * test in this project (TASK-024 review, R2-MH2).
+         * Milliseconds until the next day change after [now]. The day changes at 04:00, not at
+         * midnight (ADR-016), so the header must not flip while the user is still logging "yesterday".
          */
-        fun millisUntilNextMidnight(now: java.time.LocalDateTime): Long =
-            java.time.Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay()).toMillis()
+        fun millisUntilNextDay(now: java.time.LocalDateTime): Long =
+            DayCutoff.millisUntilNextCutoff(now)
 
         /**
          * The create action is always reachable. The empty state renders its own button inside the
