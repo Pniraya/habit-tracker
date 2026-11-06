@@ -44,6 +44,9 @@
 - 设备侧测试要插线、要唤醒，不能作为快速反馈回路；只作为「发布前证据」。
 - `inMemoryDatabaseBuilder` 与生产 `databaseBuilder` 的配置差异可能掩盖问题；需要显式确认 callback 注册路径共享。
 
+## 8. Notes
+- `TASK-025` 评审的 N1 建议顺带处理：`TEST_REPORT` 第 15 项在「最后一行 verdict 是中文」时结果词检查恒真，建议补一条治理探针（最后一行 verdict 必须是 `PASS|FAILED|NOT_RUN` 之一）。
+
 ## 9. Implementation Log
 - 尚未开始（由 `TASK-025` 评审 §5「判别力边界」与 §12 建议创建；开工后在此记录）。
 
@@ -63,6 +66,3 @@
 ## 13. Independent Review
 - Reviewer record：待创建
 - 结论：`PENDING`
-
-## 8. Notes
-- `TASK-025` 评审的 N1 建议顺带处理：`TEST_REPORT` 第 15 项在「最后一行 verdict 是中文」时结果词检查恒真，建议补一条治理探针（最后一行 verdict 必须是 `PASS|FAILED|NOT_RUN` 之一）。

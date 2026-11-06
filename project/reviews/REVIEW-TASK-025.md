@@ -1,12 +1,13 @@
-# REVIEW-TASK-025: 独立评审记录（第 1 轮）
+# REVIEW-TASK-025: 独立评审记录（第 1–2 轮）
 
 - 审查任务：`TASK-025`（真机 instrumented 测试可用性 spike）
-- 审查 commit：`82f67b0a7f47615263ab0676f8ac1147f2071669`（分支 `feat/androidtest-spike`，基线 `main` @ `74c3f06668291e51613d70c4f09e33332f483c01`）
+- 审查 commit：第 1 轮 `82f67b0a7f47615263ab0676f8ac1147f2071669`；第 2 轮 `7b3cb62ecd1b7f941a149b0f9a6215892be44e55`（分支 `feat/androidtest-spike`，基线 `main` @ `74c3f06668291e51613d70c4f09e33332f483c01`）
 - Reviewer：独立评审 Agent（DeepSeek Harness 子会话，**未参与实现**，本轮只读 + 运行命令）
 - 独立性：`INDEPENDENT`
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9；真机 `V2238A - 15`（`10CDAK0B71005KU`，Android 15）
 - 日期：`2026-11-05`
-- 结论：**REJECT**（阻断 2 项，均为文档/状态口径；实现与测试证据本身通过）
+- 结论（第 1 轮，`82f67b0`）：**REJECT**（阻断 2 项，均为文档/状态口径；实现与测试证据本身通过）
+- 结论（第 2 轮，`7b3cb62`）：**REJECT**（阻断 2 项，均为文档口径；技术证据与门禁全部通过，见 §12）
 
 评审开始与结束 `git status --short` 均为空（唯一改动是本评审文件本身，未入库）。所有 Gradle 任务串行执行，未与其他 Gradle 任务并发。按任务要求未使用 `gradlew.bat test`。
 
@@ -188,3 +189,95 @@ XML: <testsuite name="com.habittracker.SmokeTest" tests="1" failures="1" errors=
 - 安装被拒时引用的设备截图（`00:16` 锁屏）在 `.gradle/shots/`，不入库，**不可独立核对**；这属项目既有做法（`TASK-021` 的真机证据同样弱），本次不据此判分。
 - 我未运行 `gradlew.bat test`（按任务纪律与本项目既定限制），因此「单元测试 worker 仍被禁用」这条我没有重新测量，仅沿用既有记录，未据此给分。
 - 我未跨分支切换去对比 `main` 上的 APK 大小；「依赖没有进 APK」的结论用的是 `debugRuntimeClasspath`（0 条 `androidx.test`）+ APK 条目扫描（0 条）+ badging（无 `instrumentation`）三重证据，不依赖体积差值。
+
+## 12. 第 2 轮复审（`7b3cb62`，无代码改动）
+
+第 1 轮的两条阻断按最小修复方案处理，我逐条复核了语义（不只是 grep 关键词），并重跑门禁。
+
+### 12.1 本轮 diff 性质
+
+| 项 | 实测 |
+|---|---|
+| `git show 7b3cb62 --stat` | 7 文件 +287/−23，**全部是文档**（含第 1 轮评审记录入库 190 行） |
+| `git diff 82f67b0..7b3cb62 --stat -- app gradle` | 空 → 被测代码逐字节未变，第 1 轮的真机/变异结论在本 commit 继续有效 |
+| `git diff --check` | exit 0 |
+| 评审开始 `git status --short` | 空 |
+| 提交的 `REVIEW-TASK-025.md` 与我第 1 轮写出的文件 | `git cat-file -s` = 20016 = 工作树大小 → **未被实现者改写** |
+
+### 12.2 门禁重跑（HEAD=`7b3cb62`，串行）
+
+| 步骤 | 实测 | 退出码 |
+|---|---|---|
+| `check-governance.ps1` | `SUMMARY: 22 checks, 22 passed, 0 warnings, 0 failed` | 0 |
+| `run-unit-tests.ps1` | `OK (105 tests)` | 0 |
+| `verify-dao.mjs` | `checks: 27, failed: 0` | 0 |
+| `assembleDebug` | `BUILD SUCCESSFUL in 20s` | 0 |
+| `git diff --check` | `no whitespace errors` | 0 |
+| 合计 | `RESULT: VERIFY ALL PASS` | **0** |
+
+### 12.3 第 1 轮阻断的落实情况
+
+**B1（三份状态文件的 PARTIAL 原因）——已修复，语义正确。**
+`README.md:12`、`PROJECT_STATUS.md:8`、`LAST_HANDOFF.md:8` 现为同一口径：「`PARTIAL`：真机 instrumented 测试**已验证可用**，等第 2 轮复审」。三处都不再声称「等设备授权安装」/「安装被设备拒绝」；剩余命中只在 `TASK-025` §9 的历史日志（`:45`，描述当时那次失败，属历史事实）与 §13 对第 1 轮阻断的复述（`:71`），都不是对当前状态的断言。**当前 PARTIAL 的原因不含任何与实测相反的内容。**
+
+**B2（旧归因传播）——已修复，且没有反向过度修正。** 四处逐条看语义：
+
+| 位置 | 新文本 | 我的判定 |
+|---|---|---|
+| `PROJECT_STATUS.md:30` | 「通道已打通，缺的是用例（`TASK-026`）；`gradlew test` 的单元测试 worker 仍被禁，这条限制仍然成立」 | 正确：撤销旧归因的同时**保留**了本任务没推翻的限制；条目仍是 `[ ]`，没有假装已有运行时测试 |
+| `PROJECT_STATUS.md:43` | 「设备侧 instrumented 可用……Room/Compose 并非『无法测』，而是『还没有用例』」 | 正确：没有扩写成「已经测过」 |
+| `PROJECT_STATUS.md:47` | 「SQL 层由 `verify-schema`/`verify-dao` 覆盖，Room 回调与实体映射尚无设备侧用例」，并点出 `DatabaseConstraints.callback()` 零覆盖 | 正确：`HabitDatabase.kt:55` 确实有 `.addCallback(DatabaseConstraints.callback())`，所以「是否真的注册」是**未来的回归风险**而非现状断言；「零覆盖」属实 |
+| `LAST_HANDOFF.md:45` | 「无自动化验证，但通道已经有了……`TASK-026` 接手」 | 正确：保留缺口，只更新可行性 |
+
+- [x] 结论句「只对 Gradle 单元测试 worker 成立」仍在（`TASK-025` §9、`TEST_REPORT.md:92`），没有被反向过度修正成「所有 Android 测试都能跑」。`TEST_REPORT.md:92` 写「解锁」、`LAST_HANDOFF.md:12` 写「唤醒」，是同一事实的不同粒度，不构成矛盾（非阻断 nit）。
+
+**N1–N7 抽查（非阻断，已实质落地）**：失败轮补了两行；`Latest Run` 改本分支（`TASK-025`，基线 `74c3f06`）；APK 9.67 MB（与我的 10,137,249 B 一致）；`TASK-025` §6 第一条改为「1 次安装被拒、1 次设备掉线、2 次通过」；`LAST_HANDOFF.md:12` 改成「首次授权 + 授权粘性」并引用我的实测；`TASK-026` 已建。**N1 的根治没有做**，见 B3 与 N8。
+
+### 12.4 本轮新发现（阻断 2 项，均为文档）
+
+**B3（阻断）— `TASK-025.md:73` 声称做了一件没做的事。**
+原文：「非阻断建议 N1–N7 已全部处理：……、**新增一条治理探针（见下）**」。
+- 实测：`git diff 82f67b0..7b3cb62 -- tools` 为空，`tools/check-governance.ps1` 未被修改，仓库里不存在这条探针；「（见下）」在本文件没有所指（探针只作为**提案**出现在 `TASK-026.md` §8）。
+- 这与实现者汇报里的说法（「N1 的根治留作新任务……我没有在本 commit 改 `check-governance.ps1`」）**直接相反**，属对已完成工作的不实声称（`AGENTS.md` §4/§5；本项目既有教训「声称必须可核对」）。
+- 最小修复：改为「N1 的根治**未在本任务做**，已作为 `TASK-026` §8 的输入；其余 N2–N7 已处理」，删掉「新增一条治理探针（见下）」。
+
+**B4（阻断）— `LAST_HANDOFF.md` 内部口径相反，且 `Next Safe Action` 未更新。**
+- `:11`「会话状态：可继续——`TASK-022`、`TASK-024`、`TASK-025` 已 `DONE`」与 `:8`「`TASK-025`（`PARTIAL`……等第 2 轮复审）」在**同一文件里互相矛盾**；且此刻 `TASK-025` 没有任何 `APPROVE` 记录，按 `AGENTS.md` §7 它不能是 `DONE`——这正是「先 APPROVE 再置 DONE」顺序的立论，写反就把立论作废。
+- `:57`（Next Safe Action 1）与 `:60`（第 4 条）仍指示「`TASK-025`：先加最小 `androidTest` 与依赖，在真机上跑一次」「其后的候选是 `TASK-025` 与 `TASK-023`」，与 `:11`「下一步是 `TASK-026`」及 Snapshot 相反。下一会话只读 Next Safe Action 会**重做一遍本任务**。
+- 最小修复：`:11` 改回 `PARTIAL`（或写「第 2 轮复审通过后再置 `DONE`」）；`:57`/`:60` 的当前动作改成 `TASK-026` 并去掉 `TASK-025` 候选。三处，无代码。
+
+### 12.5 非阻断
+
+- **N8** 第 15 项仍未解析到真正的通过行。我复刻脚本逻辑确认：`Runs` 最后一行现为「变异……**FAILED（预期）**」→ `expected='FAILED'`，而 `Latest Run` 摘要里恰好有「`gradlew test` `FAILED`」，于是 `[PASS]` 又是因为**另一个** FAILED 字样成立；那条 `**PASS**` 行是倒数第二行，从未被读。把通过行放到表尾解决不了（表尾必然是最新的运行记录），**只有探针能修**——`TASK-026` §8 的方向对，不要用「调行序」代替它。
+- **N9** `TASK-026.md` 的 `## 8. Notes`（`:67`）排在 `## 13` 之后，编号乱序；建议移到 §7 与 §9 之间或改成 §14。
+- **N10** `PROJECT_STATUS.md:11` 仍写「合入 `main` 后 21-23s」，`README.md:14` 已改 20s（我本轮实测 20–21s）；两者都对但口径不一，下次统一。
+- **N11** `LAST_HANDOFF.md:9` 仍写「`main` …… @ `427e7cc`（`TASK-022` 已合入）」，实际 `main` 已到 `74c3f06`（`TASK-024` 已合入）。顺手改，别写死哈希。
+
+### 12.6 关于「先 APPROVE 再置 DONE」的顺序
+
+**这个顺序我认可，不驳回。** 实测依据：治理第 17 项（`tools/check-governance.ps1:359-360`）要求 `DONE` 任务的评审文件里存在 `- 结论：`APPROVE``，先把 `TASK-025` 置 `DONE` 必然打红门禁，形成「没有 APPROVE 不能 DONE、没 DONE 又没得审」的死结。可执行的顺序只能是：**评审先把 APPROVE 落到本文件 → 再置 DONE → 门禁转绿 → 同一次提交带上两者**。
+
+边界（第 3 轮请照此执行，否则本次 APPROVE 不覆盖）：置 `DONE` 的那次提交只允许改 `TASK-025.md` 的状态行 / §11 / §13 结论 / 自动摘要，加 `README.md:12`、`PROJECT_STATUS.md:8`、`LAST_HANDOFF.md:8` 的 `PARTIAL`→`DONE` 字样；**不得**夹带 `app/**`、`gradle/**`、`tools/**` 或其他文档内容改动。
+
+### 12.7 第 2 轮逐项结论
+
+| # | 项 | 结论 |
+|---|---|---|
+| 1 | diff 只对应本任务、无顺手重构 | APPROVE（纯文档 + 评审记录入库） |
+| 1 | 无新依赖/权限/module | APPROVE（`app/**`、`gradle/**` 零改动） |
+| 1 | `git diff --check` 干净 | APPROVE |
+| 3 | TEST_REPORT 有命令/退出码/失败摘要（失败轮已补齐） | APPROVE（但通过行仍不被第 15 项读到 → N8） |
+| 3 | 未执行的测试未写成通过 | APPROVE（两次环境失败标 `FAILED（环境）`，性质正确） |
+| 4 | README 与 PROJECT_STATUS 一致 | APPROVE（`TASK-025`/`Gate 3` 一致） |
+| 4 | 不含过期断言 | **REJECT**（B4 的 `Next Safe Action`；`LAST_HANDOFF:9` 哈希 → N11） |
+| 4 | LAST_HANDOFF Snapshot 无矛盾 | **REJECT**（`:11` 说 `DONE`，`:8` 说 `PARTIAL`） |
+| 4 | TEST_REPORT `Latest Run` 与 Runs 末行一致 | APPROVE（计数 105 一致；结果词巧合成立 → N8） |
+| 5 | 分支策略 | APPROVE（`feat/androidtest-spike`，治理第 16 项 PASS） |
+| 5 | 任务记录不伪造工作 | **REJECT**（B3「新增一条治理探针」） |
+| 6 | 结论 | **REJECT**（阻断 2 项：B3、B4） |
+
+### 12.8 第 2 轮结论与下一步
+
+- 结论：**REJECT**（阻断 2 项，均文档口径，共约 4 行文字；技术内容、依赖隔离、真机证据、门禁全部通过，第 1 轮阻断确已修复）。
+- 第 3 轮只需复核 `TASK-025.md:73`、`LAST_HANDOFF.md:11`、`:57`、`:60` 四处；若这四处之外还有 `app/**`/`gradle/**`/`tools/**` 改动，将重新完整评审。届时按 §12.6 边界写入 `- 结论：`APPROVE``。
+- 未验证项：`TASK-026` §2「删掉 `addCallback` 后 105 项单测与 27 项 DAO 检查仍全绿」这一**假设**未实测（属 TASK-026 开工前提，不在本任务 Scope）；我只核对了 `HabitDatabase.kt:55` 当前确实注册了回调。

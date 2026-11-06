@@ -70,8 +70,11 @@
 - Reviewer record：`project/reviews/REVIEW-TASK-025.md`
 - 第 1 轮（`82f67b0`）：**REJECT**，阻断 2 项，均为文档口径——B1 状态文件把 `PARTIAL` 原因写成「等设备授权安装」，与实测相反；B2 被推翻的旧结论未传播到 `PROJECT_STATUS:30/43/47`、`LAST_HANDOFF:45`
 - Reviewer 独立实测：真机 1 次通过（43s，XML `tests=1`）、变异 `com.nonexistent` 变红、还原后复跑通过、门禁全绿；并验证 `androidTestImplementation` 不进 APK（classpath 0 行 / APK 0 条目 / badging 无 `instrumentation` 与 `INTERNET`）
-- 非阻断建议 N1–N7 已全部处理：`TEST_REPORT` 行位置与两次失败轮、`Latest Run` 分支与 commit、APK 体积 9.67 MB、`LAST_HANDOFF` 安装授权口径、本文件 §6 措辞、新增一条治理探针（见下）
-- 结论：待第 2 轮复审
+- 第 2 轮（`7b3cb62`）：**REJECT**，阻断 2 项——B3 本条曾写「新增一条治理探针（见下）」，**不实**：`git diff 82f67b0..7b3cb62 -- tools` 为空，探针不存在；B4 `LAST_HANDOFF:11` 与 `:8` 自相矛盾、`:57/:60` 的 Next Safe Action 未更新
+- 非阻断建议处理情况：N2–N7 已处理（`Latest Run` 分支与 commit、两次失败轮已成行、APK 体积 9.67 MB、`LAST_HANDOFF` 安装授权口径、本文件 §6 措辞）；**N1 根治未在本任务做**，探针会改变治理检查项数（22→23）并牵动 8 处计数，已作为输入写进 `TASK-026` §8；N8 已确认调行序无助于第 15 项（表尾必然是最新记录，只有探针能修），故不再靠排序规避
+- 第 1 轮两阻断经复核确认**语义已改对**，不是只改关键词；B2 未出现反向过度修正（「单元测试 worker 仍被禁」这条被保留）
+- 结论：待第 3 轮复审
+- 结论：待第 3 轮复审（第 3 轮送审范围仅 `TASK-025:73` 与 `LAST_HANDOFF:11/57/60` 三处）
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
