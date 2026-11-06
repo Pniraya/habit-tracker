@@ -46,7 +46,7 @@
 | 复验 M-1：去掉 `onTrackingTypeChange` 的 unit 清空 | `Tests run: 58, Failures: 1`，`switchingFromNumericToBooleanClearsTheUnit` 变红 | **1** |
 | 还原后 `tools/run-unit-tests.ps1` | `OK (58 tests)` / `RESULT: UNIT TESTS PASS` | 0 |
 
-**设备侧独立核对（只读）**：`adb devices` 显示 `10CDAK0B71005KU device`，与 §14 的序列号一致；`dumpsys package com.habittracker` 为 `versionName=0.1.0`、`lastUpdateTime=2026-11-05 15:02:21`；用 `adb exec-out run-as com.habittracker cat databases/...` 拉取 db/wal/shm（4096 / 86552 / 32768 字节，与设备 `ls -l` 一致），分别用 `node:sqlite` 与 Python `sqlite3` 读取：`habits`、`habit_schedules`、`habit_logs` 均为 **0 行**，`sqlite_sequence` 为空，`PRAGMA integrity_check` 为 `ok`，`page_count=18`，`android_metadata=('zh_CN')`，`room_master_table` 有 identity hash；db/wal 的 mtime 为 `2026-11-05 15:03:57 +0800`，而截图 `saved.png`/`done.png` 分别为 15:03:11、15:03:22（设备时区）。
+**设备侧独立核对（只读）**：`adb devices` 显示 `<device> device`，与 §14 的序列号一致；`dumpsys package com.habittracker` 为 `versionName=0.1.0`、`lastUpdateTime=2026-11-05 15:02:21`；用 `adb exec-out run-as com.habittracker cat databases/...` 拉取 db/wal/shm（4096 / 86552 / 32768 字节，与设备 `ls -l` 一致），分别用 `node:sqlite` 与 Python `sqlite3` 读取：`habits`、`habit_schedules`、`habit_logs` 均为 **0 行**，`sqlite_sequence` 为空，`PRAGMA integrity_check` 为 `ok`，`page_count=18`，`android_metadata=('zh_CN')`，`room_master_table` 有 identity hash；db/wal 的 mtime 为 `2026-11-05 15:03:57 +0800`，而截图 `saved.png`/`done.png` 分别为 15:03:11、15:03:22（设备时区）。
 
 结论：§14 的 **schema 级事实可复现**（表、locale、identity hash、user_version=1），但**行级事实无法复现**——当前设备上的库是 15:03:57 重建的空库，说明走查读库之后应用数据被清过（或重装）并已重建；§14 未记录这次重置，也没有保留 dump，所以那几行 `tracking_type=BOOLEAN / unit=NULL / COMPLETED` 我只能视为**当时的、不可复核的手动陈述**。这不影响代码结论（M-1 已由我在 JVM 侧独立证明），但证据链本身应补一句说明。
 

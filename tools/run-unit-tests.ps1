@@ -5,7 +5,18 @@ param(
 )
 $ErrorActionPreference = "Stop"
 if (-not $Repo) { $Repo = Split-Path -Parent $PSScriptRoot }
-. "D:\AndroidToolchain\env.ps1" | Out-Null
+# Toolchain is environment-specific; prefer the caller's environment, then an explicit script.
+if (-not $env:ANDROID_HOME -or -not $env:JAVA_HOME) {
+    $candidates = @($env:HABIT_ENV_SCRIPT, (Join-Path (Split-Path -Parent $Repo) '..\AndroidToolchain\env.ps1'))
+    $loaded = $false
+    foreach ($candidate in $candidates) {
+        if ($candidate -and (Test-Path $candidate)) { . $candidate | Out-Null; $loaded = $true; break }
+    }
+    if (-not $loaded) {
+        Write-Output "RESULT: TOOLCHAIN NOT CONFIGURED (set ANDROID_HOME/JAVA_HOME or HABIT_ENV_SCRIPT)"
+        exit 1
+    }
+}
 
 function Find-Jar([string]$Pattern) {
     $hit = Get-ChildItem (Join-Path $env:USERPROFILE ".gradle\caches\modules-2\files-2.1") -Recurse -Filter $Pattern -ErrorAction SilentlyContinue |

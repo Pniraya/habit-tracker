@@ -1,0 +1,42 @@
+name: android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      # The Gradle test worker is blocked in the local sandbox, so the project has its own JUnit
+      # runner for local use. On GitHub runners the normal Gradle test task works, which keeps the
+      # 159 JVM tests covered by CI without relying on a Windows-specific script.
+      - name: Build debug APK and run unit tests
+        run: ./gradlew assembleDebug test --no-daemon --console=plain
+
+      - name: Verify exported schema and DAO SQL semantics
+        run: |
+          node tools/verify-schema.mjs
+          node tools/verify-dao.mjs

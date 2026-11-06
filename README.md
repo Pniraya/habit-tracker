@@ -3,13 +3,15 @@
 本地优先的 Android 习惯追踪器。Kotlin + Jetpack Compose + Material 3 + Room，单 Gradle module（`:app`），目标 Android 15（API 35），minSdk 26。
 
 > 仓库已包含可构建的 Android 工程（`:app`）、Room schema v1 与 Domain/Repository 层。所有状态只反映真实执行结果：没有证据的项一律写 `NOT_RUN`/`PARTIAL`。
+>
+> **发布状态：未发布（WIP）。** 尚未选定开源许可证（默认保留所有权利），也没有远程仓库。8 个任务处于 `IMPLEMENTED`（实现+真机自测完成、缺独立评审），按 `ADR-015` 尚未转 `DONE`。
 
 ## 1. 当前状态
 
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-035`（`IMPLEMENTED`：日切点 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件）；`TASK-026`（Room 契约测试）已合入；下一条做窄口径里程碑评审，再做 `N5` 提醒数据模型 ADR 与 `TASK-030a` 导出 |
+| 当前任务 | `TASK-036`（`IMPLEMENTED`：日切点 04:00 + 设计偏差 ADR/追踪表 + 移除统计页死控件）；`TASK-026`（Room 契约测试）已合入；下一条做窄口径里程碑评审，再做 `N5` 提醒数据模型 ADR 与 `TASK-030a` 导出 |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
 | 最近测试 | `PASS` — **159** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
@@ -51,13 +53,12 @@
 ## 4. 快速命令
 
 ```powershell
-# 本机工具链集中在一个目录（不在仓库内，换机需重装）
-. D:\AndroidToolchain\env.ps1        # 设置 ANDROID_HOME / JAVA_HOME / PATH
-pwsh -NoProfile -File D:\AndroidToolchain\verify.ps1   # 一键构建并校验 APK
+# 前置：JDK 17 与 Android SDK（platform 35 / build-tools 35.0.0），ANDROID_HOME 与 JAVA_HOME 指向它们
+# 若用自带脚本，可设置 HABIT_ENV_SCRIPT=<path-to-env.ps1>，工具会优先使用已设置的环境变量
 
 pwsh -NoProfile -File tools/verify-all.ps1       # 收尾统一入口：治理检查 + 单测 + 构建 + 空白检查
 gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
-pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：40 项通过（绕过 Gradle 测试 worker）
+pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：159 项通过（绕过本机被禁的 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
 node tools/verify-dao.mjs                        # 已验证：38/38（DAO 的 SQL 语义，不含 Room 映射）
 adb devices                                      # 真机需手动连接（USB 调试已可用）；模拟器不可用：无 WHPX/Hyper-V
@@ -85,6 +86,21 @@ pwsh -NoProfile -File tools/check-governance.ps1   # exit 0 = OK, 1 = 有 FAIL
 
 它只判断「文档是否自洽」，不判断「代码是否正确」——后者只能靠构建与测试。
 
-## 6. 下一步
+## 6. 路线图与下一步
 
-Gate 2 收尾：补 `UseCase` 层与 `DataStore`，并为 Room 事务补集成测试（Robolectric 或真机）；设备验证仍需 `emulator` + `system-images;android-35;google_apis` 或一台真机。详见 `project/tasks/TASK-005.md` 与 `project/PROJECT_STATUS.md`。
+当前在 `Gate 3`，出口 = 设备侧 Room 契约测试（已完成）+ 窄口径里程碑评审。之后：
+
+1. `R1` 窄口径评审：把 8 个 `IMPLEMENTED` 一起过一遍（偏差表 + 写路径/规则边界 + 变异抽查），转 `DONE` 或列阻塞项。
+2. `N5` 提醒数据模型 ADR（先于备份格式定稿）。
+3. `TASK-030a` JSON 导出（只读）→ `030b` 覆盖恢复（依赖 `TASK-026`）。
+4. UI 自动化 ≤8 用例、迁移测试底座、`assembleRelease` + lint 进 CI。
+
+细节见 `project/ROADMAP.md`、`project/PROJECT_STATUS.md` 与 `project/handoffs/LAST_HANDOFF.md`。
+
+## 7. 开源/发布前检查
+
+- 许可证：**未选定**（见上），公开前必须由仓库所有者决定。
+- 远程：当前无 `origin`，首次推送由所有者执行；本仓库不自动推送。
+- CI：`.github/workflows/android.yml` 在 Ubuntu 上跑 `assembleDebug` + 单测 + schema/DAO 校验（本机受限的 Gradle 测试 worker 在 GitHub Runner 上不受限）。
+- 敏感信息：`.gitignore` 覆盖 `local.properties`、`*.jks`、`*.keystore`、`*.apk`、`.gradle/`；仓库内无真实用户数据（真机数据库仅存在设备与本地 `.gradle/`）。
+- 设备序列号与个人绝对路径：文档中已脱敏为 `<device>`；工具链路径改为环境变量优先。

@@ -50,7 +50,7 @@
 
 **加载态断言的鉴別力**：M-1 变红说明「加载中且有行」这条断言确实咬住了 `!isLoading`，不是不可证伪的摆设。但要如实说明：该状态**当前不可达**——`TodayPresenter` 的初始 `_state` 是 `isLoading = true` + 空列表，之后唯一的状态入口是 `snapshot()`，它在同一次赋值里给出 `habits` 并把 `isLoading` 置为 false；没有任何路径会「保留旧行再进入 loading」。所以它是一条**契约锁**（防止将来加 `refresh()` 时旧行在加载期闪出 FAB），不是对真实用户状态的回归测试。测试注释「the list is not real yet」把不可达状态写成了现实，建议改注释或在 §8 写明。
 
-**设备侧抽查（只读）**：`adb devices` 显示 `10CDAK0B71005KU` 在线；拉取 `databases/habit-tracker.db` + `-wal` 用 `node:sqlite` 读取：`habits` 2 行（`R`、`e'a'w'l`，均 `BOOLEAN`、`unit=NULL`）、`habit_schedules` 2 行、`habit_logs` 2 行，与「建了第 2 个习惯」一致；`.gradle/shots/fab-done.png` 中两行习惯与右下角 `+` 按钮同时可见，按钮在底部导航之上、无遮挡。名称乱码与 §14/§10 记录的「中文 IME 丢字符」相符，不是产品缺陷。
+**设备侧抽查（只读）**：`adb devices` 显示 `<device>` 在线；拉取 `databases/habit-tracker.db` + `-wal` 用 `node:sqlite` 读取：`habits` 2 行（`R`、`e'a'w'l`，均 `BOOLEAN`、`unit=NULL`）、`habit_schedules` 2 行、`habit_logs` 2 行，与「建了第 2 个习惯」一致；`.gradle/shots/fab-done.png` 中两行习惯与右下角 `+` 按钮同时可见，按钮在底部导航之上、无遮挡。名称乱码与 §14/§10 记录的「中文 IME 丢字符」相符，不是产品缺陷。
 
 **大字号风险（如实说明，未实测）**：FAB 固定 56dp + 20dp 边距 = 76dp，列表底部留 88dp，余量 12dp；`fontScale` 不改变 FAB 尺寸，所以几何上不会因字号变大而压住最后一行。真正的风险是 88dp/20dp/56dp 是三个互不引用的魔数：若以后换成 large FAB、加文字标签或调整内边距，余量会被吃掉，而没有任何测试会失败。建议把 88dp 由 `56.dp + 20.dp + 12.dp` 推导或提为共享常量并注释来源。
 
