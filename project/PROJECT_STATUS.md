@@ -5,7 +5,7 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-030`（`PARTIAL`：JSON 备份导出已实现，168 项单测 + 权限清理通过；真机导出与巡检待设备恢复，分支 `feat/backup-export`）；`TASK-037`（`IMPLEMENTED`：自定义习惯图标——相册自选、256px 本地存储、行内渲染、11 个内置线条图标，真机走通，待批量评审）；`TASK-038`（应用图标 + 发布配套）已 `IMPLEMENTED` 合入；`TASK-036`（GitHub 预上传整理）已 `IMPLEMENTED` 合入；`TASK-035`（日切点 04:00 + 偏差登记）已 `IMPLEMENTED` 合入；`TASK-026`（设备侧 Room 契约测试，真机 6/6）已 `IMPLEMENTED` 合入；`TASK-033`（习惯详情页）已 `IMPLEMENTED` 合入；`TASK-034`（统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组）已 `IMPLEMENTED` 合入；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条按外部评审（`ADVICE-RESPONSE-2026-11-06.md`）先做窄口径里程碑评审（8 个 `IMPLEMENTED` 一起），再做 `N5` 提醒数据模型 ADR，然后把 `TASK-030` 拆成 `030a 导出`（先做）与 `030b 恢复`；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-030`（`IMPLEMENTED`：JSON 备份导出——四表导出、SAF 保存、`ADR-018` 字段映射、权限清理；真机导出 3 个习惯并用 `node:sqlite` 按 schema v1 回读校验，待批量评审）；`TASK-037`（`IMPLEMENTED`：自定义习惯图标 + 11 个内置线条图标，待批量评审）；`TASK-038`（应用图标 + 发布配套）已 `IMPLEMENTED` 合入；`TASK-036`（GitHub 预上传整理）已 `IMPLEMENTED` 合入；`TASK-035`（日切点 04:00 + 偏差登记）已 `IMPLEMENTED` 合入；`TASK-026`（设备侧 Room 契约测试，真机 6/6）已 `IMPLEMENTED` 合入；`TASK-033`（习惯详情页）已 `IMPLEMENTED` 合入；`TASK-034`（统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组）已 `IMPLEMENTED` 合入；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条按外部评审（`ADVICE-RESPONSE-2026-11-06.md`）先做窄口径里程碑评审（8 个 `IMPLEMENTED` 一起），再做 `N5` 提醒数据模型 ADR，然后把 `TASK-030` 拆成 `030a 导出`（先做）与 `030b 恢复`；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B；与 `README` 同口径）
@@ -39,7 +39,7 @@
 
 1. 补 `UseCase` 层（`RecordHabitProgressUseCase` 等）与 `DataStore`。
 2. ~~为 Room 事务/DAO 补集成测试~~ → `TASK-026` 已交付（`DatabaseContractTest` 5 项真机通过）；剩余：UI 自动化（外部评审 `N6`，≤8 用例）与迁移测试底座。
-3. `TASK-030`（备份导出）：代码与单测完成，真机导出/巡检待设备恢复后补跑（分支 `feat/backup-export`）；~~`TASK-037`~~ 已交付。
+3. ~~`TASK-030`（备份导出）~~ → 已交付（`IMPLEMENTED`，含真机导出与回读校验）；下一步 `TASK-030b` 导入、`N5` 提醒 ADR。
 3. 接真机或装模拟器完成 `TASK-003` 的设备验证，再关闭 Gate 1。
 4. 为 TASK-007 取得独立 Reviewer 的 `APPROVE` 记录后合入 `main`；其后每任务结束运行 `tools/close-task.ps1` 与 `tools/check-governance.ps1`，保持六份状态文档同步。
 
@@ -69,6 +69,7 @@
 - `TASK-036`（GitHub 预上传整理）：脱敏、脚本可移植、CI、评估报告；已知缺口：CI 未在 GitHub 实跑，提交身份/`assembleRelease` 仍未定
 - `TASK-038`（应用图标 + 发布配套）：MIT、图标 5 档、截图、社区文件、`.gitattributes`；已知缺口：未做自适应/单色主题图标，图标缩放清晰度待真机桌面观察
 - `TASK-037`（自定义习惯图标）：相册自选 + 256px 本地存储 + 圆形渲染，真机走通；已知缺口：素材包方案待用户提供文件、编辑旧习惯图标未做、删除习惯不清理孤儿文件
+- `TASK-030`（备份导出）：四表 JSON + SAF + `ADR-018`；真机导出 3 个习惯、`node:sqlite` 回读校验通过；已知缺口：导入未做（`030b`）、备份不含图标图片文件
 
 ## 在册例外（main 上的未完成任务）
 

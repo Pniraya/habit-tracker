@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-06`
-- 分支 / commit：`feat/backup-export`（`TASK-030`，基线 `main` @ `78b40b0`；未合入，设备恢复后补真机证据）
+- 分支 / commit：`main`（`TASK-030` 合入；最终 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 168 项 + DAO SQL 38 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；`aapt2 dump permissions` 确认运行时权限为 0；**真机导出/巡检 `NOT_RUN`**（`adb devices` 为空，设备离线）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 168 项 + DAO SQL 40 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；真机 `PASS`（我的 → 导出备份 → 「已导出 3 个习惯」→ `node:sqlite` 按 schema v1 回读；今日/统计/我的三页巡检；`aapt2` 确认运行时权限为 0）
 
 ## Runs
 
@@ -115,10 +115,13 @@
 | 2026-11-06 | `aapt2 dump badging`（自适应图标） | **PASS** | `application-icon-120/160/240/320/480/640/65534` 全指向 `res/mipmap-anydpi-v26/ic_launcher.xml` | TASK-038 |
 | 2026-11-06 | 真机应用信息页图标（放大 4× 检查） | **PASS** | 绿底 + 完整插画，无白边；源图白边已裁掉 | TASK-038 |
 | 2026-11-06 | `tools/verify-all.ps1`（自定义图标 + 自适应图标） | **VERIFY ALL PASS** | 治理 22/22、单测 162、DAO 38、`assembleDebug`、`git diff --check`（首次失败于 `CreateHabitScreen.kt` EOF 多一空行，已修） | TASK-037/038 |
+| 2026-11-09 | `tools/verify-all.ps1`（备份导出） | **VERIFY ALL PASS** | 治理 22/22、单测 168、DAO **40**、`assembleDebug`、`git diff --check` | TASK-030 |
 | 2026-11-06 | `gradlew.bat compileDebugKotlin`（备份导出） | **BUILD SUCCESSFUL** | 42s；`data/backup/` + SAF 接线编译通过 | TASK-030 |
 | 2026-11-06 | `tools/run-unit-tests.ps1`（备份导出） | **OK (168 tests)** | 162 → 168：`BackupJsonTest` 6 项；首轮空表输出多行 `[ ]` 与期望 `[]` 不符，改为空表紧凑输出 | TASK-030 |
 | 2026-11-06 | `aapt2 dump permissions`（权限清理后） | **PASS** | 仅 `com.habittracker.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`（androidx 生成）；`POST_NOTIFICATIONS`/`RECEIVE_BOOT_COMPLETED` 已删 | TASK-030 |
-| 2026-11-06 | 真机：导出 JSON 并校验 / 三页巡检 | **NOT_RUN** | `adb devices` 为空；设备恢复后按 `TASK-030` §12 补跑 | TASK-030 |
+| 2026-11-09 | 真机：我的 → 导出备份 → 系统选择器保存 | **PASS** | 提示「已导出 3 个习惯」；`Download/habit-tracker-backup-2026-11-09.json` 3,373 B；导出后库计数不变 | TASK-030 |
+| 2026-11-09 | `node .gradle/verify-backup.mjs`（按 schema v1 回读） | **PASS** | `format`/`schemaVersion`/日期/时间格式校验通过；内存库插入 3 习惯 / 3 计划 / 5 日志 / 0 提醒；与设备库计数一致；含 1 个归档习惯 | TASK-030 |
+| 2026-11-09 | 真机巡检：今日 / 统计 / 我的 | **PASS** | 11 月 9 日 · 周一，今日 0/2、连续 3 天；统计本月 71%、最长连续 3 天、当日格描边；我的页数据备份卡片 + 归档项 | TASK-030 |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
