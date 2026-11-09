@@ -11,7 +11,7 @@
 
 > 仓库已包含可构建的 Android 工程（`:app`）、Room schema v1 与 Domain/Repository 层。所有状态只反映真实执行结果：没有证据的项一律写 `NOT_RUN`/`PARTIAL`。
 >
-> **发布状态：未发布（WIP）。** 采用 MIT 许可证（`LICENSE`），但尚无远程仓库；多个任务处于 `IMPLEMENTED`（实现+真机自测完成、缺独立评审），按 `ADR-015` 尚未转 `DONE`。
+> **发布状态：0.1.0 已签名可装，等待公开。** 正式密钥签名（RSA 4096），`app-release.apk` 已在模拟器安装验证；发布文案见 [`project/reports/RELEASE_NOTES-v0.1.0.md`](project/reports/RELEASE_NOTES-v0.1.0.md)。高风险任务（`TASK-026/030/035/037/039`）均已独立评审通过转 `DONE`，其余 `IMPLEMENTED` 按 `ADR-015` 由用户一次性接受。
 
 ## 1. 当前状态
 
