@@ -1,6 +1,6 @@
 # TASK-030: MVP 收口（备份导出 + 真机巡检）
 
-- 状态：`IMPLEMENTED`（`ADR-015`：实现与真机自测完成，未经独立评审）
+- 状态：`DONE`（独立 Reviewer `APPROVE`，见 §13）
 - 阶段：`Gate 3`
 - 优先级：`P0`（MVP 收口）
 - 依赖：`TASK-029`
@@ -75,15 +75,15 @@
 ## 11. Completion Review
 - [x] 验收标准满足
 - [x] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`（`ADR-015` 批量评审）
+- [x] 独立 Reviewer `APPROVE`（`REVIEW-TASK-030`，第 2 轮，0 阻断）
 
 ## 12. Handoff
 - 导入（`TASK-030b`）按 `ADR-018` 读取；`DATABASE.md` §11 的合并/覆盖策略待定。
 - 之后：`F-012`/`F-013` 提醒（先 `N5` ADR）、`F-011` 热力图。
 
 ## 13. Independent Review
-- Reviewer record：待创建（批量评审）
-- 结论：`PENDING`（`IMPLEMENTED`）
+- Reviewer record：[`REVIEW-TASK-030`](../reviews/REVIEW-TASK-030.md)
+- 结论：`APPROVE`（第 2 轮独立评审，0 阻断）。第 1 轮只挑出文档计数；第 2 轮复核导出字段与 `ADR-018` 逐键一致、计数已按实测同步。
 
 ## 14. 评审修复（2026-11-09，第 2 轮）
 
@@ -94,7 +94,7 @@
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-030
-- 状态：`IMPLEMENTED`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 3 项 / 未通过 0 项
 - 最近测试记录：2026-11-09 / **OK (182 tests)**，`verify-all` 全绿

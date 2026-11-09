@@ -8,13 +8,14 @@
 - 版本类型：Release，**已签名**（正式密钥，非 debug key）
 - 日期：`2026-11-09`（本地构建）
 - commit / tag：`TBD`（首个公开 tag 待用户建仓后打）
-- 结果：`PARTIAL` —— 本地 `assembleRelease` 成功并签名；GitHub Release 与商店分发尚未执行
+- 结果：`PARTIAL` —— 本地 `assembleRelease` 成功并签名，release 包能在模拟器安装；GitHub Release、商店分发与 release 包真机首屏验证尚未执行
 
 ## 构建证据
 
 | 命令 | 结果 | 产物 / 摘要 |
 |---|---|---|
-| `gradlew.bat assembleDebug` | SUCCESSFUL（2026-11-05，36s） | `app/build/outputs/apk/debug/app-debug.apk`，9.4 MB，`com.habittracker` / minSdk 26 / targetSdk 35 |
+| `gradlew.bat assembleDebug` | SUCCESSFUL（2026-11-09） | `app-debug.apk`，11,237,263 B（debug 含 Compose 工具链，比 release 大） |
+| `gradlew.bat assembleDebug`（历史） | SUCCESSFUL（2026-11-05，36s） | 9.4 MB，`com.habittracker` / minSdk 26 / targetSdk 35 |
 | `gradlew.bat assembleRelease` | SUCCESSFUL（2026-11-09） | `app-release.apk`，7.7 MB，RSA-4096 密钥签名，`apksigner verify` 通过，`SHA-256 33AC…CE9E` |
 | `gradlew.bat lintDebug` | SUCCESSFUL（2026-11-09） | 0 error / 10 warning（`app/build/reports/lint-results-debug.txt`） |
 | `gradlew.bat test` | FAILED（沙箱限制） | 测试 worker 的命名管道被禁；等价证据见下两行 |
@@ -26,7 +27,8 @@
 
 | 设备 / 系统 | 安装 | 启动 | 核心流程 | 提醒 | 备份 | 结果 |
 |---|---|---|---|---|---|---|
-| Android 15（API 35） | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| Android 15（API 35）模拟器（`adapt` AVD，1080×2400 @420dpi） | **PASS**（`adb install app-release.apk` → Success，正式签名） | **NOT_RUN**（系统 UI 自身 ANR，焦点停在 `systemui`，未取到首屏） | NOT_RUN | NOT_RUN | NOT_RUN | **PARTIAL** |
+| iQOO Neo7 SE（Android 15，真机） | PASS（debug 包） | PASS | PASS（建习惯/打卡/备份导出导入/详情页） | NOT_RUN（未实现） | PASS（导出 + 导入） | **PARTIAL**（release 包未装机） |
 
 ## V1 发布检查表
 

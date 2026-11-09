@@ -66,14 +66,17 @@ Write-Host ("task summary written to " + $taskPath)
 
 if ($Apply) {
     $readme = Get-Content -Raw -Path 'README.md'
-    $readme = [regex]::Replace($readme, '(\|\s*当前任务\s*\|\s*)' + [regex]::Escape($tick) + 'TASK-\d{3}' + [regex]::Escape($tick), ('$1' + $tick + $taskId + $tick))
+    # 当前任务 is the task being worked on next, not the one just closed: rewriting only the id
+    # here used to leave TASK-040's description under a TASK-030 label. Left to the maintainer.
+    # $readme = [regex]::Replace($readme, '(\|\s*当前任务\s*\|\s*)' + [regex]::Escape($tick) + 'TASK-\d{3}' + [regex]::Escape($tick), ('$1' + $tick + $taskId + $tick))
     if ($gateToken) {
         $readme = [regex]::Replace($readme, '(\|\s*阶段\s*\|\s*)' + [regex]::Escape($tick) + 'Gate \d' + [regex]::Escape($tick), ('$1' + $tick + $gateToken + $tick))
     }
     [System.IO.File]::WriteAllText((Resolve-Path 'README.md'), $readme)
 
     $statusText = Get-Content -Raw -Path 'project/PROJECT_STATUS.md'
-    $statusText = [regex]::Replace($statusText, '(- 当前任务：)' + [regex]::Escape($tick) + 'TASK-\d{3}' + [regex]::Escape($tick), ('$1' + $tick + $taskId + $tick))
+    # See the README note above: 当前任务 stays under manual control.
+    # $statusText = [regex]::Replace($statusText, '(- 当前任务：)' + [regex]::Escape($tick) + 'TASK-\d{3}' + [regex]::Escape($tick), ('$1' + $tick + $taskId + $tick))
     if ($gateToken) {
         $statusText = [regex]::Replace($statusText, '(- 项目阶段：)' + [regex]::Escape($tick) + 'Gate \d' + [regex]::Escape($tick), ('$1' + $tick + $gateToken + $tick))
     }

@@ -1,6 +1,6 @@
 # TASK-039: 备份导入（覆盖式恢复）
 
-- 状态：`IMPLEMENTED`（`ADR-015`：实现与验证完成，未经独立评审）
+- 状态：`DONE`（独立 Reviewer `APPROVE`，见 §13；4 轮评审 3 次 `REJECT` 后闭合）
 - 阶段：`Gate 3`
 - 优先级：`P0`
 - 依赖：`TASK-030`（导出 + `ADR-018` 字段映射）
@@ -72,15 +72,15 @@
 ## 11. Completion Review
 - [x] 验收标准满足
 - [x] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`（`ADR-015` 批量评审）
+- [x] 独立 Reviewer `APPROVE`（`REVIEW-TASK-039`，第 4 轮，0 阻断）
 
 ## 12. Handoff
 - 合并导入（`DATABASE.md` §11 第 5 条）未做；需要时另立任务并补 ADR。
 - 导入后若图标图片缺失，行内回退嫩芽；备份不含图片文件是有意为之（`ADR-018`）。
 
 ## 13. Independent Review
-- Reviewer record：待创建（批量评审）
-- 结论：`PENDING`（`IMPLEMENTED`）
+- Reviewer record：[`REVIEW-TASK-039`](../reviews/REVIEW-TASK-039.md)
+- 结论：`APPROVE`（第 4 轮独立评审，0 阻断）。前 3 轮共 9 条阻断（解析期校验缺口、计划版本区间、文档计数与状态文档过期）已逐条闭合，评审者用 `git show HEAD:` 核对已提交内容。
 
 ## 14. 评审修复（2026-11-09，第 2 轮）
 
@@ -94,7 +94,7 @@
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-039
-- 状态：`IMPLEMENTED`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 7 项 / 未通过 0 项
 - 最近测试记录：2026-11-09 / **OK (182 tests)**，`verify-all` 全绿
