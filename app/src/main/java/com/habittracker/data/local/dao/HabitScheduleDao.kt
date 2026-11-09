@@ -16,6 +16,10 @@ interface HabitScheduleDao {
     @Insert
     suspend fun insert(schedule: HabitScheduleEntity): Long
 
+    /** Only the restore path uses this (ADR-019). */
+    @Query("DELETE FROM habit_schedules")
+    suspend fun deleteAll()
+
     /** Returns every version valid on [date]; more than one row is a data integrity error. */
     @Query(
         "SELECT * FROM habit_schedules WHERE habit_id = :habitId" +

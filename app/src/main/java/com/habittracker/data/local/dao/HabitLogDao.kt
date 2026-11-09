@@ -18,6 +18,10 @@ interface HabitLogDao {
     @Upsert
     suspend fun upsert(log: HabitLogEntity): Long
 
+    /** Only the restore path uses this (ADR-019). */
+    @Query("DELETE FROM habit_logs")
+    suspend fun deleteAll()
+
     /** Whole table for the JSON backup (TASK-030); not used by any screen. */
     @Query("SELECT * FROM habit_logs ORDER BY habit_id ASC, log_date ASC")
     suspend fun findAllForBackup(): List<HabitLogEntity>

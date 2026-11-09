@@ -48,6 +48,10 @@ interface HabitDao {
      * removed atomically; the confirmation dialog lives in the UI because the document requires a
      * second confirmation before this runs.
      */
+    /** Only the restore path uses this (ADR-019): it wipes the table before writing a backup. */
+    @Query("DELETE FROM habits")
+    suspend fun deleteAll()
+
     @Query("DELETE FROM habits WHERE id = :id")
     suspend fun deleteById(id: Long): Int
 

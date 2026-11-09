@@ -160,9 +160,9 @@ const insertReminder = db.prepare(
 
 ok("every expected DAO query was parsed out of the Kotlin sources", () => {
   const expected = {
-    HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore", "updateFields", "deleteById"]],
-    HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits", "findAllForBackup"]],
-    HabitReminderDao: [reminderQ, ["findForHabit", "findActiveForScheduling", "setEnabled", "findAllForBackup"]],
+    HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore", "updateFields", "deleteById", "deleteAll"]],
+    HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits", "findAllForBackup", "deleteAll"]],
+    HabitReminderDao: [reminderQ, ["findForHabit", "findActiveForScheduling", "setEnabled", "findAllForBackup", "deleteAll"]],
     HabitScheduleDao: [
       scheduleQ,
       [
@@ -172,6 +172,7 @@ ok("every expected DAO query was parsed out of the Kotlin sources", () => {
         "closeVersion",
         "findAllForHabits",
         "findVersionsOnForHabits",
+        "deleteAll",
       ],
     ],
   };
@@ -339,6 +340,14 @@ ok("HabitDao.deleteById removes the habit and cascades to schedules, logs and re
 });
 equal("HabitDao.deleteById is a no-op for an unknown id", queryOne(habitQ.deleteById, { id: 999999 }), 0);
 
+// --- restore path (TASK-030b, ADR-019): the four deleteAll statements must empty their tables ---
+insertReminder.run(waterId, "21:00:00", 1, 10, 10);
+equal("HabitReminderDao.deleteAll empties the reminder table", queryOne(reminderQ.deleteAll, {}), 1);
+equal("HabitLogDao.deleteAll empties the log table", queryOne(logQ.deleteAll, {}), 1);
+equal("HabitScheduleDao.deleteAll empties the schedule table", queryOne(scheduleQ.deleteAll, {}), 1);
+equal("HabitDao.deleteAll empties the habit table", queryOne(habitQ.deleteAll, {}), 1);
+equal("every table is empty after the restore wipes", ["habits", "habit_schedules", "habit_logs", "habit_reminders"].map((table) => db.prepare("SELECT COUNT(*) AS c FROM " + table).get().c), [0, 0, 0, 0]);
+
 } catch (error) {
   // A parse or bind failure must still produce a summary instead of a bare stack trace.
   failed += 1;
@@ -347,7 +356,7 @@ equal("HabitDao.deleteById is a no-op for an unknown id", queryOne(habitQ.delete
 
 // Deleting a scenario while keeping its registration would otherwise shrink coverage silently.
 // Bump this number in the same commit that adds a scenario.
-const MIN_CHECKS = 40;
+const MIN_CHECKS = 45;
 if (checks < MIN_CHECKS) {
   failed += 1;
   console.log("FAIL  coverage shrank: " + checks + " checks executed, at least " + MIN_CHECKS + " expected");

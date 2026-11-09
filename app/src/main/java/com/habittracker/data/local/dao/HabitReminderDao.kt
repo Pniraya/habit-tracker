@@ -11,6 +11,10 @@ interface HabitReminderDao {
     @Insert
     suspend fun insert(reminder: HabitReminderEntity): Long
 
+    /** Only the restore path uses this (ADR-019). */
+    @Query("DELETE FROM habit_reminders")
+    suspend fun deleteAll()
+
     /** Whole table for the JSON backup (TASK-030); not used by any screen. */
     @Query("SELECT * FROM habit_reminders ORDER BY habit_id ASC, reminder_time ASC")
     suspend fun findAllForBackup(): List<HabitReminderEntity>

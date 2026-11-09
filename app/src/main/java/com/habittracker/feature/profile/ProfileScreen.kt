@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,12 +35,18 @@ import com.habittracker.core.designsystem.SoftCard
 import com.habittracker.core.designsystem.TextPrimary
 import com.habittracker.core.designsystem.TextTertiary
 import com.habittracker.core.designsystem.WarmWhite
+import com.habittracker.data.backup.BackupDocument
 import com.habittracker.data.backup.BackupExporter
+import com.habittracker.data.backup.BackupParseResult
+import com.habittracker.data.backup.BackupParser
+import com.habittracker.data.backup.BackupRestorer
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.domain.model.Habit
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Archived habits, grouped 月 → 日 (ArchiveGroups) and restorable (TASK-028); the archive is also
@@ -56,6 +63,41 @@ fun ProfileScreen(presenter: ProfilePresenter) {
     var exportedCount by remember { mutableStateOf<Int?>(null) }
     var exportError by remember { mutableStateOf<String?>(null) }
     // SAF: the picker creates the document, so no storage permission is involved (TASK-030).
+    val restorer = remember(context) { BackupRestorer(HabitDatabase.getInstance(context)) }
+    var pendingRestore by remember { mutableStateOf<BackupDocument?>(null) }
+    var restoreMessage by remember { mutableStateOf<String?>(null) }
+    var restoreError by remember { mutableStateOf<String?>(null) }
+    // OpenDocument: the picker grants read access to one file; parsing happens off the main thread.
+    val openBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val parsed = runCatching {
+                    withContext(Dispatchers.IO) {
+                        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                            ?: error("无法读取所选文件")
+                        if (bytes.size > BackupParser.MAX_BYTES) error("文件超过 8 MB")
+                        BackupParser.parse(bytes.toString(Charsets.UTF_8))
+                    }
+                }
+                parsed.onSuccess { result ->
+                    when (result) {
+                        is BackupParseResult.Ready -> {
+                            pendingRestore = result.document
+                            restoreError = null
+                        }
+                        is BackupParseResult.Invalid -> {
+                            restoreError = result.errors.take(3).joinToString("\n")
+                            restoreMessage = null
+                        }
+                    }
+                }.onFailure {
+                    restoreError = it.message ?: "读取失败"
+                }
+            }
+        }
+    }
     val createBackup = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri ->
@@ -98,12 +140,19 @@ fun ProfileScreen(presenter: ProfilePresenter) {
                     color = TextTertiary,
                     modifier = Modifier.padding(top = 2.dp),
                 )
-                TextButton(
-                    onClick = {
-                        createBackup.launch(BackupExporter.fileName(LocalDate.now().toString()))
-                    },
-                ) {
-                    Text("导出备份", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MossGreenDark)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(
+                        onClick = {
+                            createBackup.launch(BackupExporter.fileName(LocalDate.now().toString()))
+                        },
+                    ) {
+                        Text("导出备份", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MossGreenDark)
+                    }
+                    // "*/*" on purpose: a JSON file copied from a PC often reaches the
+                    // provider without a MIME type, and the parser validates the content anyway.
+                    TextButton(onClick = { openBackup.launch(arrayOf("*/*")) }) {
+                        Text("从备份恢复", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextTertiary)
+                    }
                 }
                 exportedCount?.let {
                     Text("已导出 " + it + " 个习惯", fontSize = 13.sp, color = MossGreenDark)
@@ -111,7 +160,50 @@ fun ProfileScreen(presenter: ProfilePresenter) {
                 exportError?.let {
                     Text(it, fontSize = 13.sp, color = Color(0xFFB5523B))
                 }
+                restoreMessage?.let {
+                    Text(it, fontSize = 13.sp, color = MossGreenDark)
+                }
+                restoreError?.let {
+                    Text(it, fontSize = 13.sp, color = Color(0xFFB5523B))
+                }
             }
+        }
+        pendingRestore?.let { document ->
+            AlertDialog(
+                onDismissRequest = { pendingRestore = null },
+                title = { Text("覆盖并恢复？") },
+                text = {
+                    Text(
+                        "将清空当前全部数据，再写入备份中的 " + document.habits.size + " 个习惯、" +
+                            document.logs.size + " 条日志。此操作不可撤销。",
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            pendingRestore = null
+                            scope.launch {
+                                runCatching { restorer.restore(document) }
+                                    .onSuccess {
+                                        restoreMessage = "已恢复 " + document.habits.size + " 个习惯"
+                                        restoreError = null
+                                    }
+                                    .onFailure {
+                                        restoreError = it.message ?: "恢复失败"
+                                        restoreMessage = null
+                                    }
+                            }
+                        },
+                    ) {
+                        Text("覆盖并恢复", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFB5523B))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingRestore = null }) {
+                        Text("取消", fontSize = 14.sp, color = TextTertiary)
+                    }
+                },
+            )
         }
         if (lastError != null) {
             Text(
