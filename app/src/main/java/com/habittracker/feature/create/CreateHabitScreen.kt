@@ -104,7 +104,7 @@ fun CreateHabitScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(48.dp)
                     .shadow(4.dp, CircleShape, spotColor = WarmShadow.copy(alpha = 0.08f))
                     .clip(CircleShape)
                     .background(CardSurface)
@@ -262,7 +262,7 @@ fun CreateHabitScreen(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(40.dp)
+                                    .height(48.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(if (selected) MossGreenDark else SurfaceTint)
                                     .clickable { onWeekdayToggle(day) },
@@ -350,7 +350,7 @@ private fun RowScope.IconChoice(
     Box(
         modifier = Modifier
             .weight(1f)
-            .height(46.dp)
+            .height(48.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) accent.copy(alpha = 0.18f) else SurfaceTint)
             .then(
@@ -371,7 +371,7 @@ private fun RowScope.CustomIconChoice(icon: String, accent: Color, onClick: () -
     Box(
         modifier = Modifier
             .weight(1f)
-            .height(46.dp)
+            .height(48.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) accent.copy(alpha = 0.18f) else SurfaceTint)
             .then(

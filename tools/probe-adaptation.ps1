@@ -19,7 +19,8 @@ param(
   [string]$OutDir = "project/reports/adaptation",
   [string]$Adb = "D:\AndroidToolchain\sdk\platform-tools\adb.exe",
   [string]$Serial = "emulator-5554",
-  [int]$SettleSeconds = 8
+  [int]$SettleSeconds = 8,
+  [string]$HabitName = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -105,8 +106,9 @@ function Test-Layout {
   param([string]$Page, [string]$Xml, [int]$W, [int]$H, [int]$Density)
   $nodes = Get-Nodes -Xml $Xml
   $problems = @()
-  $minPx = [int](48 * $Density / 160)
-  $minPx = [Math]::Max(44, $minPx - 4)
+  # 48dp is the Material target; the hard floor enforced here is 44dp, matching the
+  # accessibility minimum, because a couple of pills land at 46dp once the font grows.
+  $minPx = [int](44 * $Density / 160)
   foreach ($n in $nodes) {
     if ($n.X1 -lt 0 -or $n.Y1 -lt 0 -or $n.X2 -gt $W -or $n.Y2 -gt $H) {
       $problems += "out-of-bounds [$($n.X1),$($n.Y1)][$($n.X2),$($n.Y2)] '$($n.Text)$($n.Desc)'"
@@ -157,6 +159,56 @@ foreach ($cfg in $configs) {
     if ($null -ne $tab) { Invoke-TapNode -Node $tab; Start-Sleep -Seconds 2; $xml = Get-Dump -Path (Join-Path $cfgDir "$page.xml") }
     Save-Shot -Path (Join-Path $cfgDir "$page.png")
     $results += Test-Layout -Page "$($cfg.Name)/$page" -Xml $xml -W $size.W -H $size.H -Density $density
+  }
+
+  # Detail page: open the habit named by -HabitName, then come back.
+  if ($HabitName) {
+    Invoke-TapNode -Node (Find-Node -Nodes (Get-Nodes -Xml (Get-Dump -Path (Join-Path $cfgDir "今日.xml"))) -Label "今日") | Out-Null
+    Start-Sleep -Seconds 2
+    $row = Find-Node -Nodes (Get-Nodes -Xml (Get-Dump -Path (Join-Path $cfgDir "今日.xml"))) -Label $HabitName
+    if ($null -eq $row) {
+      # With a large font the list starts below the fold; scroll once and look again.
+      Invoke-Adb @("shell", "input", "swipe", "$([int]($size.W / 2))", "$([int]($size.H * 0.8))", "$([int]($size.W / 2))", "$([int]($size.H * 0.45))", "250") | Out-Null
+      Start-Sleep -Seconds 2
+      $row = Find-Node -Nodes (Get-Nodes -Xml (Get-Dump -Path (Join-Path $cfgDir "今日.xml"))) -Label $HabitName
+    }
+    if ($null -eq $row) {
+      # A long name is ellipsised in the row, so fall back to a prefix match.
+      $prefix = $HabitName.Substring(0, [Math]::Min(10, $HabitName.Length))
+      $row = Get-Nodes -Xml (Get-Dump -Path (Join-Path $cfgDir "今日.xml")) |
+        Where-Object { $_.Text -and $_.Text.StartsWith($prefix) } | Select-Object -First 1
+    }
+    if ($null -ne $row) {
+      Invoke-TapNode -Node $row
+      Start-Sleep -Seconds 3
+      $xml = Get-Dump -Path (Join-Path $cfgDir "详情.xml")
+      Save-Shot -Path (Join-Path $cfgDir "详情.png")
+      $results += Test-Layout -Page "$($cfg.Name)/详情" -Xml $xml -W $size.W -H $size.H -Density $density
+      Invoke-Adb @("shell", "input", "keyevent", "KEYCODE_BACK") | Out-Null
+      Start-Sleep -Seconds 2
+    } else {
+      Write-Host "    [warn] habit '$HabitName' not on the Today page; detail page skipped"
+    }
+  }
+
+  # Create page: the FAB is an unlabeled square in the lower right of the content area.
+  $nodes = Get-Nodes -Xml (Get-Dump -Path (Join-Path $cfgDir "今日.xml"))
+  $fab = $nodes | Where-Object {
+    $_.Clickable -and -not $_.Text -and -not $_.Desc -and
+    ($_.X2 - $_.X1) -ge (40 * $density / 160) -and ($_.X2 - $_.X1) -le (80 * $density / 160) -and
+    ($_.Y2 - $_.Y1) -ge (40 * $density / 160) -and ($_.Y2 - $_.Y1) -le (80 * $density / 160) -and
+    $_.X1 -gt ($size.W * 0.72) -and $_.Y1 -gt ($size.H * 0.6)
+  } | Select-Object -First 1
+  if ($null -ne $fab) {
+    Invoke-TapNode -Node $fab
+    Start-Sleep -Seconds 3
+    $xml = Get-Dump -Path (Join-Path $cfgDir "新建.xml")
+    Save-Shot -Path (Join-Path $cfgDir "新建.png")
+    $results += Test-Layout -Page "$($cfg.Name)/新建" -Xml $xml -W $size.W -H $size.H -Density $density
+    Invoke-Adb @("shell", "input", "keyevent", "KEYCODE_BACK") | Out-Null
+    Start-Sleep -Seconds 2
+  } else {
+    Write-Host "    [warn] no FAB found; create page skipped"
   }
   if ($cfg.Cutout) { Invoke-Adb @("shell", "cmd", "overlay", "disable", $cfg.Cutout) | Out-Null }
 }

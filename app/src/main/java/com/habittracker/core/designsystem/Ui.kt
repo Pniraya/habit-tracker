@@ -272,7 +272,7 @@ fun ChoicePill(text: String, selected: Boolean, onClick: () -> Unit, modifier: M
         modifier = modifier
             // min height keeps the 44dp mockup at 1x and lets the pill grow when the system
             // font is enlarged, instead of clipping the label (TASK-040).
-            .heightIn(min = 44.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(999.dp))
             .background(if (selected) MossGreenDark else SurfaceTint)
             .clickable(onClick = onClick)
