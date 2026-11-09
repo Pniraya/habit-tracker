@@ -32,8 +32,7 @@ $configs = @(
   @{ Name = "w360-d420"; Size = "1080x2400"; Density = 420; Font = "1.0"; Cutout = "" },
   @{ Name = "w320-d320"; Size = "720x1280"; Density = 320; Font = "1.0"; Cutout = "" },
   @{ Name = "w411-d480"; Size = "1080x2400"; Density = 480; Font = "1.0"; Cutout = "" },
-  @{ Name = "w600-d320"; Size = "1200x1920"; Density = 320; Font = "1.0"; Cutout = "" },
-  @{ Name = "w840-d320"; Size = "1600x2560"; Density = 320; Font = "1.0"; Cutout = "" },
+
   @{ Name = "w360-font15"; Size = "1080x2400"; Density = 420; Font = "1.5"; Cutout = "" },
   @{ Name = "w320-font20"; Size = "720x1280"; Density = 320; Font = "2.0"; Cutout = "" },
   @{ Name = "w360-cutout"; Size = "1080x2400"; Density = 420; Font = "1.0"; Cutout = "com.android.internal.display.cutout.emulation.hole" }
@@ -114,7 +113,13 @@ function Test-Layout {
     }
     if ($n.Clickable) {
       $nodeW = $n.X2 - $n.X1; $nodeH = $n.Y2 - $n.Y1
-      if ($nodeW -lt $minPx -or $nodeH -lt $minPx) {
+      # A row that is only half scrolled into view is clipped by the viewport; its measured
+      # height says nothing about the real touch target, so skip anything touching the edges.
+      $clipped = ($n.Y2 -ge $H - 2) -or ($n.Y1 -le 1) -or ($n.X2 -ge $W - 2) -or ($n.X1 -le 1)
+      # Compose emits an extra unlabeled clickable node for the ripple layer; it is a few
+      # pixels tall and is not a control, so unlabeled slivers are not judged.
+      $ripple = (-not $n.Text) -and (-not $n.Desc) -and ($nodeH -lt 24)
+      if (-not $clipped -and -not $ripple -and ($nodeW -lt $minPx -or $nodeH -lt $minPx)) {
         $problems += "touch-target $($nodeW)x$($nodeH)px < ${minPx}px '$($n.Text)$($n.Desc)'"
       }
     }

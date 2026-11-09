@@ -123,7 +123,10 @@
 1. 模拟器跑通：`emulator 37.3.8` + `system-images;android-35;google_apis;x86_64`，AEHD 2.2 加速（`-accel-check` = 0，无需 WHPX）。
 2. `tools/probe-adaptation.ps1`：8 档配置 × 3 页（今日/统计/我的）截图 + `uiautomator` 断言（越界、触控目标 ≥48dp、文本宽度）。
 3. 修复 1：底部导航固定 `84.dp` 在字体 ≥1.5× 时裁掉文字 → 高度随 `fontScale` 缩放（1×–1.7×）。
-4. 修复 2：平板宽度 840dp 时内容被拉伸 → 今日页内容 `widthIn(max = 560.dp)` 居中。
+4. 修复 2：今日页内容 `widthIn(max = 560.dp)` 居中（只影响 600dp+ 宽屏，手机无变化）。
+5. 修复 3：「记录方式」「频率」两行 ChoicePill 在 320dp + 1.5× 字体下挤压，标签被裁成「记录」「自」→ 改 FlowRow 换行，pill 高度改 heightIn(min = 44.dp)。
+6. 修复 4：详情页「本周」「近 5 周」卡片头固定 height(22.dp)，1.5× 字体下标题顶部被裁、图例「完成」被裁 → heightIn(min = 22.dp) + FlowRow。
+7. 手机档位：矩阵只保留 320/360/411dp、1.5×/2.0× 字体、挖孔；平板档位移除（用户决定只考虑手机）。
 
 ### 断言脚本踩坑（已修）
 
@@ -134,13 +137,13 @@
 
 ### 未完成
 
-- 统计页、我的页在 600dp+ 仍是全宽（只有今日页做了 560dp 上限）。
-- 平板底部导航仍是全宽拉伸。
+- 「新建」「详情」两页未纳入自动断言：靠人工截图核对（320dp + 1.5× 字体）。
+- 平板（600dp+）按用户决定不再投入。
 - Firebase Test Lab（小米 / OPPO）未跑。
 - 横屏未验证。
 ## 10. Verification Evidence
 | 命令/测试 | 实际结果 | 证据/失败摘要 |
 |---|---|---|
 | `gradlew.bat assembleDebug` | **BUILD SUCCESSFUL** | 布局修复后重建（`AppRoot.kt`、`TodayScreen.kt`） |
-| `tools/probe-adaptation.ps1` | **PASS** | 8 档 × 3 页 = 24 次断言全绿；首轮发现底部导航 2.0× 字体裁字、840dp 平板内容拉伸 |
+| `tools/probe-adaptation.ps1`（含种子数据） | **PASS** | 5 档手机配置 × 3 页；空数据与 3 个习惯数据各一轮；发现并修复 2.0× 导航裁字、320dp pill 裁字、详情卡头裁切 |
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 177、DAO 45、构建、`git diff --check` |

@@ -5,14 +5,14 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-040`（`IN_PROGRESS`：机型适配——本地模拟器 + `tools/probe-adaptation.ps1` 跑 8 档尺寸/密度/字体；已修底部导航大字体裁剪与平板宽度拉伸；统计/我的宽度上限、Firebase Test Lab 真机抽样未做）；`TASK-039`（`IMPLEMENTED`：备份恢复）已合入；`TASK-037`（`IMPLEMENTED`：自定义习惯图标 + 11 个内置线条图标，待批量评审）；`TASK-038`（应用图标 + 发布配套）已 `IMPLEMENTED` 合入；`TASK-036`（GitHub 预上传整理）已 `IMPLEMENTED` 合入；`TASK-035`（日切点 04:00 + 偏差登记）已 `IMPLEMENTED` 合入；`TASK-026`（设备侧 Room 契约测试，真机 6/6）已 `IMPLEMENTED` 合入；`TASK-033`（习惯详情页）已 `IMPLEMENTED` 合入；`TASK-034`（统计页滚动、导航栏自动隐藏、删除习惯、归档按月日分组）已 `IMPLEMENTED` 合入；`TASK-032`（今日页/新建页重建）已 `IMPLEMENTED` 合入；`TASK-031`（统计页重建）已 `IMPLEMENTED` 合入；下一条按外部评审（`ADVICE-RESPONSE-2026-11-06.md`）先做窄口径里程碑评审（8 个 `IMPLEMENTED` 一起），再做 `N5` 提醒数据模型 ADR，然后把 `TASK-030` 拆成 `030a 导出`（先做）与 `030b 恢复`；`TASK-024` 已 `DONE` 合入 `main`；`TASK-022` 已 `DONE` 合入 `main`；`TASK-012`~`TASK-022` 已 `DONE`（第 3 轮独立评审 `APPROVE` 于 `07b1aab`，合入 `main` @ `62199e9`）；`TASK-011` 已 `DONE`；`TASK-010`、`TASK-009` 已 `DONE`；`TASK-008`、`TASK-007`、`TASK-006` 已 `DONE`；`TASK-005`、`TASK-004`、`TASK-003` 为 `PARTIAL`（main 上的在册例外）
+- 当前任务：`TASK-040`（`IN_PROGRESS`：机型适配——模拟器 + `tools/probe-adaptation.ps1` 跑 5 档手机尺寸/密度/字体（320/360/411dp、1.5×/2.0×、挖孔），带 3 个习惯数据；已修底部导航大字体裁剪、`ChoicePill` 挤压、详情卡头裁切；Firebase Test Lab 真机抽样未做）；
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B；与 `README` 同口径）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` 38/38 验证 DAO 的 SQL 语义、CAS 更新与级联删除（含 `deleteById`））
-- 最近验证测试：`PASS`（**168 项**单测 + **6 项设备侧 instrumented**，`connectedDebugAndroidTest`：触发器注册/重开、Converter 往返、Flow 失效、级联删除、事务回滚）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
+- 最近验证测试：`PASS`（**177 项**单测 + **6 项设备侧 instrumented**，`connectedDebugAndroidTest`：触发器注册/重开、Converter 往返、Flow 失效、级联删除、事务回滚）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查 + 15 个探针 0 失败；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
-- 最后核对时间：`2026-11-06`
+- 最后核对时间：`2026-11-09`
 
 ## 已有设计资产与实现
 

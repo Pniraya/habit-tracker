@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -230,7 +233,9 @@ private fun WeekCard(week: DetailWeek) {
     SoftCard(modifier = Modifier.fillMaxWidth(), padding = PaddingValues(16.dp)) {
         Column {
             Row(
-                modifier = Modifier.fillMaxWidth().height(22.dp),
+                // heightIn: at a 1.5x font the 16sp title is taller than the old fixed 22dp
+                // header and was clipped at the top of the card (TASK-040).
+                modifier = Modifier.fillMaxWidth().heightIn(min = 22.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -298,13 +303,16 @@ private fun DayDot(day: DetailDay) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FiveWeeksCard(weeks: List<List<DetailDay>>) {
     SoftCard(modifier = Modifier.fillMaxWidth(), padding = PaddingValues(16.dp)) {
         Column {
-            Row(
-                modifier = Modifier.fillMaxWidth().height(22.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            // FlowRow: the title plus both legend labels no longer fit on one line once the
+            // system font grows, and the legend used to be cut off at the card edge.
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 22.dp),
+                verticalArrangement = Arrangement.Center,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text("近 5 周", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)

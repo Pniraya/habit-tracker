@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -269,11 +270,13 @@ fun PillButton(
 fun ChoicePill(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .height(44.dp)
+            // min height keeps the 44dp mockup at 1x and lets the pill grow when the system
+            // font is enlarged, instead of clipping the label (TASK-040).
+            .heightIn(min = 44.dp)
             .clip(RoundedCornerShape(999.dp))
             .background(if (selected) MossGreenDark else SurfaceTint)
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(

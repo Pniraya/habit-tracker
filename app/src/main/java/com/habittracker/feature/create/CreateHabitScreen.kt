@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -68,6 +70,7 @@ private val WEEKDAY_LABELS = listOf(
 )
 
 /** Create-habit form, rebuilt to orgins/新建习惯-html. Every rule lives in [CreateHabitPresenter]. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateHabitScreen(
     form: CreateHabitForm,
@@ -133,7 +136,12 @@ fun CreateHabitScreen(
             }
 
             FormCard(title = "记录方式") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // FlowRow: at 320dp with a 1.5x font the two pills no longer fit on one line and
+                // the second label used to be clipped to "记录" (TASK-040).
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     ChoicePill(
                         text = "完成 / 未完成",
                         selected = form.trackingType == TrackingType.BOOLEAN,
@@ -224,7 +232,10 @@ fun CreateHabitScreen(
             }
 
             FormCard(title = "频率") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     ChoicePill(
                         text = "每天",
                         selected = form.frequency == FrequencyType.DAILY,
