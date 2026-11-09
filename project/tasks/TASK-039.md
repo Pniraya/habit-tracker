@@ -88,6 +88,7 @@
 - **计划版本区间**：`validateScheduleVersions` 按 `habit_id` 排序后拒绝重叠区间与多条未结束版本，避免导入成功后 repository 才抛 `overlapping schedule versions`（绕过 `HabitScheduleWriter` 的唯一写入端）。
 - **文档同步**：`README`/`PROJECT_STATUS`/`TEST_REPORT` 的计数统一为 182 单测、45 DAO；`DATABASE.md` §11 增加指向 `ADR-019` 修订的说明；本文件 §6 补记上述校验。
 - **非阻塞项**：8 MB 上限改为边读边判（`ProfileScreen`），不再先 `readBytes()` 再检查。
+- **登记为 Known Gaps（第 2 轮评审提出，未在本轮修）**：BOOLEAN 习惯的 `actual_value ∉ {0,1}` 仍由 `DatabaseConstraints` 兜底（事务回滚、报原始异常，无字段路径）；`archived_at`/`archived_on` 配对未校验（`DATABASE.md` §4.1，无 DB 约束）；`unit` 类型错、BOOLEAN `target≠1`、`until<from` 各有实现但缺独立用例；`BackupRestorer` 的 logs upsert 与其余 insert 语义等价、未统一。
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）

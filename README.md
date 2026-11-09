@@ -18,7 +18,7 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-040`（`IMPLEMENTED`：机型适配——模拟器 5 档手机配置 × 5 页自动断言，修掉大字体裁字与 <48dp 触控；待批量评审） |
+| 当前任务 | `TASK-039`（`IMPLEMENTED`：机型适配——模拟器 5 档手机配置 × 5 页自动断言，修掉大字体裁字与 <48dp 触控；待批量评审） |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
 | 最近测试 | `PASS` — **182** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
@@ -71,11 +71,26 @@ gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
 pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：182 项通过（绕过本机被禁的 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
 node tools/verify-dao.mjs                        # 已验证：45/45（DAO 的 SQL 语义，不含 Room 映射）
-adb devices                                      # 真机需手动连接（USB 调试已可用）；模拟器不可用：无 WHPX/Hyper-V
+adb devices                                      # 真机需手动连接（USB 调试已可用）；模拟器用 Android Emulator + AEHD（见 .gradle/start-emulator.ps1）
 pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply
 pwsh -NoProfile -File tools/check-governance.ps1
 pwsh -NoProfile -File tools/replay-governance-probes.ps1   # 重放 15 个治理探针（P5–P19）
 ```
+
+### 打正式包（可选）
+
+发布用的签名从仓库根目录的 `keystore.properties` 读取（已在 `.gitignore`，不进版本库）：
+
+```properties
+storeFile=.gradle/release.jks
+storePassword=***
+keyAlias=release
+keyPassword=***
+```
+
+生成密钥：`keytool -genkeypair -v -keystore .gradle/release.jks -alias release -keyalg RSA -keysize 4096 -validity 10000`。
+没有这个文件时 `./gradlew assembleRelease` 照常成功，产物是 `app-release-unsigned.apk`（可用于自查，不能直接装机发布）。
+文件刚创建的那次构建若被 Gradle 判成 up-to-date，加 `--rerun-tasks` 或先 `clean`。
 
 `replay-governance-probes.ps1` 会**临时改写** `TASK-019`、`TEST_REPORT`、manifest 与 build 文件，用 `git show HEAD:` 取原件、`git checkout --` 还原；探测路径上有未提交改动时它直接 `[DIRTY]` 中止，不会覆盖别人的工作。
 
