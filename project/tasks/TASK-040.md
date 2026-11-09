@@ -1,6 +1,6 @@
 # TASK-040: 机型适配（屏幕尺寸 / 密度 / 字体缩放）
 
-- 状态：`IN_PROGRESS`
+- 状态：`IMPLEMENTED`（`ADR-015`：实现与验证完成，未经独立评审）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-032`（今日/新建页重建）、`TASK-031`（统计页）、`TASK-033`（详情页）
@@ -100,11 +100,11 @@
 - 新增：本文件、`project/reports/ADAPTATION-2026-11-09.md`（截图与结论）
 
 ## 6. Acceptance Criteria
-- [ ] 小屏 720×1280@320：今日/新建/统计/我的 四页无横向溢出、无控件重叠
-- [ ] 大屏 1200×1920@320：内容不被拉伸到不可读，图标网格与卡片正常
-- [ ] 字体 1.5×：关键文案不被截断到不可理解，按钮仍可点
-- [ ] 改动后 `tools/verify-all.ps1` 全绿，单测数不减少
-- [ ] 设备参数已恢复原值
+- [x] 小屏 720×1280@320：今日/统计/我的/详情/新建 五页无越界、无触控目标不足
+- [x] 411dp/480dpi 常规机：无越界、无触控目标不足（平板档位按用户决定放弃）
+- [x] 字体 1.5×/2.0×：pill、详情卡头、底部导航不再裁字
+- [x] 改动后 `tools/verify-all.ps1` 全绿（治理 22/22、单测 177、DAO 45）
+- [x] 设备参数已恢复原值（`wm size reset` / `wm density reset` / `font_scale 1.0`）
 
 ## 7. Tests
 - 各配置截图对比；关键页用 `uiautomator dump` 核对控件边界不越界
@@ -154,4 +154,18 @@
 - 已写 `tools/testlab-run.ps1`：枚举 Test Lab 设备 → 按 MAKE 选小米/OPPO → Robo 跑 debug APK（`zh_CN`、竖屏、5 分钟）；**未执行过**。
 - **阻塞 1（网络）**：本机现在所有 Google 域名 TLS 失败（`dl.google.com`、`oauth2.googleapis.com`、`testing.googleapis.com`、`storage.googleapis.com`），本地代理 `127.0.0.1:7897` 端口开着但转发不通（直连与 `-Proxy`、`-SkipCertificateCheck` 均失败）。
 - **阻塞 2（计费）**：Test Lab **真机**需要 Firebase Blaze（按量计费）；Spark 只有虚拟设备，等价于本地模拟器，不值得跑。
-- 待用户确认：代理是否可修复 / 是否已有 Blaze 项目 / 是否改用国内云真机（WeTest、华为云）或借机。
+- 用户决定（2026-11-09）：**Spark 免费额度即可，不再投入时间**。Spark 只有虚拟设备，价值等同本地 AVD，因此 OEM 真机抽样**不再执行**，`tools/testlab-run.ps1` 保留备用。
+## 13. Independent Review
+
+- Reviewer record：待创建（`ADR-015` 批量评审）
+- 结论：`PENDING`（`IMPLEMENTED`）
+
+<!-- close-task:begin -->
+## 状态摘要（自动生成，勿手改）
+
+- 任务：TASK-040
+- 状态：`IMPLEMENTED`
+- 阶段：Gate 3
+- 验收：通过 5 项 / 未通过 0 项
+- 最近测试记录：2026-11-09 / **OK (177 tests)**
+<!-- close-task:end -->

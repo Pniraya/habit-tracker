@@ -5,7 +5,7 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-040`（`IN_PROGRESS`：机型适配——模拟器 + `tools/probe-adaptation.ps1` 跑 5 档手机尺寸/密度/字体（320/360/411dp、1.5×/2.0×、挖孔），带 3 个习惯数据；已修底部导航大字体裁剪、`ChoicePill` 挤压、详情卡头裁切；Firebase Test Lab 真机抽样被网络与计费卡住，`tools/testlab-run.ps1` 已就绪但未执行）；
+- 当前任务：`TASK-040`（`IMPLEMENTED`：机型适配——模拟器 + `tools/probe-adaptation.ps1` 跑 5 档手机尺寸/密度/字体（320/360/411dp、1.5×/2.0×、挖孔），带 3 个习惯数据；已修底部导航大字体裁剪、`ChoicePill` 挤压、详情卡头裁切；Firebase Test Lab 真机抽样被网络与计费卡住，`tools/testlab-run.ps1` 已就绪但未执行）；
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
 - 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B；与 `README` 同口径）
@@ -71,6 +71,7 @@
 - `TASK-037`（自定义习惯图标）：相册自选 + 256px 本地存储 + 圆形渲染，真机走通；已知缺口：素材包方案待用户提供文件、编辑旧习惯图标未做、删除习惯不清理孤儿文件
 - `TASK-030`（备份导出）：四表 JSON + SAF + `ADR-018`；真机导出 3 个习惯、`node:sqlite` 回读校验通过；已知缺口：备份不含图标图片文件
 - `TASK-039`（备份导入）：`ADR-019` 覆盖式恢复 + 全量校验 + 单事务；177 项单测、DAO 45 项；真机由用户验证导入正常；已知缺口：合并导入未做
+- `TASK-040`（机型适配）：模拟器 5 档手机配置 × 5 页自动断言，修掉大字体裁字与 <48dp 触控；OEM 真机抽样按用户决定不做（Spark 只有虚拟设备）；已知缺口：2.0× 字体下详情页探测跳过、横屏未验证
 
 ## 在册例外（main 上的未完成任务）
 
