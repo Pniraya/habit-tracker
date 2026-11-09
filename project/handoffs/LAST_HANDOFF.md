@@ -11,7 +11,7 @@
 
 ## 本轮完成
 - 模拟器：`.gradle\emu-sdk`（emulator 37.3.8 + API 35 google_apis x86_64）+ AVD `adapt`，AEHD 加速；启动脚本 `.gradle\start-emulator.ps1`。
-- `tools/probe-adaptation.ps1`：5 档手机配置 × 3 页（今日/统计/我的），断言越界、触控 ≥48dp、文本宽度；会跳过视口裁剪节点与 ripple 层。
+- `tools/probe-adaptation.ps1`：5 档手机配置 × 5 页（今日/统计/我的/详情/新建），断言越界、触控 ≥44dp（下限）与文本宽度；跳过视口裁剪节点与 ripple 层。
 - 修复：底部导航随 fontScale 缩放；`ChoicePill` 改 `FlowRow` + `heightIn(min=44dp)`；详情页卡头 `heightIn(min=22dp)` + `FlowRow` 图例；今日页 `widthIn(max=560dp)`。
 - 种子数据：模拟器库里 3 个习惯（含 1 个归档）+ 5 条日志，直接 sqlite 写入（`run-as` + `.gradle\logs.sql`）。
 
@@ -23,7 +23,7 @@
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 177、DAO 45、构建、`git diff --check` |
 
 ## Not Verified / Known Gaps
-- 新建 / 详情两页未进自动断言（仅人工截图）。
+- 新建 / 详情已进自动断言（`-HabitName` 指定习惯）；2.0× 字体下详情页仍会跳过（行在折叠线下且名字被省略号截断）。
 - Firebase Test Lab 未跑：小米 HyperOS / OPPO ColorOS 的字体、显示大小、手势条差异仍未知。
 - 横屏未验证。
 - 13 个 `IMPLEMENTED` 评审债；模拟器已 `emu kill` 关闭。

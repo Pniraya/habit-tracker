@@ -149,3 +149,9 @@
 | `gradlew.bat assembleDebug` | **BUILD SUCCESSFUL** | 布局修复后重建（`AppRoot.kt`、`TodayScreen.kt`） |
 | `tools/probe-adaptation.ps1`（含种子数据，5 页） | **PASS** | 5 档手机配置 × 5 页（今日/统计/我的/详情/新建）；修掉底部导航裁字、pill 裁字、详情卡头裁切、图标格与关闭按钮 <48dp |
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 177、DAO 45、构建、`git diff --check` |
+### OEM 抽样（Firebase Test Lab）— 阻塞中
+
+- 已写 `tools/testlab-run.ps1`：枚举 Test Lab 设备 → 按 MAKE 选小米/OPPO → Robo 跑 debug APK（`zh_CN`、竖屏、5 分钟）；**未执行过**。
+- **阻塞 1（网络）**：本机现在所有 Google 域名 TLS 失败（`dl.google.com`、`oauth2.googleapis.com`、`testing.googleapis.com`、`storage.googleapis.com`），本地代理 `127.0.0.1:7897` 端口开着但转发不通（直连与 `-Proxy`、`-SkipCertificateCheck` 均失败）。
+- **阻塞 2（计费）**：Test Lab **真机**需要 Firebase Blaze（按量计费）；Spark 只有虚拟设备，等价于本地模拟器，不值得跑。
+- 待用户确认：代理是否可修复 / 是否已有 Blaze 项目 / 是否改用国内云真机（WeTest、华为云）或借机。
