@@ -5,10 +5,10 @@
 ## 当前状态
 
 - 项目阶段：`Gate 3` — Today 与新建习惯两页均已接真实数据，并在真机走通「建习惯 → 今日出现 → 打卡 → 落库」（`TASK-012` §14 / `DEVICE_DUMP-2026-11-05.md`）；Gate 1 的自动设备验证仍缺（`TASK-003` `PARTIAL`）
-- 当前任务：`TASK-039`（`IMPLEMENTED`：机型适配——模拟器 + `tools/probe-adaptation.ps1` 跑 5 档手机尺寸/密度/字体（320/360/411dp、1.5×/2.0×、挖孔），带 3 个习惯数据；已修底部导航大字体裁剪、`ChoicePill` 挤压、详情卡头裁切；Firebase Test Lab 真机抽样被网络与计费卡住，`tools/testlab-run.ps1` 已就绪但未执行）；
+- 当前任务：`TASK-040`（`IMPLEMENTED`：机型适配——模拟器 + `tools/probe-adaptation.ps1` 跑 5 档手机尺寸/密度/字体（320/360/411dp、1.5×/2.0×、挖孔），带 3 个习惯数据；已修底部导航大字体裁剪、`ChoicePill` 挤压、详情卡头裁切；Firebase Test Lab 真机抽样被网络与计费卡住，`tools/testlab-run.ps1` 已就绪但未执行）；
 - 总体状态：`IN_PROGRESS`
 - 代码实现状态：`DEVICE_VERIFIED`（单模块 `:app` + 三页导航 + Room schema v1 + Domain/Repository/UseCase + Today 页与新建习惯页状态机；构建通过，schema/约束/DAO 语句经真实 SQLite 验证，主路径已在 `iQOO Neo7 SE` 走通；逐页巡检与 UI 自动化仍缺，见 `FEATURE_MATRIX.md` 的脚注）
-- 最近验证构建：`PASS`（`gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B；与 `README` 同口径）
+- 最近验证构建：`PASS`（`gradlew assembleDebug` 11,237,263 B、`assembleRelease` 7,668,838 B 已用 RSA-4096 正式密钥签名；2026-11-09，与 `README` 同口径）
 - 最近验证数据层：`PASS`（`node tools/verify-schema.mjs` 40/40 含 schema parity；`node tools/verify-dao.mjs` **45/45** 验证 DAO 的 SQL 语义、CAS 更新、级联删除与四个 `deleteAll`）
 - 最近验证测试：`PASS`（**182 项**单测 + **6 项设备侧 instrumented**，`connectedDebugAndroidTest`：触发器注册/重开、Converter 往返、Flow 失效、级联删除、事务回滚）；`gradlew test` 仍因沙箱阻断测试 worker 而失败，已改用直接 runner
 - 最近治理一致性检查：`PASS`（2026-11-05，**22 项**检查 + 15 个探针 0 失败；含独立评审记录、verify-all 证据、离线守卫 `offline guarantee`。历史任务/评审记录里的「21 项」是当时的真实值，不回改）
@@ -18,7 +18,7 @@
 
 - [x] `ARCHITECTURE.md`、`DATABASE.md`、`DEVELOPMENT.md`：已按 `ADR-005~010` 修订
 - [x] `project/REQUIREMENTS.md`：TBD 第 1/5/6 项已关闭
-- [x] `project/decisions/ADR-001`~`ADR-018`：全部 `ACCEPTED`（`ADR-018` JSON 备份字段映射）（`ADR-016` 日切点 04:00、`ADR-017` 设计偏差与归档语义）（`ADR-015` 评审批量后置，交付 MVP 期间生效）（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
+- [x] `project/decisions/ADR-001`~`ADR-019`：全部 `ACCEPTED`（`ADR-018` JSON 备份字段映射、`ADR-019` 覆盖式备份导入）（`ADR-016` 日切点 04:00、`ADR-017` 设计偏差与归档语义）（`ADR-015` 评审批量后置，交付 MVP 期间生效）（`ADR-011` 触发器方案、`ADR-012` 治理一致性、`ADR-013` 评审证据、`ADR-014` 单一验证入口 `tools/verify-all.ps1`）
 - [x] `project/FEATURE_MATRIX.md`：F-001/F-002/F-003/F-004/F-006/F-007/F-009/F-011/F-020 已 `DEVICE_VERIFIED`；F-005 `VERIFIED`（三种频率有单测，真机只建过 `DAILY`）；F-008 `PARTIAL`（撤销可，改历史记录未做）；F-010 `DEVICE_VERIFIED`（进度条/7 天完成率）；F-012~F-014 未开始；F-015 `VERIFIED`（无 `INTERNET` 权限与网络库，无自动化断言）；F-016~F-019 `OUT_OF_SCOPE`（`TASK-019` 校正）
 - [x] Git 仓库 + `.gitignore` + 基线检查点（`d0f470a`）
 - [x] 治理层：`README.md`、`RELEASE_REPORT.md`、`TASK-000~009`、`tools/check-governance.ps1`（22 项）、`tools/close-task.ps1`、`tools/verify-all.ps1`、`project/REVIEW_CHECKLIST.md`

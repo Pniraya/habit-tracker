@@ -4,18 +4,19 @@
 
 ## 当前版本
 
-- 版本号：`NOT_SET`
-- 版本类型：Debug / Release（未定）
-- 日期：`TBD`
-- commit / tag：`TBD`
-- 结果：`NOT_RUN`（尚未进入发布流程；Debug 构建已可执行，见构建证据）
+- 版本号：`0.1.0`（`versionCode 1`）
+- 版本类型：Release，**已签名**（正式密钥，非 debug key）
+- 日期：`2026-11-09`（本地构建）
+- commit / tag：`TBD`（首个公开 tag 待用户建仓后打）
+- 结果：`PARTIAL` —— 本地 `assembleRelease` 成功并签名；GitHub Release 与商店分发尚未执行
 
 ## 构建证据
 
 | 命令 | 结果 | 产物 / 摘要 |
 |---|---|---|
 | `gradlew.bat assembleDebug` | SUCCESSFUL（2026-11-05，36s） | `app/build/outputs/apk/debug/app-debug.apk`，9.4 MB，`com.habittracker` / minSdk 26 / targetSdk 35 |
-| `gradlew.bat assembleRelease` | NOT_RUN | 未执行签名与混淆配置 |
+| `gradlew.bat assembleRelease` | SUCCESSFUL（2026-11-09） | `app-release.apk`，7.7 MB，RSA-4096 密钥签名，`apksigner verify` 通过，`SHA-256 33AC…CE9E` |
+| `gradlew.bat lintDebug` | SUCCESSFUL（2026-11-09） | 0 error / 10 warning（`app/build/reports/lint-results-debug.txt`） |
 | `gradlew.bat test` | FAILED（沙箱限制） | 测试 worker 的命名管道被禁；等价证据见下两行 |
 | `pwsh tools/run-unit-tests.ps1` | PASS（27 项） | `LogStatusRulesTest`、`ScheduleRulesTest`、`AppRoutesTest` |
 | `node tools/verify-schema.mjs` | PASS（40/40） | schema parity + 约束行为 |

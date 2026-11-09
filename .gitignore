@@ -27,6 +27,8 @@ out/
 # Signing material and local secrets (never commit)
 *.jks
 *.keystore
+*.p12
+*.bks
 keystore.properties
 secrets.properties
 

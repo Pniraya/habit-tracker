@@ -18,12 +18,12 @@
 | 项目 | 状态 |
 |---|---|
 | 阶段 | `Gate 3` — Today 与新建习惯两页已接线，主路径在真机走通 |
-| 当前任务 | `TASK-039`（`IMPLEMENTED`：机型适配——模拟器 5 档手机配置 × 5 页自动断言，修掉大字体裁字与 <48dp 触控；待批量评审） |
+| 当前任务 | `TASK-040`（`IMPLEMENTED`：机型适配——模拟器 5 档手机配置 × 5 页自动断言，修掉大字体裁字与 <48dp 触控；待批量评审） |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
-| 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
+| 最近构建 | `PASS` — `gradlew assembleDebug`（11,237,263 B）与 `assembleRelease`（7,668,838 B，RSA-4096 正式签名），2026-11-09 |
 | 最近测试 | `PASS` — **182** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
 | 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL **45/45**（`verify-dao.mjs`） |
-| ADR | `ADR-001`~`ADR-017` 全部 `ACCEPTED`（`ADR-016` 日切点 04:00、`ADR-017` 设计偏差登记） |
+| ADR | `ADR-001`~`ADR-019` 全部 `ACCEPTED`（`ADR-016` 日切点 04:00、`ADR-017` 设计偏差登记、`ADR-018` 备份字段映射、`ADR-019` 覆盖式备份导入） |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
 
 ## 2. 文档地图
@@ -82,14 +82,19 @@ pwsh -NoProfile -File tools/replay-governance-probes.ps1   # 重放 15 个治理
 发布用的签名从仓库根目录的 `keystore.properties` 读取（已在 `.gitignore`，不进版本库）：
 
 ```properties
-storeFile=.gradle/release.jks
+storeFile=D:/HabitTracker-release/release.jks
 storePassword=***
-keyAlias=release
+keyAlias=habittracker
 keyPassword=***
 ```
 
-生成密钥：`keytool -genkeypair -v -keystore .gradle/release.jks -alias release -keyalg RSA -keysize 4096 -validity 10000`。
-没有这个文件时 `./gradlew assembleRelease` 照常成功，产物是 `app-release-unsigned.apk`（可用于自查，不能直接装机发布）。
+已就绪：正式密钥在 `D:\HabitTracker-release\release.jks`（PKCS12，RSA 4096，有效期 30 年），证书指纹
+`SHA-256 33:ac:f8:b7:8a:89:5e:59:45:22:75:e3:72:69:05:86:8a:45:b1:59:6e:14:47:8b:d2:ec:3f:38:c9:08:ce:9e`。
+**这个文件丢了，已发布的 App 就永远无法升级**，务必离线备份（连同 `keystore.properties` 的密码）。
+
+重新生成（另一份密钥会得到不同指纹，不要混用）：`keytool -genkeypair -v -keystore release.jks -alias habittracker -keyalg RSA -keysize 4096 -validity 10950`。
+路径用正斜杠或双反斜杠，`Properties` 会把 `\r` 当成转义。
+没有 `keystore.properties` 时 `./gradlew assembleRelease` 照常成功，产物是 `app-release-unsigned.apk`（只能自查，不能装机发布）。
 文件刚创建的那次构建若被 Gradle 判成 up-to-date，加 `--rerun-tasks` 或先 `clean`。
 
 `replay-governance-probes.ps1` 会**临时改写** `TASK-019`、`TEST_REPORT`、manifest 与 build 文件，用 `git show HEAD:` 取原件、`git checkout --` 还原；探测路径上有未提交改动时它直接 `[DIRTY]` 中止，不会覆盖别人的工作。
