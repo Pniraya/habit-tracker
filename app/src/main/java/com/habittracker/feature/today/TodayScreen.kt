@@ -33,6 +33,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -103,9 +105,10 @@ fun TodayScreen(
     val allDone = total > 0 && doneCount == total
     val bestStreak = HabitVisuals.bestStreak(scheduled.map { it.currentStreak })
 
-    Box(modifier = modifier.fillMaxSize().background(WarmWhite)) {
+    Box(modifier = modifier.fillMaxSize().background(WarmWhite), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            // Tablets and foldables otherwise stretch a phone layout to 840dp.
+            modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth().fillMaxHeight(),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,

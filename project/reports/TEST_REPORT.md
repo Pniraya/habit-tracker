@@ -4,9 +4,9 @@
 
 ## Latest Run
 - 日期时间：`2026-11-09`
-- 分支 / commit：`main`（`TASK-030b` 合入；最终 commit 以 `git log -1` 为准）
+- 分支 / commit：`main`（`TASK-040` 机型适配；最终 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 177 项 + DAO SQL 45 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；真机 `PASS`（我的 → 导出备份 → 「已导出 3 个习惯」→ `node:sqlite` 按 schema v1 回读；今日/统计/我的三页巡检；`aapt2` 确认运行时权限为 0）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 177 项 + DAO SQL 45 项 + `assembleDebug` + `git diff --check`）；`tools/probe-adaptation.ps1` `PASS`（模拟器 API 35，8 档配置 × 3 页 = 24 次页面断言全绿）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -125,6 +125,7 @@
 | 2026-11-09 | 真机：我的 → 导出备份 → 系统选择器保存 | **PASS** | 提示「已导出 3 个习惯」；`Download/habit-tracker-backup-2026-11-09.json` 3,373 B；导出后库计数不变 | TASK-030 |
 | 2026-11-09 | `node .gradle/verify-backup.mjs`（按 schema v1 回读） | **PASS** | `format`/`schemaVersion`/日期/时间格式校验通过；内存库插入 3 习惯 / 3 计划 / 5 日志 / 0 提醒；与设备库计数一致；含 1 个归档习惯 | TASK-030 |
 | 2026-11-09 | `tools/run-unit-tests.ps1`（备份导入） | **OK (177 tests)** | 168 → 177：`BackupParserTest` 9 项；首轮 `wrong()` 返回类型写成 `Nothing` 编译失败，改回 `Nothing?` | TASK-039 |
+| 2026-11-09 | `tools/probe-adaptation.ps1`（8 档 × 3 页） | **PASS** | 模拟器 `android-35 google_apis x86_64` + AEHD；24 次断言无越界/触控目标不足；首轮修复底部导航大字体裁剪与 840dp 平板拉伸 | TASK-040 |
 | 2026-11-09 | 真机巡检：今日 / 统计 / 我的 | **PASS** | 11 月 9 日 · 周一，今日 0/2、连续 3 天；统计本月 71%、最长连续 3 天、当日格描边；我的页数据备份卡片 + 归档项 | TASK-030 |
 
 ## Known Test Gaps

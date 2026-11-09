@@ -5,32 +5,32 @@
 ## Snapshot
 - 日期时间（含时区）：`2026-11-09`（Asia/Shanghai）
 - 当前阶段：`Gate 3`（出口 = `TASK-026` 完成 + `R1` 窄口径评审；评审仍未做）
-- 当前任务：`TASK-039`（`IMPLEMENTED`：覆盖式 JSON 恢复，177 项单测 + DAO 45 项，真机由用户验证导入正常）
-- 用户决定：备份更新方式 = **覆盖**（`ADR-019`）；**暂不做提醒**（`F-012/F-013` 推迟）；下一步做 **机型适配**
-- `main`：合入 `TASK-030b` 后以 `git log -1` 为准；远程仍为空，未推送
-- 待批审：`TASK-026/027/028/029/030/030b/031~038` 共 13 个 `IMPLEMENTED`；`TASK-003/004/005` 为 `PARTIAL` 在册例外
-- **设备**：iQOO Neo7 SE 在线；用户数据 3 个习惯（含归档「苔藓缸打造」），不要覆盖
+- 当前任务：`TASK-040`（`IN_PROGRESS`：机型适配；模拟器矩阵已跑通，2 个布局缺陷已修）
+- 用户决定：备份更新方式 = **覆盖**；**暂不做提醒**；适配优先小米/OPPO，云真机先用 Firebase Test Lab 免费额度
+- `main`：`TASK-039` 已合入（`fb767de`），`TASK-040` 改动未提交
+- 待批审：`TASK-026/027/028/029/030/031~039` 共 13 个 `IMPLEMENTED`；`TASK-003/004/005` 为 `PARTIAL` 在册例外
 
-## Completed This Session
-- `TASK-030`：四表 JSON 导出 + SAF + 权限清理 + `ADR-018`；真机导出 3,373 B 并由 `node:sqlite` 回读
-- `TASK-030b`：`BackupParser`（最小 JSON 解析器 + 全量校验）、`BackupRestorer`（单事务覆盖）、「我的」页导入入口 + 二次确认 + `ADR-019`
+## 本轮新增（TASK-040）
+- 模拟器：`D:\AndroidStudio\.gradle\emu-sdk`（emulator 37.3.8 + API 35 google_apis x86_64），AVD `adapt` 在 `D:\AndroidStudio\.gradle\avd`；AEHD 2.2 加速可用，WHPX 不需要。
+  - 启动：`pwsh -NoProfile -File .gradle\start-emulator.ps1`（headless，端口 5554）。
+  - 注意：`sdkmanager` 在沙箱里写 `.sdk` 会 `AccessDenied`，所以模拟器与镜像用 `Invoke-WebRequest` 直接下载 zip 解压，不走 sdkmanager。
+- `tools/probe-adaptation.ps1`：8 档配置（320/360/411/600/840dp、字体 1.5×/2.0×、挖孔 overlay）× 3 页，截图 + `uiautomator` 断言。
+- 修复：底部导航 `84.dp` 固定高度 → 随 `fontScale` 缩放（1×–1.7×）；今日页内容 `widthIn(max = 560.dp)` 居中。
 
 ## Verification Actually Run
 | 命令 | 结果 | 备注 |
 |---|---|---|
-| `tools/run-unit-tests.ps1` | **OK (177 tests)** | 新增 `BackupParserTest` 9 项 |
-| `node tools/verify-dao.mjs` | **DAO SQL PASS（45 项）** | 4 个 `deleteAll` + 全表清空 |
-| 真机导入（用户手动） | **PASS（owner）** | 覆盖式恢复；AI 未走完文件选择确认流程 |
-| `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 177、DAO 45、构建、`git diff --check` |
+| `tools/probe-adaptation.ps1` | **PASS** | 24 次页面断言全绿（越界、触控 ≥48dp、文本宽度） |
+| `gradlew assembleDebug` | **BUILD SUCCESSFUL** | 两次布局修复后重建 |
+| `tools/verify-all.ps1` | 见 `project/reports/TEST_REPORT.md` | 提交前最后一跑 |
 
 ## Not Verified / Known Gaps
-- **AI 未亲手完成真机导入确认**：文件选择器里下载目录文件过多，AI 未定位到备份文件；用户已手动验证通过。
-- **合并导入未实现**（`DATABASE.md` §11 第 5 条），需要时另立任务。
-- **13 个 `IMPLEMENTED` 评审债**：需新上下文做 `R1` 批量评审。
-- **单色主题图标**、`assembleRelease`/lint、CI 实跑仍未做。
-- 04:00 跨日仅 JVM 证据（用户跳过真机跨日验证）。
+- 统计页、我的页在 600dp+ 未做宽度上限；平板底部导航仍全宽。
+- 未跑 Firebase Test Lab（小米/OPPO 真机 ROM 差异：字体、显示大小、手势条）。
+- 横屏未验证；矩阵跑的是空数据状态。
+- 13 个 `IMPLEMENTED` 评审债；提醒功能暂缓。
 
 ## Next Safe Action
-1. **机型适配**（用户指定下一步）：小屏/大屏/高 DPI、字体缩放、刘海与导航栏 insets、横竖屏表现。
-2. `R1` 批量评审（新上下文）。
-3. 提醒功能暂缓（用户决定）。
+1. `TASK-040` 收尾：统计/我的宽度上限 + 底部导航平板居中，再跑矩阵。
+2. Firebase Test Lab 跑小米/OPPO 抽样。
+3. `R1` 批量评审（新上下文）。

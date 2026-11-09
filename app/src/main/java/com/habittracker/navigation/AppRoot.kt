@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -269,8 +270,12 @@ private fun HabitBottomBar(currentRoute: String?, onSelect: (AppDestination) -> 
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .fillMaxWidth()
-                .height(84.dp)
-                .padding(start = 24.dp, end = 24.dp, top = 10.dp, bottom = 22.dp),
+                // A fixed 84dp height clipped the labels once the system font scale passed
+                // 1.5x (TASK-040). Scaling the bar with the font keeps the mockup at 1x and
+                // leaves the labels their full line height; heightIn alone let the pill
+                // stretch to the whole screen because the tabs use fillMaxHeight.
+                .height((84 * LocalConfiguration.current.fontScale.coerceIn(1f, 1.7f)).dp)
+                .padding(start = 24.dp, end = 24.dp, top = 10.dp, bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             AppDestination.entries.forEach { destination ->
