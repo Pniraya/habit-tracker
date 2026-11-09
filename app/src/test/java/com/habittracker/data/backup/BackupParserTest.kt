@@ -135,4 +135,51 @@ class BackupParserTest {
         val json = BackupJson.encode(document()).replace("\"format\"", "\"extra\": true,\n  \"format\"")
         assertTrue(BackupParser.parse(json) is BackupParseResult.Ready)
     }
+
+    @Test
+    fun anImpossibleCalendarDateIsRejected() {
+        // The yyyy-MM-dd regex accepts February 30th; only a real parse catches it.
+        val broken = BackupJson.encode(document()).replace("2026-11-08", "2026-02-30")
+        assertTrue(errorsOf(broken).any { it.contains("不是合法日期") })
+    }
+
+    @Test
+    fun overlappingScheduleVersionsAreRejected() {
+        val doc = document()
+        val broken = BackupJson.encode(
+            doc.copy(
+                schedules = doc.schedules + doc.schedules[0].copy(
+                    id = 4,
+                    effectiveFrom = "2026-11-01",
+                    effectiveUntil = "2026-11-30",
+                ),
+            ),
+        )
+        assertTrue(errorsOf(broken).any { it.contains("区间重叠") })
+    }
+
+    @Test
+    fun twoOpenScheduleVersionsAreRejected() {
+        val doc = document()
+        val broken = BackupJson.encode(doc.copy(schedules = doc.schedules + doc.schedules[0].copy(id = 9)))
+        assertTrue(errorsOf(broken).any { it.contains("多条未结束") })
+    }
+
+    @Test
+    fun aBooleanHabitWithATargetOrUnitIsRejected() {
+        val doc = document()
+        val broken = BackupJson.encode(
+            doc.copy(habits = listOf(doc.habits[0].copy(trackingType = "BOOLEAN", unit = "页"))),
+        )
+        assertTrue(errorsOf(broken).any { it.contains("BOOLEAN 必须为空") })
+    }
+
+    @Test
+    fun aLogWhoseStatusContradictsItsValueIsRejected() {
+        val doc = document()
+        val broken = BackupJson.encode(
+            doc.copy(logs = listOf(doc.logs[0].copy(status = "COMPLETED", completedAt = 1_700_000_200_000))),
+        )
+        assertTrue(errorsOf(broken).any { it.contains("status 与 actual_value") })
+    }
 }

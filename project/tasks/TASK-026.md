@@ -1,6 +1,6 @@
 # TASK-026: 设备侧 Room 契约测试
 
-- 状态：`IMPLEMENTED`（`ADR-015`：实现与真机自测完成，未经独立评审）
+- 状态：`DONE`（独立 Reviewer `APPROVE`，见 §13）
 - 阶段：`Gate 3`
 - 优先级：`P0`（外部评审 `ADVICE-RESPONSE-2026-11-06.md` 建议「现在最该做的一件事」）
 - 依赖：`TASK-025`（设备侧通道）
@@ -73,7 +73,7 @@
 ## 11. Completion Review
 - [x] 验收标准满足
 - [x] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`（`ADR-015` 批量评审）
+- [x] 独立 Reviewer `APPROVE`（`REVIEW-TASK-026`，0 阻断）
 
 ## 12. Handoff
 - 下一条安全操作：外部评审建议的 `N2` 窄口径里程碑评审（7 个 `IMPLEMENTED` 一起转 `DONE` 或列阻塞项），由**不带实现上下文的新会话**执行。
@@ -81,15 +81,15 @@
 - 跑设备测试前必须备份 DB（见 §8）。
 
 ## 13. Independent Review
-- Reviewer record：待创建（批量评审）
-- 结论：`PENDING`（`IMPLEMENTED`）
+- Reviewer record：[`REVIEW-TASK-026`](../reviews/REVIEW-TASK-026.md)
+- 结论：`APPROVE`（第 1 轮独立评审，0 阻断）。评审者未参与实现，逐项复核了 数据层契约测试（触发器/回滚） 的 diff、测试证据与文档同步。
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-026
-- 状态：`IMPLEMENTED`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 7 项 / 未通过 0 项
-- 最近测试记录：2026-11-06 / **OK (154 tests)**
+- 最近测试记录：2026-11-09 / **OK (182 tests)**，`verify-all` 全绿
 <!-- close-task:end -->

@@ -42,7 +42,7 @@ import com.habittracker.data.backup.BackupParser
 import com.habittracker.data.backup.BackupRestorer
 import com.habittracker.data.local.HabitDatabase
 import com.habittracker.domain.model.Habit
-import java.time.LocalDate
+import com.habittracker.domain.calculation.DayCutoff
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -75,9 +75,19 @@ fun ProfileScreen(presenter: ProfilePresenter) {
             scope.launch {
                 val parsed = runCatching {
                     withContext(Dispatchers.IO) {
-                        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                            ?: error("无法读取所选文件")
-                        if (bytes.size > BackupParser.MAX_BYTES) error("文件超过 8 MB")
+                        // Cap while streaming: readBytes() would already have the whole file in
+                        // memory before the size check (ADR-019 keeps the 8 MB limit meaningful).
+                        val bytes = context.contentResolver.openInputStream(uri)?.use { stream ->
+                            val buffer = java.io.ByteArrayOutputStream()
+                            val chunk = ByteArray(64 * 1024)
+                            while (true) {
+                                val read = stream.read(chunk)
+                                if (read < 0) break
+                                buffer.write(chunk, 0, read)
+                                if (buffer.size() > BackupParser.MAX_BYTES) error("文件超过 8 MB")
+                            }
+                            buffer.toByteArray()
+                        } ?: error("无法读取所选文件")
                         BackupParser.parse(bytes.toString(Charsets.UTF_8))
                     }
                 }
@@ -143,7 +153,9 @@ fun ProfileScreen(presenter: ProfilePresenter) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(
                         onClick = {
-                            createBackup.launch(BackupExporter.fileName(LocalDate.now().toString()))
+                            // Logical day, not the wall clock: before 04:00 the backup file
+                            // would otherwise be dated one day ahead of the habit data.
+                            createBackup.launch(BackupExporter.fileName(DayCutoff.today().toString()))
                         },
                     ) {
                         Text("导出备份", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MossGreenDark)

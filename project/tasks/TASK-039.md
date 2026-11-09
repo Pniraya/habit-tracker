@@ -23,7 +23,7 @@
 - 文件选择用 `*/*`：从电脑拷入的 JSON 常无 MIME 类型，按内容校验更可靠。
 
 ## 4. Out of Scope
-- 合并导入（按 ID 去重、冲突选择）留待后续任务。
+- 合并导入：用户已于 2026-11-09 决定**不做**（`ADR-019` 修订），不再作为缺口。
 - 提醒调度重建（V1 无提醒）。
 - 自定义图标的图片文件不在 JSON 内，导入后文件缺失则回退嫩芽。
 
@@ -32,7 +32,7 @@
 - 修改：`ProfileScreen.kt`、`HabitDao.kt`、`HabitScheduleDao.kt`、`HabitLogDao.kt`、`HabitReminderDao.kt`、`tools/verify-dao.mjs`、状态文档
 
 ## 6. Acceptance Criteria
-- [x] 校验失败不写库：解析/校验在内存完成，任何错误整体失败并显示字段路径
+- [x] 校验失败不写库：解析/校验在内存完成，任何错误整体失败并显示字段路径。2026-11-09 评审后补强：列级约束（BOOLEAN 目标/单位、status 与 `actual_value` 一致）、日历合法性（`LocalDate`/`LocalTime` 真解析）、计划版本区间重叠与多条未结束版本都在解析阶段拒绝，不再落到 SQLite 约束或 repository 才抛错
 - [x] 覆盖前二次确认：弹窗写明习惯数、日志数与「不可撤销」
 - [x] 单事务：删除与写入在 `withTransaction` 内，异常回滚
 - [x] 保留原始 ID 与引用，导入后自增序列从最大 ID 继续
@@ -82,6 +82,13 @@
 - Reviewer record：待创建（批量评审）
 - 结论：`PENDING`（`IMPLEMENTED`）
 
+## 14. 评审修复（2026-11-09，第 2 轮）
+
+- **列级约束前移到解析期**：`BackupParser.validateHabitColumns` 检查 BOOLEAN 的 `target_value=1`、`unit=null`，NUMERIC 的 `unit` 非空；`validateDates` 用 `LocalDate`/`LocalTime` 真解析（`yyyy-MM-dd` 正则放过了 `2026-02-30`）；日志 `status` 必须与 `actual_value`/`target_snapshot` 一致；`unit` 类型错误不再静默变 `null`。
+- **计划版本区间**：`validateScheduleVersions` 按 `habit_id` 排序后拒绝重叠区间与多条未结束版本，避免导入成功后 repository 才抛 `overlapping schedule versions`（绕过 `HabitScheduleWriter` 的唯一写入端）。
+- **文档同步**：`README`/`PROJECT_STATUS`/`TEST_REPORT` 的计数统一为 182 单测、45 DAO；`DATABASE.md` §11 增加指向 `ADR-019` 修订的说明；本文件 §6 补记上述校验。
+- **非阻塞项**：8 MB 上限改为边读边判（`ProfileScreen`），不再先 `readBytes()` 再检查。
+
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
@@ -89,5 +96,5 @@
 - 状态：`IMPLEMENTED`
 - 阶段：Gate 3
 - 验收：通过 7 项 / 未通过 0 项
-- 最近测试记录：2026-11-06 / **OK (168 tests)**
+- 最近测试记录：2026-11-09 / **OK (182 tests)**，`verify-all` 全绿
 <!-- close-task:end -->

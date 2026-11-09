@@ -3,6 +3,8 @@ package com.habittracker.core.storage
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import com.habittracker.core.designsystem.HabitVisuals
 import java.io.File
@@ -48,14 +50,41 @@ object CustomIcons {
             BitmapFactory.decodeStream(it, null, options)
         } ?: return null
 
-        val side = minOf(decoded.width, decoded.height)
-        if (side <= 0) return decoded
-        val x = (decoded.width - side) / 2
-        val y = (decoded.height - side) / 2
-        val cropped = Bitmap.createBitmap(decoded, x, y, side, side)
-        if (cropped !== decoded) decoded.recycle()
+        // BitmapFactory ignores EXIF orientation, so a portrait camera shot would otherwise be
+        // written to disk lying on its side (found in the TASK-037 review).
+        val upright = applyExifRotation(context, uri, decoded)
+        val side = minOf(upright.width, upright.height)
+        if (side <= 0) return upright
+        val x = (upright.width - side) / 2
+        val y = (upright.height - side) / 2
+        val cropped = Bitmap.createBitmap(upright, x, y, side, side)
+        if (cropped !== upright) upright.recycle()
         return if (cropped.width == MAX_PX) cropped else Bitmap.createScaledBitmap(cropped, MAX_PX, MAX_PX, true).also {
             if (it !== cropped) cropped.recycle()
+        }
+    }
+
+    /** Rotates the decoded bitmap by the EXIF orientation, or returns it unchanged. */
+    private fun applyExifRotation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap {
+        val degrees = runCatching {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                when (
+                    ExifInterface(input).getAttributeInt(
+                        ExifInterface.TAG_ORIENTATION,
+                        ExifInterface.ORIENTATION_NORMAL,
+                    )
+                ) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                    else -> 0
+                }
+            } ?: 0
+        }.getOrDefault(0)
+        if (degrees == 0) return bitmap
+        val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true).also {
+            if (it !== bitmap) bitmap.recycle()
         }
     }
 }

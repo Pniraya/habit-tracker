@@ -1,5 +1,8 @@
 package com.habittracker.data.backup
 
+import java.time.LocalDate
+import java.time.LocalTime
+
 /**
  * Reads the JSON backup (ADR-018) and validates every row before anything touches the database
  * (DATABASE.md 11, ADR-019). Pure Kotlin: the JVM tests drive it, and a malformed file must fail
@@ -233,6 +236,15 @@ object BackupParser {
                 errors.add("reminders 中 habit " + reminder.habitId + " 在 " + reminder.reminderTime + " 有重复提醒")
             }
         }
+        validateHabitColumns(habits, errors)
+        validateDates(habits, schedules, logs, reminders, errors)
+        validateScheduleVersions(schedules, errors)
+        logs.forEach { log ->
+            if ((log.status == "COMPLETED") != (log.actualValue >= log.targetSnapshot)) {
+                errors.add("logs[" + log.id + "] status 与 actual_value/target_snapshot 不一致")
+            }
+        }
+
         if (schedules.map { it.id }.toSet().size != schedules.size) errors.add("schedules.id 有重复")
         if (logs.map { it.id }.toSet().size != logs.size) errors.add("logs.id 有重复")
         if (reminders.map { it.id }.toSet().size != reminders.size) errors.add("reminders.id 有重复")
@@ -245,6 +257,78 @@ object BackupParser {
             logs = logs,
             reminders = reminders,
         )
+    }
+
+    /** Column-level rules that the database CHECK constraints would otherwise reject at insert. */
+    private fun validateHabitColumns(habits: List<BackupHabit>, errors: MutableList<String>) {
+        habits.forEach { habit ->
+            when (habit.trackingType) {
+                "BOOLEAN" -> {
+                    if (habit.targetValue != 1.0) {
+                        errors.add("habits[" + habit.id + "].target_value BOOLEAN 必须是 1")
+                    }
+                    if (habit.unit != null) errors.add("habits[" + habit.id + "].unit BOOLEAN 必须为空")
+                }
+                "NUMERIC" -> if (habit.unit.isNullOrBlank()) {
+                    errors.add("habits[" + habit.id + "].unit NUMERIC 不能为空")
+                }
+            }
+        }
+    }
+
+    /** Calendar validity: the regex alone accepts 2026-02-30 and 25:00:00. */
+    private fun validateDates(
+        habits: List<BackupHabit>,
+        schedules: List<BackupSchedule>,
+        logs: List<BackupLog>,
+        reminders: List<BackupReminder>,
+        errors: MutableList<String>,
+    ) {
+        fun date(value: String?, label: String) {
+            if (value == null) return
+            runCatching { LocalDate.parse(value) }.onFailure {
+                errors.add(label + " 不是合法日期: " + value)
+            }
+        }
+        habits.forEach { habit ->
+            date(habit.createdOn, "habits[" + habit.id + "].created_on")
+            date(habit.archivedOn, "habits[" + habit.id + "].archived_on")
+        }
+        schedules.forEach { schedule ->
+            date(schedule.effectiveFrom, "schedules[" + schedule.id + "].effective_from")
+            date(schedule.effectiveUntil, "schedules[" + schedule.id + "].effective_until")
+            val from = schedule.effectiveFrom
+            val until = schedule.effectiveUntil
+            if (until != null && DATE.matches(from) && DATE.matches(until) && until < from) {
+                errors.add("schedules[" + schedule.id + "].effective_until 早于 effective_from")
+            }
+        }
+        logs.forEach { log -> date(log.logDate, "logs[" + log.id + "].log_date") }
+        reminders.forEach { reminder ->
+            runCatching { LocalTime.parse(reminder.reminderTime) }.onFailure {
+                errors.add("reminders[" + reminder.id + "].reminder_time 不是合法时间: " + reminder.reminderTime)
+            }
+        }
+    }
+
+    /**
+     * Schedule versions are written straight into the table (ADR-019 keeps the original ids), so
+     * overlap and multiple open versions have to be rejected here: Room has no constraint for it
+     * and the repository throws later, with no field path for the user.
+     */
+    private fun validateScheduleVersions(schedules: List<BackupSchedule>, errors: MutableList<String>) {
+        schedules.groupBy { it.habitId }.forEach { (habitId, versions) ->
+            val sorted = versions.sortedBy { it.effectiveFrom }
+            sorted.zipWithNext().forEach { (earlier, later) ->
+                val until = earlier.effectiveUntil
+                if (until == null || until >= later.effectiveFrom) {
+                    errors.add("schedules 中 habit " + habitId + " 的计划版本区间重叠或重复开放")
+                }
+            }
+            if (versions.count { it.effectiveUntil == null } > 1) {
+                errors.add("schedules 中 habit " + habitId + " 有多条未结束的计划版本")
+            }
+        }
     }
 
     private fun validateMask(schedule: BackupSchedule, errors: MutableList<String>) {
@@ -291,6 +375,10 @@ object BackupParser {
         if (tracking !in setOf("BOOLEAN", "NUMERIC")) errors.add(path + ".tracking_type 不是已知枚举")
         val target = obj.double("target_value") ?: return wrong(errors, path + ".target_value", "数字")
         if (target <= 0) errors.add(path + ".target_value 必须大于 0")
+        val unitValue = obj.values["unit"]
+        if (unitValue != null && unitValue !is Json.Str && unitValue !is Json.Null) {
+            errors.add(path + ".unit 必须是字符串或 null")
+        }
         val unit = obj.string("unit")
         val createdAt = obj.long("created_at") ?: return wrong(errors, path + ".created_at", "数字")
         val updatedAt = obj.long("updated_at") ?: return wrong(errors, path + ".updated_at", "数字")

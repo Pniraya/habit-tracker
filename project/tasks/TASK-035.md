@@ -1,6 +1,6 @@
 # TASK-035: 日切点 04:00 与设计偏差登记
 
-- 状态：`IMPLEMENTED`（`ADR-015`：实现与真机自测完成，未经独立评审）
+- 状态：`DONE`（独立 Reviewer `APPROVE`，见 §13）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-026`
@@ -63,26 +63,28 @@
 | `tools/run-unit-tests.ps1` | **OK (159 tests)** | 154 → 159：`DayCutoffTest` 5；定时器用例改写 |
 | 真机（iQOO Neo7 SE）：安装 + 今日页 + 统计页 | **PASS** | 今日页 `11月6日 · 周五`、3 个习惯不变；统计页 UI 树只有「统计/本月/本周趋势」，无「周/年」 |
 | `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 159、DAO 38、构建、`git diff --check` |
+| 评审修复（2026-11-09）：`grep -r "LocalDate.now" app/src/main` | **0 命中** | 备份文件名改用 `DayCutoff.today()`；业务日期不再取墙钟自然日 |
+| 评审修复：`assembleDebug` + `run-unit-tests.ps1` | **BUILD SUCCESSFUL / OK (182 tests)** | 与 `ADR-016` 的 Supersedes 收窄同时落地 |
 
 ## 11. Completion Review
 - [x] 验收标准满足
 - [x] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`（`ADR-015` 批量评审）
+- [x] 独立 Reviewer `APPROVE`（`REVIEW-TASK-035`，第 2 轮，0 阻断）
 
 ## 12. Handoff
 - 下一条：`R1` 窄口径评审（现在有 8 个 `IMPLEMENTED`），或 `N5` 提醒数据模型 ADR。
 - 04:00 真实跨日需要在凌晨手动确认一次；这是目前唯一无法自动化的日切证据。
 
 ## 13. Independent Review
-- Reviewer record：待创建（批量评审）
-- 结论：`PENDING`（`IMPLEMENTED`）
+- Reviewer record：[`REVIEW-TASK-035`](../reviews/REVIEW-TASK-035.md)
+- 结论：`APPROVE`（第 2 轮独立评审，0 阻断）。评审者未参与实现，逐项复核了 备份导出（含 04:00 逻辑日修复） 的 diff、测试证据与文档同步。
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-035
-- 状态：`IMPLEMENTED`
+- 状态：`DONE`
 - 阶段：Gate 3
 - 验收：通过 7 项 / 未通过 0 项
-- 最近测试记录：2026-11-06 / **OK (159 tests)**
+- 最近测试记录：2026-11-09 / **OK (182 tests)**，`verify-all` 全绿
 <!-- close-task:end -->

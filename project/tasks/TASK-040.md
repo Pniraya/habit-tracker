@@ -167,5 +167,5 @@
 - 状态：`IMPLEMENTED`
 - 阶段：Gate 3
 - 验收：通过 5 项 / 未通过 0 项
-- 最近测试记录：2026-11-09 / **OK (177 tests)**
+- 最近测试记录：2026-11-09 / **OK (182 tests)**，`verify-all` 全绿
 <!-- close-task:end -->

@@ -6,7 +6,7 @@
 - 日期时间：`2026-11-09`
 - 分支 / commit：`main`（`TASK-040` 机型适配；最终 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
-- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 177 项 + DAO SQL 45 项 + `assembleDebug` + `git diff --check`）；`tools/probe-adaptation.ps1` `PASS`（模拟器 API 35，5 档手机配置 × 3 页，带 3 个习惯数据）；新建/详情页人工截图核对（320dp + 1.5× 字体）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
+- 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 182 项 + DAO SQL 45 项 + `assembleDebug` + `git diff --check`）；`tools/probe-adaptation.ps1` `PASS`（模拟器 API 35，5 档手机配置 × 3 页，带 3 个习惯数据）；新建/详情页人工截图核对（320dp + 1.5× 字体）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）
 
 ## Runs
 
@@ -130,11 +130,12 @@
 | 2026-11-09 | 人工截图：新建 / 详情（720×1280@320，字体 1.5） | **PASS** | 表单可滚动到频率与「开始养成」；详情「本周 / 近 5 周」标题与图例完整 | TASK-040 |
 | 2026-11-09 | `tools/probe-adaptation.ps1 -HabitName`（5 页） | **PASS** | 新建/详情纳入自动断言；发现图标格 46dp、关闭按钮 46dp、pill 46dp → 全部提到 48dp；`-HabitName` 名称被省略时回退前缀匹配 | TASK-040 |
 | 2026-11-09 | 真机巡检：今日 / 统计 / 我的 | **PASS** | 11 月 9 日 · 周一，今日 0/2、连续 3 天；统计本月 71%、最长连续 3 天、当日格描边；我的页数据备份卡片 + 归档项 | TASK-030 |
+| 2026-11-09 | `tools/verify-all.ps1`（`TASK-035`/`037`/`030`/`039` 评审修复） | **OK (182 tests)**，`verify-all` 全绿 | 治理 22/22、**OK (182 tests)**（`tools/run-unit-tests.ps1`，+5 备份解析用例）、DAO 45、`assembleDebug`、`git diff --check` | `TASK-039` |
 
 ## Known Test Gaps
 - 已知限制：`gradlew test` 在本机沙箱内必然失败（Gradle 测试 worker 的命名管道被禁），只能由 `tools/run-unit-tests.ps1` 直接跑 JUnit；这不是代码通过或失败的证据。
 - **重要更新（`TASK-025`）**：`connectedDebugAndroidTest` 在真机上**可用**（`Tests 1/1 completed`，两次通过）。此前「本机无法跑 Android 侧测试」只对 Gradle 单元测试 worker 成立。约束有两条：安装需要**解锁**设备；运行期间需 `adb shell svc power stayon usb` 保持唤醒，否则 UTP 会报 `Android device ... is not found`。
-- **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，31 项，含 6 项批量查询场景与归档/恢复 4 项）——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新。
+- **已覆盖**：schema 与 8 条约束触发器（`verify-schema.mjs`，40 项）；DAO 声明语句的 SQL 语义（`verify-dao.mjs`，**45 项**，含批量查询、归档/恢复、删除与四个 `deleteAll`）——闭区间边界、CAS 更新（`archive`/`closeVersion`）、级联删除、唯一索引与 `ON CONFLICT` 更新。
 - **未覆盖（UI）**：Today 状态机 9 项、新建表单状态机 9 项 JVM 覆盖；Compose 渲染与交互未由 Robolectric 或设备自动化验证（手动真机走查记录见 `TASK-012` §14，非自动化）。
 - **部分已覆盖（`TASK-026`，设备侧）**：触发器在生产 `callback()` 路径上的注册与重开、实体/Converter 往返（闰日/REAL 精度/可空 unit/枚举/时区）、`observeActive()` 失效、四表级联、`changeSchedule` 回滚。**仍未覆盖**：迁移（schema 仍 v1）、Cursor 到实体的全量字段映射（只抽查关键字段）、并发写入、Room 由 `@Upsert`/`@Insert` **生成的** SQL 与唯一索引选择。
 - 无模拟器（`HypervisorPresent=False`，无 WHPX/Hyper-V）；真机验证为手动走查，非自动化：`TASK-012`（建习惯/打卡/落库）与 `TASK-016`（小数输入 `0.5` 落库）。设备侧行级证据见 `project/reports/DEVICE_DUMP-2026-11-05.md`。

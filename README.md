@@ -21,8 +21,8 @@
 | 当前任务 | `TASK-040`（`IMPLEMENTED`：机型适配——模拟器 5 档手机配置 × 5 页自动断言，修掉大字体裁字与 <48dp 触控；待批量评审） |
 | 代码实现 | `DEVICE_VERIFIED`（单模块 `:app`、三页导航、Room schema v1、Repository、UseCase；主路径已真机走通，逐页巡检与 UI 自动化仍缺） |
 | 最近构建 | `PASS` — `gradlew assembleDebug`，2026-11-06，13s，APK 10,559,569 B |
-| 最近测试 | `PASS` — **159** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
-| 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL 38/38（`verify-dao.mjs`） |
+| 最近测试 | `PASS` — **182** 项单测（`tools/run-unit-tests.ps1`）+ **6** 项真机 instrumented（`connectedDebugAndroidTest`：5 项 Room 契约 + SmokeTest）；`gradlew test` 仍因沙箱禁用测试 worker 而不可用 |
+| 最近数据层校验 | `PASS` — schema 40/40（`verify-schema.mjs`）+ DAO SQL **45/45**（`verify-dao.mjs`） |
 | ADR | `ADR-001`~`ADR-017` 全部 `ACCEPTED`（`ADR-016` 日切点 04:00、`ADR-017` 设计偏差登记） |
 | Git | `main` 为稳定分支；治理任务在 `feat/*` 经独立评审后合入；本地仓库，无远程；基线检查点 `d0f470a` |
 
@@ -68,9 +68,9 @@
 # 作者本机（Windows sandbox：Gradle 测试 worker 被禁，所以另有一个直接跑 JUnit 的入口）
 pwsh -NoProfile -File tools/verify-all.ps1       # 收尾统一入口：治理检查 + 单测 + 构建 + 空白检查
 gradlew.bat assembleDebug                        # 已验证：SUCCESSFUL
-pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：159 项通过（绕过本机被禁的 Gradle 测试 worker）
+pwsh -NoProfile -File tools/run-unit-tests.ps1   # 已验证：182 项通过（绕过本机被禁的 Gradle 测试 worker）
 node tools/verify-schema.mjs                     # 已验证：40/40（schema + 约束）
-node tools/verify-dao.mjs                        # 已验证：38/38（DAO 的 SQL 语义，不含 Room 映射）
+node tools/verify-dao.mjs                        # 已验证：45/45（DAO 的 SQL 语义，不含 Room 映射）
 adb devices                                      # 真机需手动连接（USB 调试已可用）；模拟器不可用：无 WHPX/Hyper-V
 pwsh -NoProfile -File tools/close-task.ps1 -Task TASK-xxx -Apply
 pwsh -NoProfile -File tools/check-governance.ps1

@@ -59,7 +59,7 @@
 - **F-011**：月度热力图与本周柱状趋势由 `TASK-031` 实现并在真机对照；`TASK-033` 补齐每习惯的「本周 + 近 5 周」网格（详情页）。故三列均为已验证。限制：统计页的周/年切换未实现，`TASK-035` 已删除死控件，改为静态「本月」标签（`ADR-017` §6）。
 - **日期语义**：`TASK-035` 起所有「今天」来自 `DayCutoff`（04:00 逻辑日，`ADR-016`）；跨过 0 点的打卡仍属于前一天。
 - **F-012~F-013** 提醒、提醒恢复 — 仍无实现（全量 grep 无 `AlarmManager`/`WorkManager`），`NOT_STARTED`。
-- **F-014** 备份/恢复 — 导出（`TASK-030`）与覆盖式导入（`TASK-030b`）均已实现：四表 JSON、SAF 保存/读取、`ADR-018`/`ADR-019`、全量校验后单事务写回；单测 177 项、DAO 45 项，真机导出由 `node:sqlite` 回读、导入由用户验证正常。合并导入仍未做（有意）。
+- **F-014** 备份/恢复 — 导出（`TASK-030`）与覆盖式导入（`TASK-030b`）均已实现：四表 JSON、SAF 保存/读取、`ADR-018`/`ADR-019`、全量校验后单事务写回；单测 177 项、DAO 45 项，真机导出由 `node:sqlite` 回读、导入由用户验证正常。合并导入已由用户决定不做（`ADR-019` 修订）。
 - **F-008** 的「修改历史记录」仍未实现：`TASK-033` 详情页只读展示历史，编辑只在当前习惯字段上，故 `F-008` 实现列保持 `PARTIAL`。
 - **数据层契约（不占功能行）**：`TASK-026` 新增设备侧 `DatabaseContractTest` 5 项——生产 `DatabaseConstraints.callback()` 的 8 个触发器注册与「重开后仍生效」、实体/Converter 往返（闰日、REAL 精度、可空 unit、枚举、时区切换）、`observeActive()` 失效、四表级联删除、`changeSchedule` 失败回滚。真机 6/6（含 `SmokeTest`）通过；仍未覆盖迁移与 UI。
 - **F-015** 离线 — **覆盖范围**：治理检查第 22 项扫 `AndroidManifest.xml` 的 `INTERNET` 权限，以及 `gradle/libs.versions.toml`、`app/build.gradle.kts`、根 `build.gradle.kts` 的 `okhttp`/`retrofit`/`ktor`/`firebase` 字样。**挡不住**：第三方库 manifest 合并进来的 `INTERNET`、手写 socket/URL 代码。`VERIFIED` 主张的是「本仓库未声明网络能力」，不是「应用绝对无法联网」。 代码：`app/src/main/AndroidManifest.xml`（仅 `POST_NOTIFICATIONS`、`RECEIVE_BOOT_COMPLETED`，无 `INTERNET`）、`gradle/libs.versions.toml`（无 `okhttp`/`retrofit`/`ktor`/`firebase`）；自动化：无专门断言；真机：无。

@@ -1,6 +1,6 @@
 # TASK-037: 自定义习惯图标（相册自选）
 
-- 状态：`IMPLEMENTED`（`ADR-015`：实现与真机自测完成，未经独立评审）
+- 状态：`DONE`（独立 Reviewer `APPROVE`，见 §13）
 - 阶段：`Gate 3`
 - 优先级：`P1`
 - 依赖：`TASK-032`（图标/颜色选择器）、`TASK-038`（应用图标）
@@ -69,27 +69,33 @@
 | 真机：新建页图标网格 | **PASS** | 11 个线条图标 + 相册格，两行等宽；滚动到底后频率卡与保存按钮不再贴住 |
 | 真机：Photo Picker → 保存 → 今日页 | **PASS** | 截图 `picked.png`（图标格预览）、`custom_created.png`（行内圆形图） |
 | 真机数据库/文件核对 | **PASS** | `icon='custom:952fcb26-...png'`；`files/icons/952fcb26-...png` 115,959 B |
-| `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 161、DAO 38、构建、`git diff --check` |
+| `tools/verify-all.ps1` | **VERIFY ALL PASS** | 治理 22/22、单测 **162**、DAO 38、构建、`git diff --check` |
 
 ## 11. Completion Review
 - [x] 验收标准满足
 - [x] 测试实际运行
-- [ ] 独立 Reviewer `APPROVE`（`ADR-015` 批量评审）
+- [x] 独立 Reviewer `APPROVE`（`REVIEW-TASK-037`，第 2 轮，0 阻断）
 
 ## 12. Handoff
 - 素材包方案（B）需要用户提供文件与风格决定；相册方案已可用。
 - 后续可做：编辑已有习惯的图标、删除习惯时清理孤儿文件、备份导出包含图标文件。
 
 ## 13. Independent Review
-- Reviewer record：待创建（批量评审）
-- 结论：`PENDING`（`IMPLEMENTED`）
+- Reviewer record：[`REVIEW-TASK-037`](../reviews/REVIEW-TASK-037.md)
+- 结论：`APPROVE`（第 2 轮独立评审，0 阻断）。评审者未参与实现，逐项复核了 自定义图标（含 EXIF 修复） 的 diff、测试证据与文档同步。
+
+## 14. 评审修复（2026-11-09）
+
+- **EXIF 方向**：`CustomIcons.decodeSquare` 现在用 `android.media.ExifInterface`（框架自带，无新依赖）读 Orientation，旋转 90/180/270 后再居中裁剪；否则相机竖拍会横躺落盘。
+- **证据矛盾**：`TASK-037` 里 `verify-all` 的「单测 161」与其余「162」不一致，已统一为 162。
+- 未改动：解码仍在主线程（慢 provider 有 ANR 风险）、孤儿文件（删除习惯 / 取消新建 / 重选图）仍未清理，均登记为已知缺口。
 
 <!-- close-task:begin -->
 ## 状态摘要（自动生成，勿手改）
 
 - 任务：TASK-037
-- 状态：`IMPLEMENTED`
+- 状态：`DONE`
 - 阶段：Gate 3
-- 验收：通过 7 项 / 未通过 0 项
-- 最近测试记录：2026-11-06 / **OK (161 tests)**
+- 验收：通过 8 项 / 未通过 0 项
+- 最近测试记录：2026-11-09 / **OK (182 tests)**，`verify-all` 全绿
 <!-- close-task:end -->
