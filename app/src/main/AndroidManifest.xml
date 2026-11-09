@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- V1 permissions only. No exact-alarm permission: reminders are Normal precision. -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- No permissions in V1. POST_NOTIFICATIONS and RECEIVE_BOOT_COMPLETED come back with the
+         reminder feature; declaring them before it exists only looked like the app asks for more
+         access than it uses (TASK-030). No exact-alarm permission even then: Normal precision. -->
 
     <application
         android:allowBackup="false"

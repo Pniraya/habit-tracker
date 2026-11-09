@@ -1,5 +1,7 @@
 package com.habittracker.feature.profile
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,8 +17,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,8 +34,12 @@ import com.habittracker.core.designsystem.SoftCard
 import com.habittracker.core.designsystem.TextPrimary
 import com.habittracker.core.designsystem.TextTertiary
 import com.habittracker.core.designsystem.WarmWhite
+import com.habittracker.data.backup.BackupExporter
+import com.habittracker.data.local.HabitDatabase
 import com.habittracker.domain.model.Habit
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
 
 /**
  * Archived habits, grouped 月 → 日 (ArchiveGroups) and restorable (TASK-028); the archive is also
@@ -38,6 +50,29 @@ fun ProfileScreen(presenter: ProfilePresenter) {
     val state by presenter.state.collectAsState()
     val lastError by presenter.lastError.collectAsState()
     val months = ArchiveGroups.group(state.archived)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val exporter = remember(context) { BackupExporter(HabitDatabase.getInstance(context)) }
+    var exportedCount by remember { mutableStateOf<Int?>(null) }
+    var exportError by remember { mutableStateOf<String?>(null) }
+    // SAF: the picker creates the document, so no storage permission is involved (TASK-030).
+    val createBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                runCatching { exporter.export(context, uri) }
+                    .onSuccess {
+                        exportedCount = it
+                        exportError = null
+                    }
+                    .onFailure {
+                        exportError = it.message ?: "导出失败"
+                        exportedCount = null
+                    }
+            }
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(WarmWhite).padding(horizontal = 20.dp)) {
         Text(
@@ -54,6 +89,30 @@ fun ProfileScreen(presenter: ProfilePresenter) {
             color = TextTertiary,
             modifier = Modifier.padding(top = 2.dp, bottom = 12.dp),
         )
+        SoftCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), corner = 20.dp) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("数据备份", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(
+                    text = "把全部习惯、计划、日志与提醒导出为 JSON 文件",
+                    fontSize = 13.sp,
+                    color = TextTertiary,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+                TextButton(
+                    onClick = {
+                        createBackup.launch(BackupExporter.fileName(LocalDate.now().toString()))
+                    },
+                ) {
+                    Text("导出备份", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MossGreenDark)
+                }
+                exportedCount?.let {
+                    Text("已导出 " + it + " 个习惯", fontSize = 13.sp, color = MossGreenDark)
+                }
+                exportError?.let {
+                    Text(it, fontSize = 13.sp, color = Color(0xFFB5523B))
+                }
+            }
+        }
         if (lastError != null) {
             Text(
                 text = lastError.orEmpty(),

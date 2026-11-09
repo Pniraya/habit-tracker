@@ -82,6 +82,7 @@ function loadQueries(fileName) {
 const habitQ = loadQueries("HabitDao.kt");
 const logQ = loadQueries("HabitLogDao.kt");
 const scheduleQ = loadQueries("HabitScheduleDao.kt");
+const reminderQ = loadQueries("HabitReminderDao.kt");
 
 let checks = 0;
 let failed = 0;
@@ -160,7 +161,8 @@ const insertReminder = db.prepare(
 ok("every expected DAO query was parsed out of the Kotlin sources", () => {
   const expected = {
     HabitDao: [habitQ, ["findById", "observeActive", "observeArchived", "findAll", "archive", "restore", "updateFields", "deleteById"]],
-    HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits"]],
+    HabitLogDao: [logQ, ["findByDate", "findRange", "observeRange", "findForDate", "findRangeForHabits", "findAllForBackup"]],
+    HabitReminderDao: [reminderQ, ["findForHabit", "findActiveForScheduling", "setEnabled", "findAllForBackup"]],
     HabitScheduleDao: [
       scheduleQ,
       [
@@ -196,6 +198,7 @@ insertSchedule.run(readId, "CUSTOM", 1, "2026-01-05", "2026-01-31", 10);
 const openVersionId = insertSchedule.run(readId, "DAILY", 127, "2026-02-01", null, 11).lastInsertRowid;
 // 08:00:00, not 08:00: Converters writes HH:mm:ss, and the fixture must use what the app stores.
 insertReminder.run(readId, "08:00:00", 1, 10, 10);
+insertReminder.run(readId, "06:30:00", 1, 10, 10);
 // A second habit with its own open version, so the batch queries are proved to span more than one id.
 insertSchedule.run(waterId, "DAILY", 127, "2026-01-02", null, 20);
 
@@ -224,6 +227,17 @@ equal("HabitLogDao.findByDate is empty before the first write", query(logQ.findB
 insertLog.run(readId, "2026-01-05", 1, 1, "COMPLETED", 100, null, 100, 100);
 insertLog.run(readId, "2026-01-06", 1, 1, "COMPLETED", 110, null, 110, 110);
 insertLog.run(readId, "2026-01-20", 0, 1, "IN_PROGRESS", null, null, 120, 120);
+// TASK-030: the backup reads whole tables. Ordering matters so two exports of the same data match.
+equal(
+  "HabitLogDao.findAllForBackup returns every log ordered by habit then date",
+  query(logQ.findAllForBackup, {}).map((r) => r.log_date),
+  ["2026-01-05", "2026-01-06", "2026-01-20"],
+);
+equal(
+  "HabitReminderDao.findAllForBackup returns every reminder ordered by habit then time",
+  query(reminderQ.findAllForBackup, {}).map((r) => r.reminder_time),
+  ["06:30:00", "08:00:00"],
+);
 equal("HabitLogDao.findByDate returns the single row", query(logQ.findByDate, { habitId: readId, date: "2026-01-05" })[0].status, "COMPLETED");
 equal(
   "HabitLogDao.findRange includes both boundaries and sorts ascending",
@@ -333,7 +347,7 @@ equal("HabitDao.deleteById is a no-op for an unknown id", queryOne(habitQ.delete
 
 // Deleting a scenario while keeping its registration would otherwise shrink coverage silently.
 // Bump this number in the same commit that adds a scenario.
-const MIN_CHECKS = 38;
+const MIN_CHECKS = 40;
 if (checks < MIN_CHECKS) {
   failed += 1;
   console.log("FAIL  coverage shrank: " + checks + " checks executed, at least " + MIN_CHECKS + " expected");
