@@ -26,7 +26,7 @@
 | F-011 | 日历热力图/趋势 | 已定义 | DEVICE_VERIFIED | VERIFIED | DEVICE_VERIFIED |
 | F-012 | 多条 Normal 提醒 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
 | F-013 | 重启/时区后提醒恢复 | 已定义 | NOT_STARTED | NOT_STARTED | NOT_STARTED |
-| F-014 | JSON 备份/恢复 | 已定义 | IN_PROGRESS | VERIFIED（导出） | DEVICE_VERIFIED（导出） |
+| F-014 | JSON 备份/恢复 | 已定义 | IN_PROGRESS | VERIFIED | DEVICE_VERIFIED |
 | F-015 | 离线核心功能 | 已定义 | VERIFIED | NOT_STARTED | NOT_STARTED |
 | F-016 | 平均用时 | V1 不做（ADR-010） | OUT_OF_SCOPE | — | — |
 | F-017 | 桌面小组件 | V1 不做 | OUT_OF_SCOPE | — | — |

@@ -3,7 +3,7 @@
 > 只记录实际执行的命令和结果。没有执行就写 `NOT_RUN`。
 
 ## Latest Run
-- 日期时间：`2026-11-06`
+- 日期时间：`2026-11-09`
 - 分支 / commit：`main`（`TASK-030` 合入；最终 commit 以 `git log -1` 为准）
 - 环境：Windows；JDK 17.0.13（`JAVA_HOME=D:\javajdk17`）；Android SDK `D:\AndroidToolchain\sdk`；Gradle 8.9
 - 结果：`tools/verify-all.ps1` `PASS`（治理 **22 项**检查、0 警告 + 单测 168 项 + DAO SQL 40 项 + `assembleDebug` + `git diff --check`）；`gradlew test` `FAILED`（沙箱禁止测试 worker，非代码失败）；真机 `PASS`（我的 → 导出备份 → 「已导出 3 个习惯」→ `node:sqlite` 按 schema v1 回读；今日/统计/我的三页巡检；`aapt2` 确认运行时权限为 0）
