@@ -24,11 +24,11 @@
 
 ## Not Verified / Known Gaps
 - 新建 / 详情已进自动断言（`-HabitName` 指定习惯）；2.0× 字体下详情页仍会跳过（行在折叠线下且名字被省略号截断）。
-- Firebase Test Lab 未跑：小米 HyperOS / OPPO ColorOS 的字体、显示大小、手势条差异仍未知。
+- **Firebase Test Lab 阻塞**：本机所有 Google 域名 TLS 失败（本地代理 127.0.0.1:7897 转发不通）；真机还需 Blaze 计费项目。`tools/testlab-run.ps1` 已写好但**未执行**。小米/OPPO 的字体、显示大小、手势条差异仍未知。
 - 横屏未验证。
 - 13 个 `IMPLEMENTED` 评审债；模拟器已 `emu kill` 关闭。
 
 ## Next Safe Action
 1. 把新建 / 详情页纳入 `probe-adaptation.ps1` 的页面列表。
-2. Firebase Test Lab 跑小米/OPPO 抽样（需要 Google 账号与免费配额）。
+2. Firebase Test Lab：先解决网络（代理需能访问 oauth2/testing.googleapis.com）与 Blaze 计费，再跑 `pwsh -NoProfile -File tools/testlab-run.ps1 -Project <id>`；否则改国内云真机或借机。
 3. `R1` 批量评审（新上下文）。
